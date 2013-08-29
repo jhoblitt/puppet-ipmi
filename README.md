@@ -10,7 +10,7 @@ Puppet ipmi Module
 2. [Description](#description)
 3. [Usage](#usage)
 4. [Limitations](#limitations)
-    *[Tested Platforms](#tested-platforms)
+    * [Tested Platforms](#tested-platforms)
 5. [Support](#support)
 
 
