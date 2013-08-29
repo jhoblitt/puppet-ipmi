@@ -12,6 +12,8 @@
 #
 # Copyright (C) 2013 Joshua Hoblitt
 #
-class ipmi {
-  include ipmi::install, ipmi::service
+class ipmi inherits ipmi::params {
+  class { 'ipmi::install': } ->
+  class { 'ipmi::service': } ->
+  Class['Ipmi']
 }

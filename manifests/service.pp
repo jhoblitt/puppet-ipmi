@@ -16,6 +16,5 @@ class ipmi::service {
     hasstatus   => true,
     hasrestart  => true,
     enable      => true,
-    require     => Class['ipmi::install'],
   }
 }
