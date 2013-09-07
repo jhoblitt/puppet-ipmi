@@ -17,4 +17,11 @@ class ipmi::service {
     hasrestart  => true,
     enable      => true,
   }
+
+  service{ 'ipmievd':
+    ensure      => running,
+    hasrestart  => true,
+    hasstatus   => true,
+    enable      => true,
+  }
 }

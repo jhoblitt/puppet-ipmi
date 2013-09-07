@@ -11,4 +11,13 @@ describe 'ipmi::service', :type => :class do
     })
   end
 
+  it do
+    should contain_service('ipmievd').with({
+      :ensure => 'running',
+      :hasstatus => 'true',
+      :hasrestart => 'true',
+      :enable => 'true',
+    })
+  end
+
 end
