@@ -69,14 +69,10 @@ describe 'ipmi::service', :type => :class do
   describe 'with start_ipmievd => not-a-bool' do
     let(:params) {{ :start_ipmievd => 'not-a-bool' }}
 
-    describe 'with start_ipmievd => not-a-bool' do
-      let(:params) {{ :start_ipmievd => 'not-a-bool' }}
-
-      it 'should fail' do
-        expect {
-          should include_class('ipmi::service')
-        }.to raise_error(Puppet::Error, /is not a boolean/)
-      end
+    it 'should fail' do
+      expect {
+        should include_class('ipmi::service')
+      }.to raise_error(Puppet::Error, /is not a boolean/)
     end
   end
 
