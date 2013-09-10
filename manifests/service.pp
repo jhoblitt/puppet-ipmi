@@ -15,6 +15,8 @@
 class ipmi::service (
   $start_ipmievd = false,
 ) {
+  validate_bool($start_ipmievd)
+
   case $start_ipmievd {
     /(true)/: {
       $ipmievd_ensure = 'running'

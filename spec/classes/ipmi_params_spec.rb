@@ -2,11 +2,7 @@ require 'spec_helper'
 
 describe 'ipmi::params', :type => :class do
   describe 'for osfamily RedHat' do
-    let :facts do
-      {
-        :osfamily => 'RedHat',
-      }
-    end
+    let(:facts) {{ :osfamily => 'RedHat' }}
 
     describe 'el5.x' do
       before { facts[:lsbmajdistrelease] = '5' }

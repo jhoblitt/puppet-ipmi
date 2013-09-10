@@ -21,6 +21,8 @@
 class ipmi (
   $start_ipmievd = false,
 ) inherits ipmi::params {
+  validate_bool($start_ipmievd)
+
   class { 'ipmi::install': } ->
   class { 'ipmi::service':
     start_ipmievd => $start_ipmievd,
