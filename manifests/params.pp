@@ -13,7 +13,7 @@
 class ipmi::params {
   case $::osfamily {
     'redhat': {
-      case $::lsbmajdistrelease {
+      case $::operatingsystemmajrelease {
         5: {
           # el5.x
           $ipmi_package = ['OpenIPMI', 'OpenIPMI-tools']
@@ -23,7 +23,7 @@ class ipmi::params {
           $ipmi_package = ['OpenIPMI', 'ipmitool']
         }
         default: {
-          fail("Module ${module_name} is not supported on lsbmajdistrelease ${::lsbmajdistrelease}")
+          fail("Module ${module_name} is not supported on operatingsystemmajrelease ${::operatingsystemmajrelease}")
         }
       }
     }

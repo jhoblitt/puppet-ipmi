@@ -13,7 +13,7 @@ describe 'ipmi::install', :type => :class do
     end
 
     describe 'el5.x' do
-      before { facts[:lsbmajdistrelease] = '5' }
+      before { facts[:operatingsystemmajrelease] = '5' }
   
       it { should include_class('ipmi::install') }
       it { should contain_package('OpenIPMI').with_ensure('present') }
@@ -21,7 +21,7 @@ describe 'ipmi::install', :type => :class do
     end
 
     describe 'el6.x' do
-      before { facts[:lsbmajdistrelease] = '6' }
+      before { facts[:operatingsystemmajrelease] = '6' }
   
       it { should include_class('ipmi::install') }
       it { should contain_package('OpenIPMI').with_ensure('present') }
