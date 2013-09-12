@@ -5,23 +5,23 @@ describe 'ipmi::params', :type => :class do
     let(:facts) {{ :osfamily => 'RedHat' }}
 
     describe 'el5.x' do
-      before { facts[:lsbmajdistrelease] = '5' }
+      before { facts[:operatingsystemmajrelease] = '5' }
 
       it { should include_class('ipmi::params') }
     end
 
     describe 'el6.x' do
-      before { facts[:lsbmajdistrelease] = '6' }
+      before { facts[:operatingsystemmajrelease] = '6' }
   
       it { should include_class('ipmi::params') }
     end
 
-    describe 'unsupported lsbmajdistrelease' do
-      before { facts[:lsbmajdistrelease] = '7' }
+    describe 'unsupported operatingsystemmajrelease' do
+      before { facts[:operatingsystemmajrelease] = '7' }
 
       it 'should fail' do
         expect { should include_class('ipmi::params') }.
-          to raise_error(Puppet::Error, /not supported on lsbmajdistrelease 7/)
+          to raise_error(Puppet::Error, /not supported on operatingsystemmajrelease 7/)
       end
     end
   end
