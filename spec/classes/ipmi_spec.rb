@@ -14,34 +14,117 @@ describe 'ipmi', :type => :class do
       it { should include_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
-      it { should contain_class('ipmi::service').with_start_ipmievd(false) }
+      it do
+        should contain_class('ipmi::service::ipmi').with({
+          :ensure => 'running',
+          :enable => true,
+        })
+      end
+      it do
+        should contain_class('ipmi::service::ipmievd').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+      end
     end
 
-    describe 'with start_ipmievd => false' do
-      let(:params) {{ :start_ipmievd => false }}
+    describe 'service_ensure => running' do
+      let(:params) {{ :service_ensure => 'running' }}
 
       it { should include_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
-      it { should contain_class('ipmi::service').with_start_ipmievd(false) }
+      it do
+        should contain_class('ipmi::service::ipmi').with({
+          :ensure => 'running',
+          :enable => true,
+        })
+      end
+      it do
+        should contain_class('ipmi::service::ipmievd').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+      end
     end
 
-    describe 'with start_ipmievd => true' do
-      let(:params) {{ :start_ipmievd => true }}
+    describe 'service_ensure => stopped' do
+      let(:params) {{ :service_ensure => 'stopped' }}
 
       it { should include_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
-      it { should contain_class('ipmi::service').with_start_ipmievd(true) }
+      it do
+        should contain_class('ipmi::service::ipmi').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+      end
+      it do
+        should contain_class('ipmi::service::ipmievd').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+      end
     end
 
-    describe 'with start_ipmievd => not-a-bool' do
-      let(:params) {{ :start_ipmievd => 'not-a-bool' }}
+    describe 'service_ensure => invalid-string' do
+      let(:params) {{ :service_ensure => 'invalid-string' }}
 
       it 'should fail' do
         expect {
           should include_class('ipmi')
-        }.to raise_error(Puppet::Error, /is not a boolean/)
+        }.to raise_error(Puppet::Error, /does not match/)
+      end
+    end
+
+    describe 'ipmievd_service_ensure => running' do
+      let(:params) {{ :ipmievd_service_ensure => 'running' }}
+
+      it { should include_class('ipmi') }
+      it { should contain_class('ipmi::params') }
+      it { should contain_class('ipmi::install') }
+      it do
+        should contain_class('ipmi::service::ipmi').with({
+          :ensure => 'running',
+          :enable => true,
+        })
+      end
+      it do
+        should contain_class('ipmi::service::ipmievd').with({
+          :ensure => 'running',
+          :enable => true,
+        })
+      end
+    end
+
+    describe 'ipmievd_service_ensure => stopped' do
+      let(:params) {{ :ipmievd_service_ensure => 'stopped' }}
+
+      it { should include_class('ipmi') }
+      it { should contain_class('ipmi::params') }
+      it { should contain_class('ipmi::install') }
+      it do
+        should contain_class('ipmi::service::ipmi').with({
+          :ensure => 'running',
+          :enable => true,
+        })
+      end
+      it do
+        should contain_class('ipmi::service::ipmievd').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+      end
+    end
+
+    describe 'ipmievd_service_ensure => invalid-string' do
+      let(:params) {{ :ipmievd_service_ensure => 'invalid-string' }}
+
+      it 'should fail' do
+        expect {
+          should include_class('ipmi')
+        }.to raise_error(Puppet::Error, /does not match/)
       end
     end
   end
