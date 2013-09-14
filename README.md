@@ -40,7 +40,7 @@ Usage
     class { 'ipmi':
       service_ensure         => 'running', # default is 'running'
       ipmievd_service_ensure => 'running', # default is 'stopped'
-   }
+    }
 
 
 Limitations
