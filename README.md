@@ -33,14 +33,18 @@ Usage
 
 ### Basic
 
-    include ipmi
+```puppet
+include ipmi
+```
 
 ### All Params
 
-    class { 'ipmi':
-      service_ensure         => 'running', # default is 'running'
-      ipmievd_service_ensure => 'running', # default is 'stopped'
-    }
+```puppet
+class { 'ipmi':
+  service_ensure         => 'running', # default is 'running'
+  ipmievd_service_ensure => 'running', # default is 'stopped'
+}
+```
 
 
 Limitations
