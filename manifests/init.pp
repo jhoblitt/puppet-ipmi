@@ -7,7 +7,7 @@
 #
 # String.  Possible values: 'running', 'stopped'
 #
-# Controls the state of the `ipmi` daemon.
+# Controls the state of the `ipmi` service.
 #
 # Default: 'running'
 #
@@ -15,7 +15,7 @@
 #
 # String.  Possible values: 'running', 'stopped'
 #
-# Controls the state of the `ipmievd` daemon.
+# Controls the state of the `ipmievd` service.
 #
 # Default: 'stopped'
 #

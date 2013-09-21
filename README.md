@@ -34,16 +34,32 @@ Usage
 ### Basic
 
 ```puppet
-include ipmi
+    include ipmi
 ```
 
-### All Params
+### Parameters
+
+* `service_ensure`
+
+String.  Possible values: 'running', 'stopped'
+
+Controls the state of the `ipmi` service.
+
+Default: 'running'
+
+* `ipmievd_service_ensure`
+
+String.  Possible values: 'running', 'stopped'
+
+Controls the state of the `ipmievd` service.
+
+Default: 'stopped'
 
 ```puppet
-class { 'ipmi':
-  service_ensure         => 'running', # default is 'running'
-  ipmievd_service_ensure => 'running', # default is 'stopped'
-}
+    class { 'ipmi':
+      service_ensure         => 'running', # default is 'running'
+      ipmievd_service_ensure => 'running', # default is 'stopped'
+    }
 ```
 
 
