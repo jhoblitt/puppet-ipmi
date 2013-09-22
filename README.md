@@ -69,7 +69,7 @@ Limitations
 At present, only support for `$::osfamily == 'RedHat'` has been implimented.
 Adding other Linux distrubtions should be trivial.
 
-### Tested on
+### Tested Platforms
 
 * el5.x
 * el6.x
