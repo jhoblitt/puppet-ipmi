@@ -1,5 +1,5 @@
 Puppet ipmi Module
-=========================
+==================
 
 [![Build Status](https://travis-ci.org/jhoblitt/puppet-ipmi.png)](https://travis-ci.org/jhoblitt/puppet-ipmi)
 
@@ -9,9 +9,13 @@ Puppet ipmi Module
 1. [Overview](#overview)
 2. [Description](#description)
 3. [Usage](#usage)
+    * [Example](#example)
+    * [Classes](#classes)
 4. [Limitations](#limitations)
     * [Tested Platforms](#tested-platforms)
-5. [Support](#support)
+5. [Versioning](#versioning)
+6. [Support](#support)
+7. [See Also](#see-also)
 
 
 Overview
@@ -31,36 +35,39 @@ with the BMC from user space.
 Usage
 -----
 
-### Basic
+### Example
 
 ```puppet
     include ipmi
 ```
 
-### Parameters
+### Classes
 
-* `service_ensure`
+#### `ipmi`
 
-String.  Possible values: 'running', 'stopped'
+```puppet
+# defaults
+class { 'ipmi':
+  service_ensure         => 'running', # default is 'running'
+  ipmievd_service_ensure => 'running', # default is 'stopped'
+}
+```
+
+##### `service_ensure`
+
+`String` defaults to: `running`
+
+Possible values: `running`, `stopped`
 
 Controls the state of the `ipmi` service.
 
-Default: 'running'
+##### `ipmievd_service_ensure`
 
-* `ipmievd_service_ensure`
+`String` defaults to: `stopped`
 
-String.  Possible values: 'running', 'stopped'
+ Possible values: `running', `stopped`
 
 Controls the state of the `ipmievd` service.
-
-Default: 'stopped'
-
-```puppet
-    class { 'ipmi':
-      service_ensure         => 'running', # default is 'running'
-      ipmievd_service_ensure => 'running', # default is 'stopped'
-    }
-```
 
 
 Limitations
@@ -76,6 +83,13 @@ Adding other Linux distrubtions should be trivial.
 * el7.x
 
 
+Versioning
+----------
+
+This module is versioned according to the [Semantic Versioning
+2.0.0](http://semver.org/spec/v2.0.0.html) specification.
+
+
 Support
 -------
 
@@ -83,3 +97,7 @@ Please log tickets and issues at
 [github](https://github.com/jhoblitt/puppet-ipmi/issues)
 
 
+See Also
+--------
+
+* [OpenIPMI](http://openipmi.sourceforge.net/)
