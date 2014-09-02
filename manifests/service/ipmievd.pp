@@ -20,10 +20,10 @@ class ipmi::service::ipmievd (
   validate_bool($enable)
 
   service{ 'ipmievd':
-    ensure      => $ensure,
-    hasstatus   => true,
-    hasrestart  => true,
-    enable      => $enable,
+    ensure     => $ensure,
+    hasstatus  => true,
+    hasrestart => true,
+    enable     => $enable,
   }
 
 }

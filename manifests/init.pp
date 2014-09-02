@@ -1,33 +1,7 @@
 # == Class: ipmi
 #
-#
-# === Parameters
-#
-# [*service_ensure*]
-#
-# String.  Possible values: 'running', 'stopped'
-#
-# Controls the state of the `ipmi` service.
-#
-# Default: 'running'
-#
-# [*ipmievd_service_ensure*]
-#
-# String.  Possible values: 'running', 'stopped'
-#
-# Controls the state of the `ipmievd` service.
-#
-# Default: 'stopped'
-#
-# === Examples
-#
-#
-# include ipmi
-#
-# class { 'ipmi':
-#   service_ensure         => 'running',
-#   ipmievd_service_ensure => 'running',
-# }
+# Please refer to https://github.com/jhoblitt/puppet-ipmi#usage for
+# parameter documentation.
 #
 # === Authors
 #
