@@ -18,7 +18,7 @@ class ipmi::params {
           # el5.x
           $ipmi_package = ['OpenIPMI', 'OpenIPMI-tools']
         }
-        6: {
+        6, 7: {
           # el6.x
           $ipmi_package = ['OpenIPMI', 'ipmitool']
         }
