@@ -32,16 +32,16 @@ class ipmi::service (
   }
 
   service{ 'ipmi':
-    ensure      => running,
-    hasstatus   => true,
-    hasrestart  => true,
-    enable      => true,
+    ensure     => running,
+    hasstatus  => true,
+    hasrestart => true,
+    enable     => true,
   }
 
   service{ 'ipmievd':
-    ensure      => $ipmievd_ensure,
-    hasrestart  => true,
-    hasstatus   => true,
-    enable      => $ipmievd_enable,
+    ensure     => $ipmievd_ensure,
+    hasrestart => true,
+    hasstatus  => true,
+    enable     => $ipmievd_enable,
   }
 }
