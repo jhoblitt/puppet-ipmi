@@ -3,16 +3,6 @@
 # Please refer to https://github.com/jhoblitt/puppet-ipmi#usage for
 # parameter documentation.
 #
-# === Authors
-#
-# Joshua Hoblitt <jhoblitt@cpan.org>
-# Mike Arnold <mike@razorsedge.org>
-#
-# === Copyright
-#
-# Copyright (C) 2013 Joshua Hoblitt
-# Copyright (C) 2013 Mike Arnold, unless otherwise noted.
-#
 class ipmi (
   $service_ensure         = 'running',
   $ipmievd_service_ensure = 'stopped',
