@@ -6,9 +6,11 @@
 class ipmi (
   $service_ensure         = 'running',
   $ipmievd_service_ensure = 'stopped',
+  $watchdog               = false,
 ) inherits ipmi::params {
   validate_re($service_ensure, '^running$|^stopped$')
   validate_re($ipmievd_service_ensure, '^running$|^stopped$')
+  validate_bool($watchdog)
 
   $enable_ipmi = $service_ensure ? {
     'running' => true,
@@ -20,6 +22,9 @@ class ipmi (
     'stopped' => false,
   }
 
+  include ::ipmi::install
+  include ::ipmi::config
+
   class { 'ipmi::service::ipmi':
     ensure => $service_ensure,
     enable => $enable_ipmi,
@@ -30,8 +35,10 @@ class ipmi (
     enable => $enable_ipmievd,
   }
 
-  class { 'ipmi::install': } ->
-  Class['ipmi::service::ipmi'] ->
-  Class['ipmi::service::ipmievd'] ->
-  Class['ipmi']
+  anchor { 'ipmi::begin': }
+  anchor { 'ipmi::end': }
+
+  Anchor['ipmi::begin'] -> Class['::ipmi::install'] ~> Class['::ipmi::config']
+    ~> Class['::ipmi::service::ipmi'] ~> Class['::ipmi::service::ipmievd']
+    -> Anchor['ipmi::end']
 }

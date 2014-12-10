@@ -50,6 +50,7 @@ Usage
 class { 'ipmi':
   service_ensure         => 'running', # default is 'running'
   ipmievd_service_ensure => 'running', # default is 'stopped'
+  watchdog               => true,      # default is false
 }
 ```
 
@@ -69,6 +70,11 @@ Controls the state of the `ipmi` service.
 
 Controls the state of the `ipmievd` service.
 
+##### `watchdog`
+
+`Boolean` defaults to: `false`
+
+Controls whether the IPMI watchdog is enabled.
 
 Limitations
 -----------
