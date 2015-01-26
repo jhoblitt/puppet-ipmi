@@ -27,16 +27,8 @@ RSpec.configure do |c|
   # Configure all nodes in nodeset
   c.before :suite do
     # Install module and dependencies
+    puppet_module_install(:source => proj_root, :module_name => 'ipmi')
     hosts.each do |host|
-      on host, "mkdir -p #{host['distmoduledir']}/ipmi"
-      result = on host, "echo #{host['distmoduledir']}/ipmi"
-      target = result.raw_output.chomp
-
-      %w(files lib manifests templates metadata.json).each do |file|
-        path = "#{proj_root}/#{file}"
-        next unless File.exists? path
-        scp_to host, path, target
-      end
       on host, puppet('module', 'install', 'puppetlabs-stdlib'), {:acceptable_exit_codes => [0, 1]}
       on host, puppet('module', 'install', 'stahnma-epel'), {:acceptable_exit_codes => [0, 1]}
     end
