@@ -12,7 +12,7 @@ describe 'ipmi::params', :type => :class do
 
     describe 'el6.x' do
       before { facts[:operatingsystemmajrelease] = '6' }
-  
+
 #      it { should contain_class('ipmi::params') }
     end
 
@@ -33,13 +33,13 @@ describe 'ipmi::params', :type => :class do
   end
 
   describe 'unsupported osfamily' do
-    let :facts do 
+    let :facts do
       {
         :osfamily        => 'Debian',
         :operatingsystem => 'Debian',
       }
     end
-  
+
     it 'should fail' do
       expect { should contain_class('ipmi::params') }.
         to raise_error(Puppet::Error, /not supported on Debian/)
