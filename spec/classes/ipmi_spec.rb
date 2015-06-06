@@ -5,8 +5,8 @@ describe 'ipmi', :type => :class do
   describe 'for osfamily RedHat' do
     let :facts do
       {
-        :osfamily          => 'RedHat',
-        :operatingsystemmajrelease => '6',
+        :osfamily                  => 'RedHat',
+        :operatingsystemmajrelease => 6,
       }
     end
 

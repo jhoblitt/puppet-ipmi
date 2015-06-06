@@ -5,25 +5,25 @@ describe 'ipmi::params', :type => :class do
     let(:facts) {{ :osfamily => 'RedHat' }}
 
     describe 'el5.x' do
-      before { facts[:operatingsystemmajrelease] = '5' }
+      before { facts[:operatingsystemmajrelease] = 5 }
 
 #      it { should contain_class('ipmi::params') }
     end
 
     describe 'el6.x' do
-      before { facts[:operatingsystemmajrelease] = '6' }
+      before { facts[:operatingsystemmajrelease] = 6 }
 
 #      it { should contain_class('ipmi::params') }
     end
 
     describe 'el7.x' do
-      before { facts[:operatingsystemmajrelease] = '7' }
+      before { facts[:operatingsystemmajrelease] = 7 }
 
 #      it { should contain_class('ipmi::params') }
     end
 
     describe 'unsupported operatingsystemmajrelease' do
-      before { facts[:operatingsystemmajrelease] = '1' }
+      before { facts[:operatingsystemmajrelease] = 1 }
 
       it 'should fail' do
         expect { should contain_class('ipmi::params') }.
