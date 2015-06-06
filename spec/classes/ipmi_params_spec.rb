@@ -5,25 +5,25 @@ describe 'ipmi::params', :type => :class do
     let(:facts) {{ :osfamily => 'RedHat' }}
 
     describe 'el5.x' do
-      before { facts[:operatingsystemmajrelease] = '5' }
+      before { facts[:operatingsystemmajrelease] = 5 }
 
 #      it { should contain_class('ipmi::params') }
     end
 
     describe 'el6.x' do
-      before { facts[:operatingsystemmajrelease] = '6' }
-  
+      before { facts[:operatingsystemmajrelease] = 6 }
+
 #      it { should contain_class('ipmi::params') }
     end
 
     describe 'el7.x' do
-      before { facts[:operatingsystemmajrelease] = '7' }
+      before { facts[:operatingsystemmajrelease] = 7 }
 
 #      it { should contain_class('ipmi::params') }
     end
 
     describe 'unsupported operatingsystemmajrelease' do
-      before { facts[:operatingsystemmajrelease] = '1' }
+      before { facts[:operatingsystemmajrelease] = 1 }
 
       it 'should fail' do
         expect { should contain_class('ipmi::params') }.
@@ -33,13 +33,13 @@ describe 'ipmi::params', :type => :class do
   end
 
   describe 'unsupported osfamily' do
-    let :facts do 
+    let :facts do
       {
         :osfamily        => 'Debian',
         :operatingsystem => 'Debian',
       }
     end
-  
+
     it 'should fail' do
       expect { should contain_class('ipmi::params') }.
         to raise_error(Puppet::Error, /not supported on Debian/)
