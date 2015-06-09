@@ -23,7 +23,7 @@ Puppet ipmi Module
 Overview
 --------
 
-Manages the OpenIPMI package
+Manages IPMI
 
 
 Description
@@ -31,7 +31,7 @@ Description
 
 Installs the [OpemIPMI](http://openipmi.sourceforge.net/) package and enables
 the `ipmi` service.  This loads the kernel drivers needed for communicating
-with the BMC from user space.
+with the BMC from user space. Moreover, two facts are made available to the system.
 
 
 Usage
@@ -77,6 +77,13 @@ Controls the state of the `ipmievd` service.
 `Boolean` defaults to: `false`
 
 Controls whether the IPMI watchdog is enabled.
+
+### Facts
+
+This module provides the following facts:
+
+* kmod_isloaded_ipmi_si (Boolean) `true` if kernel module is loaded, `false` otherwise
+* bmc_lan_conf (Hash) returns LAN configuration of BMC. Example: `{"IP_Address"=>"192.168.1.1", "Subnet_Mask"=>"255.255.255.0", "IP_Address_Source"=>"Static", "Default_Gateway_MAC_Address"=>"00:00:00:00:00:00", "Backup_Gateway_IP_Address"=>"0.0.0.0", "Backup_Gateway_MAC_Address"=>"00:00:00:00:00:00", "MAC_Address"=>"FF:FF:FF:FF:FF:FF", "Default_Gateway_IP_Address"=>"192.168.1.254"}`
 
 Limitations
 -----------
@@ -136,3 +143,4 @@ See Also
 --------
 
 * [OpenIPMI](http://openipmi.sourceforge.net/)
+* [FreeIPMI](http://www.gnu.org/software/freeipmi/)
