@@ -8,11 +8,11 @@ class ipmi::params {
       case $::operatingsystemmajrelease {
         5: {
           # el5.x
-          $ipmi_package = ['OpenIPMI', 'OpenIPMI-tools']
+          $ipmi_package = ['OpenIPMI', 'OpenIPMI-tools', 'freeipmi']
         }
         6, 7: {
           # el6.x
-          $ipmi_package = ['OpenIPMI', 'ipmitool']
+          $ipmi_package = ['OpenIPMI', 'ipmitool', 'freeipmi']
         }
         default: {
           fail("Module ${module_name} is not supported on operatingsystemmajrelease ${::operatingsystemmajrelease}")
