@@ -1,5 +1,19 @@
 
 #### [Current]
+ * [2c67abe](../../commit/2c67abe) - __(Joshua Hoblitt)__ Merge pull request [#16](../../issues/16) from elisiano/foreman_facts
+
+IPMI facts (rebase only, original PR is [#12](../../issues/12))
+ * [7d4ac2e](../../commit/7d4ac2e) - __(Dominique Quatravaux)__ IPMI facts
+
+Expose IPMI facts in a format compatible with RedHat's The Foreman, so
+that BMCs appear in its web UI.
+
+Add documentation to README.md
+
+ * [683e0c0](../../commit/683e0c0) - __(Joshua Hoblitt)__ Merge pull request [#13](../../issues/13) from jhoblitt/feature/v2.0.0
+
+Feature/v2.0.0
+ * [c52dc2a](../../commit/c52dc2a) - __(Joshua Hoblitt)__ bump version to v2.0.0
  * [bfc0e6a](../../commit/bfc0e6a) - __(Joshua Hoblitt)__ fix rspec puppet 4 compatibility
  * [3123bb9](../../commit/3123bb9) - __(Joshua Hoblitt)__ add Puppet Version Compatibility subsection to README
  * [1e76146](../../commit/1e76146) - __(Joshua Hoblitt)__ update README boilerplate
