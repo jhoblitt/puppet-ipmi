@@ -11,13 +11,14 @@ Puppet ipmi Module
 3. [Usage](#usage)
     * [Example](#example)
     * [Classes](#classes)
-4. [Limitations](#limitations)
+4. [Additional Facts](#additional-facts)
+5. [Limitations](#limitations)
     * [Tested Platforms](#tested-platforms)
     * [Puppet Version Compatibility](#puppet-version-compatibility)
-5. [Versioning](#versioning)
-6. [Support](#support)
-7. [Contributing](#contributing)
-8. [See Also](#see-also)
+6. [Versioning](#versioning)
+7. [Support](#support)
+8. [Contributing](#contributing)
+9. [See Also](#see-also)
 
 
 Overview
@@ -29,10 +30,12 @@ Manages the OpenIPMI package
 Description
 -----------
 
-Installs the [OpemIPMI](http://openipmi.sourceforge.net/) package and enables
-the `ipmi` service.  This loads the kernel drivers needed for communicating
-with the BMC from user space.
-
+Installs the [OpemIPMI](http://openipmi.sourceforge.net/) package,
+provides IPMI facts in a format compatible with
+[The Foreman](www.theforeman.org)'s
+[BMC features](www.theforeman.org/manuals/latest/index.html#4.3.3BMC)
+and enables the `ipmi` service. The latter loads the kernel drivers
+needed for communicating with the BMC from user space.
 
 Usage
 -----
@@ -77,6 +80,35 @@ Controls the state of the `ipmievd` service.
 `Boolean` defaults to: `false`
 
 Controls whether the IPMI watchdog is enabled.
+
+Additional Facts
+----------------
+
+This module provides additional facts for Facter with the following
+format:
+
+```
+ipmi1_gateway => 192.168.10.1
+ipmi1_ipaddress => 192.168.10.201
+ipmi1_ipaddress_source => Static Address
+ipmi1_macaddress => 00:30:48:c9:64:2a
+ipmi1_subnet_mask => 255.255.255.0
+```
+
+where the 1 in `ipmi1` corresponds to the channel according to
+`ipmitool lan print`.
+
+Additionally for compatibility with The Foreman, the first IPMI
+interface (i.e. the one from `ipmi lan print 1`) gets all facts
+repeated as just `ipmi_foo`:
+
+```
+ipmi_gateway => 192.168.10.1
+ipmi_ipaddress => 192.168.10.201
+ipmi_ipaddress_source => Static Address
+ipmi_macaddress => 00:30:48:c9:64:2a
+ipmi_subnet_mask => 255.255.255.0
+```
 
 Limitations
 -----------
