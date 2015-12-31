@@ -6,12 +6,10 @@ class ipmi::params {
   case $::osfamily {
     'redhat': {
       case $::operatingsystemmajrelease {
-        5: {
-          # el5.x
+        '5': {
           $ipmi_package = ['OpenIPMI', 'OpenIPMI-tools']
         }
-        6, 7: {
-          # el6.x
+        '6', '7': {
           $ipmi_package = ['OpenIPMI', 'ipmitool']
         }
         default: {
