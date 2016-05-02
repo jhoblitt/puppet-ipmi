@@ -34,7 +34,7 @@ class IPMIChannel
   end
 
   def load_facts
-    ipmitool_output = `env - $(which ipmitool) lan print #{@channel_nr} 2>&1`
+    ipmitool_output = `env - $(which ipmitool 2>/dev/null) lan print #{@channel_nr} 2>&1`
     parse_ipmitool_output ipmitool_output
     if ipmitool_output =~ /Invalid channel/ then
       return false
