@@ -9,7 +9,7 @@ Puppet ipmi Module
 1. [Overview](#overview)
 2. [Description](#description)
 3. [Usage](#usage)
-    * [Example](#example)
+    * [Examples](#examples)
     * [Classes](#classes)
 4. [Additional Facts](#additional-facts)
 5. [Limitations](#limitations)
@@ -40,10 +40,42 @@ needed for communicating with the BMC from user space.
 Usage
 -----
 
-### Example
+### Examples
 
 ```puppet
-    include ipmi
+   include ipmi
+```
+
+Create a user with admin privileges (default):
+```puppet
+   ipmi::user { 'newuser1':
+     user     => 'newuser1',
+     password => 'password1',
+     user_id  => 4,
+   }
+```
+Create a user with operator privileges:
+```puppet
+   ipmi::user { 'newuser2':
+     user     => 'newuser2',
+     password => 'password2',
+     priv     => 3,
+     user_id  => 5,
+   }
+```
+Configure a static ip on IPMI lan channel 1:
+```puppet
+   ipmi::network { 'lan1':
+     type        => 'static',
+     ip          => '192.168.1.10',
+     netmask     => '255.255.255.0',
+     gateway     => '192.168.1.1',
+   }
+```
+
+Configure IPMI lan channel 1 to DHCP:
+```puppet
+   ipmi::network { 'dhcp': }
 ```
 
 ### Classes
@@ -80,6 +112,32 @@ Controls the state of the `ipmievd` service.
 `Boolean` defaults to: `false`
 
 Controls whether the IPMI watchdog is enabled.
+
+### Defined Resources
+
+#### `ipmi::user`
+
+```puppet
+# defaults
+ipmi::user { 'newuser':
+  user     => 'root',
+  priv     => 4,           # Administrator
+  user_id  => 3,
+}
+```
+
+#### `ipmi::network`
+
+```puppet
+# defaults
+ipmi::network { 'lan1':
+  type        => 'dhcp',
+  ip          => '0.0.0.0',
+  netmask     => '255.255.255.0',
+  gateway     => '0.0.0.0',
+  lan_channel => 1,
+}
+```
 
 Additional Facts
 ----------------
