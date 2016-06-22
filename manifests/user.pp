@@ -1,14 +1,17 @@
-# == Defined type: ipmi::user
+# == Defined resource type: ipmi::user
 #
 
 define ipmi::user (
-  String $password,
-  String $user = 'root',
-  Integer $priv = 4,
-  Integer $user_id = 3,
+  $password,
+  $user = 'root',
+  $priv = 4,
+  $user_id = 3,
 )
 {
   require ::ipmi
+
+  validate_string($password,$user)
+  validate_integer($priv,$user_id)
 
   case $priv {
     1: {$privilege = 'CALLBACK'}

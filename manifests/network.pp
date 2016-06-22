@@ -1,15 +1,18 @@
-# == Defined type: ipmi::network
+# == Defined resource type: ipmi::network
 #
 
 define ipmi::network (
-  String $ip = '0.0.0.0',
-  String $netmask = '255.255.255.0',
-  String $gateway = '0.0.0.0',
-  String $type = 'dhcp',
-  Integer $lan_channel = 1,
+  $ip = '0.0.0.0',
+  $netmask = '255.255.255.0',
+  $gateway = '0.0.0.0',
+  $type = 'dhcp',
+  $lan_channel = 1,
 )
 {
   require ::ipmi
+
+  validate_string($ip,$netmask,$gateway,$type)
+  validate_integer($lan_channel)
 
   if $type == 'dhcp' {
 
