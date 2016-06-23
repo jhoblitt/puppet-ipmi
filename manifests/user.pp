@@ -11,7 +11,8 @@ define ipmi::user (
   require ::ipmi
 
   validate_string($password,$user)
-  validate_integer($priv,$user_id)
+  validate_integer($priv)
+  validate_integer($user_id)
 
   case $priv {
     1: {$privilege = 'CALLBACK'}

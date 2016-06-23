@@ -78,6 +78,14 @@ Configure IPMI lan channel 1 to DHCP:
    ipmi::network { 'dhcp': }
 ```
 
+Configure IPMI snmp string on lan channel 1:
+```puppet
+   ipmi::snmp { 'lan1':
+     snmp        => 'secret',
+     lan_channel => 1,
+   }
+```
+
 ### Classes
 
 #### `ipmi`
@@ -135,6 +143,16 @@ ipmi::network { 'lan1':
   ip          => '0.0.0.0',
   netmask     => '255.255.255.0',
   gateway     => '0.0.0.0',
+  lan_channel => 1,
+}
+```
+
+#### `ipmi::snmp`
+
+```puppet
+# defaults
+ipmi::snmp { 'lan1':
+  snmp        => 'public',
   lan_channel => 1,
 }
 ```
