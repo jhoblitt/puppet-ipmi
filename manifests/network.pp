@@ -7,12 +7,31 @@ define ipmi::network (
   $gateway = '0.0.0.0',
   $type = 'dhcp',
   $lan_channel = 1,
+  $interface_type = 'dedicated',
 )
 {
   require ::ipmi
 
   validate_string($ip,$netmask,$gateway,$type)
   validate_integer($lan_channel)
+  validate_re($type, '^dhcp$|^static$', 'Network type must be either dhcp or static')
+  validate_re($interface_type, '^dedicated$|^shared$|^failover$', 'Network interface type must be either dedicated, shared, or failover')
+
+  $interface_type_raw_command_code = '0x30 0x70 0x0c'
+  if $interface_type == 'dedicated' {
+    $interface_code = 0
+  }
+  elsif $interface_type == 'shared' {
+    $interface_code = 1
+  }
+  else {
+    $interface_code = 2
+  }
+
+  exec { "ipmi_set_interface_type_${lan_channel}":
+    command => "/usr/bin/ipmitool raw ${interface_type_raw_command_code} 1 ${interface_code}",
+    onlyif  => "/usr/bin/test $(/usr/bin/ipmitool raw ${interface_type_raw_command_code} 0) -ne ${interface_code}",
+  }
 
   if $type == 'dhcp' {
 
@@ -22,7 +41,7 @@ define ipmi::network (
     }
   }
 
-  if ($type == 'static') {
+  else {
 
     exec { "ipmi_set_static_${lan_channel}":
       command => "/usr/bin/ipmitool lan set ${lan_channel} ipsrc static",
