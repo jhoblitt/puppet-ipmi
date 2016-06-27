@@ -58,7 +58,7 @@ describe 'ipmi::user', :type => :define do
 
   describe 'when deploying with no params' do
     it 'should fail and raise password required error' do
-      expect { should contain_exec('ipmi_user_enable_newuser') }.to raise_error(Puppet::Error, /expects a value for parameter 'password'/)
+      expect { should contain_exec('ipmi_user_enable_newuser') }.to raise_error(Puppet::Error, /password/)
     end
   end
 
