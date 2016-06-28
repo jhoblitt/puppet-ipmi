@@ -7,10 +7,17 @@ class ipmi (
   $service_ensure         = 'running',
   $ipmievd_service_ensure = 'stopped',
   $watchdog               = false,
+  $snmps                  = {},
+  $users                  = {},
+  $networks               = {},
 ) inherits ipmi::params {
   validate_re($service_ensure, '^running$|^stopped$')
   validate_re($ipmievd_service_ensure, '^running$|^stopped$')
   validate_bool($watchdog)
+
+  validate_hash($snmps)
+  validate_hash($users)
+  validate_hash($networks)
 
   $enable_ipmi = $service_ensure ? {
     'running' => true,
@@ -41,4 +48,17 @@ class ipmi (
   Anchor['ipmi::begin'] -> Class['::ipmi::install'] ~> Class['::ipmi::config']
     ~> Class['::ipmi::service::ipmi'] ~> Class['::ipmi::service::ipmievd']
     -> Anchor['ipmi::end']
+
+  if $snmps {
+    create_resources('ipmi::snmp', $snmps)
+  }
+
+  if $users {
+    create_resources('ipmi::user', $users)
+  }
+
+  if $networks {
+    create_resources('ipmi::network', $networks)
+  }
+
 }
