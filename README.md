@@ -134,6 +134,38 @@ ipmi::user { 'newuser':
 }
 ```
 
+##### `user`
+
+`String` defaults to: `root`
+
+Controls the username of the user to be created.
+
+##### `password`
+
+`String` - required field
+
+Controls the password of the user to be created.
+
+##### `priv`
+
+`Integer` defaults to: `4`
+
+Possible values:
+`4` - ADMINISTRATOR,
+`3` - OPERATOR,
+`2` - USER,
+`1` - CALLBACK
+
+Controls the rights of the user to be created.
+
+##### `user_id`
+
+`Integer` defaults to: `3`
+
+The user id of the user to be created. Should be unique from
+existing users. On SuperMicro IPMI, user id 2 is reserved
+for the ADMIN user.
+
 #### `ipmi::network`
 
 ```puppet
@@ -147,6 +179,38 @@ ipmi::network { 'lan1':
 }
 ```
 
+##### `type`
+
+`String` defaults to: `dhcp`
+
+Possible values: `dhcp`, `static`
+
+Controls the if IP will be from DHCP or Static.
+
+##### `ip`
+
+`String` defaults to: `0.0.0.0`
+
+Controls the IP of the IPMI network.
+
+##### `netmask`
+
+`String` defaults to: `255.255.255.0`
+
+Controls the subnet mask of the IPMI network.
+
+##### `gateway`
+
+`String` defaults to: `0.0.0.0`
+
+Controls the gateway of the IPMI network.
+
+##### `lan_channel`
+
+`Integer` defaults to: `1`
+
+Controls the lan channel of the IPMI network to be configured.
+
 #### `ipmi::snmp`
 
 ```puppet
@@ -156,6 +220,19 @@ ipmi::snmp { 'lan1':
   lan_channel => 1,
 }
 ```
+
+##### `snmp`
+
+`String` defaults to: `public`
+
+Controls the snmp string of the IPMI network interface.
+
+##### `lan_channel`
+
+`Integer` defaults to: `1`
+
+Controls the lan channel of the IPMI network on which snmp is to be
+configured.
 
 Additional Facts
 ----------------
