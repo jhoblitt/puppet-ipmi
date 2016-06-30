@@ -30,19 +30,12 @@ class IPMIChannel
   public
   def initialize channel_nr
     @channel_nr = channel_nr
-    @has_facts = false
   end
 
   def load_facts
-    ipmitool_output = `env - $(which ipmitool 2>/dev/null) lan print #{@channel_nr} 2>&1`
-    parse_ipmitool_output ipmitool_output
-    if ipmitool_output =~ /Invalid channel/ then
-      return false
-    elsif not @has_facts
-      Facter.debug(ipmitool_output)
-      return false
-    else
-      return true
+    if Facter::Util::Resolution.which('ipmitool')
+      ipmitool_output = Facter::Util::Resolution.exec("ipmitool lan print #{@channel_nr} 2>&1")
+      parse_ipmitool_output ipmitool_output
     end
   end
 
@@ -80,8 +73,8 @@ class IPMIChannel
   end
 end
 
-channel_nr = 1
-while true
-  break unless IPMIChannel.new(channel_nr).load_facts
-  channel_nr += 1
+channel_array = (1..11).to_a
+channel_array.each do | channel |
+  @channel_nr = channel
+  IPMIChannel.new(@channel_nr).load_facts
 end
