@@ -32,8 +32,8 @@ Description
 
 Installs the [OpemIPMI](http://openipmi.sourceforge.net/) package,
 provides IPMI facts in a format compatible with
-[The Foreman](www.theforeman.org)'s
-[BMC features](www.theforeman.org/manuals/latest/index.html#4.3.3BMC)
+[The Foreman](https://www.theforeman.org)'s
+[BMC features](https://www.theforeman.org/manuals/latest/index.html#4.3.3BMC)
 and enables the `ipmi` service. The latter loads the kernel drivers
 needed for communicating with the BMC from user space.
 
