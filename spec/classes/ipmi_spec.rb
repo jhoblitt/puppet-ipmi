@@ -11,7 +11,7 @@ describe 'ipmi', :type => :class do
     end
 
     describe 'no params' do
-#      it { should contain_class('ipmi') }
+      it { should create_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
       it { should contain_class('ipmi::config') }
@@ -40,7 +40,7 @@ describe 'ipmi', :type => :class do
     describe 'service_ensure => running' do
       let(:params) {{ :service_ensure => 'running' }}
 
-#      it { should contain_class('ipmi') }
+      it { should create_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
       it { should contain_class('ipmi::config') }
@@ -69,7 +69,7 @@ describe 'ipmi', :type => :class do
     describe 'service_ensure => stopped' do
       let(:params) {{ :service_ensure => 'stopped' }}
 
-#      it { should contain_class('ipmi') }
+      it { should create_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
       it { should contain_class('ipmi::config') }
@@ -108,7 +108,7 @@ describe 'ipmi', :type => :class do
     describe 'ipmievd_service_ensure => running' do
       let(:params) {{ :ipmievd_service_ensure => 'running' }}
 
-#      it { should contain_class('ipmi') }
+      it { should create_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
       it { should contain_class('ipmi::config') }
@@ -137,7 +137,7 @@ describe 'ipmi', :type => :class do
     describe 'ipmievd_service_ensure => stopped' do
       let(:params) {{ :ipmievd_service_ensure => 'stopped' }}
 
-#      it { should contain_class('ipmi') }
+      it { should create_class('ipmi') }
       it { should contain_class('ipmi::params') }
       it { should contain_class('ipmi::install') }
       it { should contain_class('ipmi::config') }
