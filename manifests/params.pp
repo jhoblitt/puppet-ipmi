@@ -22,9 +22,11 @@ class ipmi::params {
     'debian': {
       case $::operatingsystem {
         'ubuntu': {
+          $ipmi_package    = ['openipmi', 'ipmitool']
           $config_location = '/etc/default/openipmi'
         }
         'debian': {
+          $ipmi_package    = ['openipmi', 'ipmitool']
           $config_location = '/etc/default/openipmi'
         }
         default: {
