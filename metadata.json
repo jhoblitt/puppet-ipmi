@@ -7,36 +7,42 @@
   "source": "https://github.com/jhoblitt/puppet-ipmi.git",
   "project_page": "https://github.com/jhoblitt/puppet-ipmi",
   "issues_url": "https://github.com/jhoblitt/puppet-ipmi/issues",
-  "operatingsystem_support": [
-    {
-      "operatingsystem": "RedHat",
-      "operatingsystemrelease": [
-        "5",
-        "6",
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "CentOS",
-      "operatingsystemrelease": [
-        "5",
-        "6",
-        "7"
-      ]
-    },
-    {
-      "operatingsystem": "Scientific",
-      "operatingsystemrelease": [
-        "5",
-        "6",
-        "7"
-      ]
-    }
-  ],
-  "dependencies": [
-    {
-      "name": "puppetlabs/stdlib",
-      "version_requirement": ">= 4.6.0 < 5.0.0"
-    }
-  ]
+  "operatingsystem_support": [{
+    "operatingsystem": "RedHat",
+    "operatingsystemrelease": [
+      "5",
+      "6",
+      "7"
+    ]
+  }, {
+    "operatingsystem": "CentOS",
+    "operatingsystemrelease": [
+      "5",
+      "6",
+      "7"
+    ]
+  }, {
+    "operatingsystem": "Scientific",
+    "operatingsystemrelease": [
+      "5",
+      "6",
+      "7"
+    ]
+  }, {
+    "operatingsystem": "Ubuntu",
+    "operatingsystemrelease": [
+      "12.04",
+      "16.04"
+    ]
+  }, {
+    "operatingsystem": "Debian",
+    "operatingsystemrelease": [
+      "7",
+      "8"
+    ]
+  }],
+  "dependencies": [{
+    "name": "puppetlabs/stdlib",
+    "version_requirement": ">= 4.6.0 < 5.0.0"
+  }]
 }

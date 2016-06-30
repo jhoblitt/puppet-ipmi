@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'ipmi::service::ipmievd', :type => :class do
 
   describe 'no params' do
-#    it { should contain_class('ipmi::service::ipmievd') }
+    it { should create_class('ipmi::service::ipmievd') }
     it do
       should contain_service('ipmievd').with({
         :ensure     => 'running',
@@ -17,7 +17,7 @@ describe 'ipmi::service::ipmievd', :type => :class do
   describe 'with enable => false' do
     let(:params) {{ :enable => false }}
 
-#    it { should contain_class('ipmi::service::ipmievd') }
+    it { should create_class('ipmi::service::ipmievd') }
     it do
       should contain_service('ipmievd').with({
         :ensure     => 'running',
@@ -31,7 +31,7 @@ describe 'ipmi::service::ipmievd', :type => :class do
   describe 'with enable => true' do
     let(:params) {{ :enable => true }}
 
-#    it { should contain_class('ipmi::service::ipmievd') }
+    it { should create_class('ipmi::service::ipmievd') }
     it do
       should contain_service('ipmievd').with({
         :ensure     => 'running',
@@ -47,7 +47,7 @@ describe 'ipmi::service::ipmievd', :type => :class do
 
     it 'should fail' do
       expect {
-        should contain_class('ipmi::service')
+        should create_class('ipmi::service')
       }.to raise_error(Puppet::Error, /is not a boolean/)
     end
   end
@@ -55,7 +55,7 @@ describe 'ipmi::service::ipmievd', :type => :class do
   describe 'with ensure => running' do
     let(:params) {{ :ensure => 'running' }}
 
-#    it { should contain_class('ipmi::service::ipmievd') }
+    it { should create_class('ipmi::service::ipmievd') }
     it do
       should contain_service('ipmievd').with({
         :ensure     => 'running',
@@ -69,7 +69,7 @@ describe 'ipmi::service::ipmievd', :type => :class do
   describe 'with ensure => running' do
     let(:params) {{ :ensure => 'stopped' }}
 
-#    it { should contain_class('ipmi::service::ipmievd') }
+    it { should create_class('ipmi::service::ipmievd') }
     it do
       should contain_service('ipmievd').with({
         :ensure     => 'stopped',
@@ -86,7 +86,7 @@ describe 'ipmi::service::ipmievd', :type => :class do
 
     it 'should fail' do
       expect {
-        should contain_class('ipmi::service::ipmievd')
+        should create_class('ipmi::service::ipmievd')
       }.to raise_error(Puppet::Error, /does not match/)
     end
   end
