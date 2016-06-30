@@ -8,12 +8,27 @@ class ipmi::params {
       case $::operatingsystemmajrelease {
         '5': {
           $ipmi_package = ['OpenIPMI', 'OpenIPMI-tools']
+          $config_location = '/etc/sysconfig/ipmi'
         }
         '6', '7': {
           $ipmi_package = ['OpenIPMI', 'ipmitool']
+          $config_location = '/etc/sysconfig/ipmi'
         }
         default: {
           fail("Module ${module_name} is not supported on operatingsystemmajrelease ${::operatingsystemmajrelease}")
+        }
+      }
+    }
+    'debian': {
+      case $::operatingsystem {
+        'ubuntu': {
+          $config_location = '/etc/default/openipmi'
+        }
+        'debian': {
+          $config_location = '/etc/default/openipmi'
+        }
+        default: {
+          fail("Module ${module_name} is not supported on operatingsystem ${::operatingsystem}")
         }
       }
     }
