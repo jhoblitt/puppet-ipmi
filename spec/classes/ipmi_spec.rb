@@ -28,6 +28,10 @@ describe 'ipmi', :type => :class do
           :ensure => 'running',
           :enable => true,
         })
+        should contain_service('ipmi').with({
+          :ensure => 'running',
+          :enable => true,
+        })
       end
       it do
         should contain_class('ipmi::service::ipmievd').with({
@@ -264,6 +268,10 @@ describe 'ipmi', :type => :class do
       end
       it do
         should contain_class('ipmi::service::ipmi').with({
+          :ensure => 'running',
+          :enable => true,
+        })
+        should contain_service('openipmi').with({
           :ensure => 'running',
           :enable => true,
         })

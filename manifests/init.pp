@@ -33,8 +33,9 @@ class ipmi (
   include ::ipmi::config
 
   class { 'ipmi::service::ipmi':
-    ensure => $service_ensure,
-    enable => $enable_ipmi,
+    ensure       => $service_ensure,
+    enable       => $enable_ipmi,
+    ipmi_service_name => $ipmi::params::ipmi_service_name,
   }
 
   class { 'ipmi::service::ipmievd':
