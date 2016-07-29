@@ -32,8 +32,8 @@ class ipmi (
   include ::ipmi::install
   include ::ipmi::config
 
-  if ( ($::osfamily == 'Debian') and ($::operatingsystemmajrelease > 8) ) or
-       ($::osfamily == 'RedHat') and ($::operatingsystemmajrelease > 6) )
+  if ( (($::osfamily == 'Debian') and ($::operatingsystemmajrelease > 8)) or
+       (($::osfamily == 'RedHat') and ($::operatingsystemmajrelease > 6))
      ){
     class { '::ipmi::service::ipmi':
       ensure            => $service_ensure,
