@@ -59,7 +59,7 @@ class IPMIChannel
 
   def add_ipmi_fact name, value
     fact_names = []
-    if @channel_nr == 1 then fact_names.push("ipmi_#{name}") end
+    if not fact_names.include?("ipmi_#{name}") then fact_names.push("ipmi_#{name}") end
     fact_names.push("ipmi#{@channel_nr}_#{name}")
     fact_names.each do |name|
       Facter.add(name) do
