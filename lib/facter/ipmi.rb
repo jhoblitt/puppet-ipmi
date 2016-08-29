@@ -45,6 +45,7 @@ class IPMIChannel
       case line.strip
       when /^IP Address\s*:\s+(\S.*)/
         add_ipmi_fact("ipaddress", $1)
+        add_ipmi_fact("lan_channel", @channel_nr)
       when /^IP Address Source\s*:\s+(\S.*)/
         add_ipmi_fact("ipaddress_source", $1)
       when /^Subnet Mask\s*:\s+(\S.*)/
