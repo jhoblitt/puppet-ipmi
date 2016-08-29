@@ -49,9 +49,10 @@ Usage
 Create a user with admin privileges (default):
 ```puppet
    ipmi::user { 'newuser1':
-     user     => 'newuser1',
-     password => 'password1',
-     user_id  => 4,
+     user        => 'newuser1',
+     password    => 'password1',
+     user_id     => 4,
+     lan_channel => 1,
    }
 ```
 Create a user with operator privileges:
