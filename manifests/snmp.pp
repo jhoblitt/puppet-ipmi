@@ -3,7 +3,7 @@
 
 define ipmi::snmp (
   $snmp = 'public',
-  $lan_channel = 1,
+  $lan_channel = $::ipmi_lan_channel,
 )
 {
   require ::ipmi
