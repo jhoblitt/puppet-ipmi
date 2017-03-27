@@ -33,10 +33,7 @@ class ipmi (
   include ::ipmi::install
   include ::ipmi::config
 
-  if(
-    ( $facts['os']['family'] == 'Debian') or
-    (($facts['os']['family'] == 'RedHat') and (($facts['os']['release']['major']+0) >= 6))
-  )
+  if (($facts['os']['family'] == 'RedHat') and (($facts['os']['release']['major']+0) < 6))
   {
     class { '::ipmi::service::ipmi':
       ensure            => $service_ensure,
