@@ -43,7 +43,7 @@ class ipmi (
       enable            => $enable_ipmi,
       ipmi_service_name => $ipmi::params::ipmi_service_name,
       notify            => Class['::ipmi::service::ipmievd'],
-      subscribe         => Class['::ipmi::']
+      subscribe         => Class['::ipmi::config']
     }
   }
 
