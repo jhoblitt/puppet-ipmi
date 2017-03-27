@@ -34,8 +34,8 @@ class ipmi (
   include ::ipmi::config
 
   if(
-    (($facts['os']['family'] == 'Debian') and ($facts['os']['release']['major'] > 8)) or
-    (($facts['os']['family'] == 'RedHat') and ($facts['os']['release']['major'] > 6))
+    ( $facts['os']['family'] == 'Debian') or
+    (($facts['os']['family'] == 'RedHat') and (($facts['os']['release']['major']+0) >= 6))
   )
   {
     class { '::ipmi::service::ipmi':
