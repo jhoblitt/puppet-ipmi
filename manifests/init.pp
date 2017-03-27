@@ -10,7 +10,8 @@ class ipmi (
   $snmps                  = {},
   $users                  = {},
   $networks               = {},
-) inherits ipmi::params {
+) {
+  include ipmi::params
   validate_re($service_ensure, '^running$|^stopped$')
   validate_re($ipmievd_service_ensure, '^running$|^stopped$')
   validate_bool($watchdog)
@@ -32,9 +33,11 @@ class ipmi (
   include ::ipmi::install
   include ::ipmi::config
 
-  if((($::osfamily == 'Debian') and ($::operatingsystemmajrelease > 8)) or
-      (($::osfamily == 'RedHat') and ($::operatingsystemmajrelease > 6))
-    ){
+  if(
+    (($facts['os']['family'] == 'Debian') and ($facts['os']['release']['major'] > 8)) or
+    (($facts['os']['family'] == 'RedHat') and ($facts['os']['release']['major'] > 6))
+  )
+  {
     class { '::ipmi::service::ipmi':
       ensure            => $service_ensure,
       enable            => $enable_ipmi,
