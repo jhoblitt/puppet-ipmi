@@ -6,6 +6,7 @@ define ipmi::user (
   $user = 'root',
   $priv = 4,
   $user_id = 3,
+  $manage_access = true,
 )
 {
   require ::ipmi
@@ -13,6 +14,7 @@ define ipmi::user (
   validate_string($password,$user)
   validate_integer($priv)
   validate_integer($user_id)
+  validate_bool($manage_access)
 
   case $priv {
     1: {$privilege = 'CALLBACK'}
@@ -36,13 +38,13 @@ define ipmi::user (
   exec { "ipmi_user_priv_${title}":
     command => "/usr/bin/ipmitool user priv ${user_id} ${priv} 1",
     unless  => "/usr/bin/test \"$(ipmitool user list 1 | grep '^${user_id}' | awk '{print \$6}')\" = ${privilege}",
-    notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
+    notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"]],
   }
 
   exec { "ipmi_user_setpw_${title}":
     command => "/usr/bin/ipmitool user set password ${user_id} \'${password}\'",
     unless  => "/usr/bin/ipmitool user test ${user_id} 16 \'${password}\'",
-    notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
+    notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"]],
   }
 
   exec { "ipmi_user_enable_sol_${title}":
@@ -50,8 +52,14 @@ define ipmi::user (
     refreshonly => true,
   }
 
-  exec { "ipmi_user_channel_setaccess_${title}":
-    command     => "/usr/bin/ipmitool channel setaccess 1 ${user_id} callin=on ipmi=on link=on privilege=${priv}",
-    refreshonly => true,
+  if $manage_access {
+    exec { "ipmi_user_channel_setaccess_${title}":
+      command     => "/usr/bin/ipmitool channel setaccess 1 ${user_id} callin=on ipmi=on link=on privilege=${priv}",
+      refreshonly => true,
+      subscribe   => [
+        Exec["ipmi_user_priv_${title}"],
+        Exec["ipmi_user_setpw_${title}"],
+      ]
+    }
   }
 }
