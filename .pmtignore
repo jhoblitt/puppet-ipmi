@@ -1,3 +1,4 @@
+docs/
 pkg/
 Gemfile.lock
 Gemfile.local
@@ -15,6 +16,6 @@ log/
 .librarian/
 Puppetfile.lock
 *.iml
+*.sw?
 .*.sw?
 .yardoc/
-Guardfile

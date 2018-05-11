@@ -1,18 +1,41 @@
+---
 sudo: false
+dist: trusty
 language: ruby
-bundler_args: --without beaker
-rvm:
-  - 1.9.3
-  - 2.0
-  - 2.1
-  - 2.2
-env:
-  - PUPPET_GEM_VERSION="~> 3.7"
-  - PUPPET_GEM_VERSION="~> 4.0"
+#cache: bundler
+bundler_args: --without system_tests development
+before_install:
+  - bundle -v
+  - rm Gemfile.lock || true
+  - gem update --system
+  - gem update bundler
+  - gem --version
+  - bundle -v
+script:
+  - 'bundle exec rake $CHECK'
+env: ["CHECK=rubocop", "PUPPET_VERSION=\"~> 4.10\" STRICT_VARIABLES=yes CHECK=test", "PUPPET_VERSION=\"~> 5.0\" STRICT_VARIABLES=yes CHECK=test", "PUPPET_VERSION=\"~> 5.1\" STRICT_VARIABLES=yes CHECK=test", "PUPPET_VERSION=\"~> 5.2\" STRICT_VARIABLES=yes CHECK=test", "PUPPET_VERSION=\"~> 5.3\" STRICT_VARIABLES=yes CHECK=test", "PUPPET_VERSION=\"~> 5.4\" STRICT_VARIABLES=yes CHECK=test"]
+rvm: [2.3, 2.4]
 matrix:
-  exclude:
-    - rvm: 2.2
-      env: PUPPET_GEM_VERSION="~> 3.7"
   fast_finish: true
+ 
+  exclude:
+  - rvm: 2.3
+    env: CHECK=rubocop
+  include:
+  - rvm: 2.4.0
+    env: PUPPET_VERSION="~> 4.10" CHECK=build DEPLOY_TO_FORGE=yes
 notifications:
   email: false
+deploy:
+  provider: puppetforge
+  deploy:
+    branch: ha-bug-puppet-forge
+  user: icann
+  password:
+    secure: ""
+  on:
+    tags: true
+    # all_branches is required to use tags
+    all_branches: true
+    # Only publish the build marked with "DEPLOY_TO_FORGE"
+    condition: "$DEPLOY_TO_FORGE = yes"

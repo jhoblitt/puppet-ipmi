@@ -1,37 +1,44 @@
 require 'puppetlabs_spec_helper/rake_tasks'
-require 'puppet-syntax/tasks/puppet-syntax'
-require 'puppet-lint/tasks/puppet-lint'
+require 'puppet_blacksmith/rake_tasks'
+require 'voxpupuli/release/rake_tasks'
+require 'puppet-strings/tasks'
+
+PuppetLint.configuration.log_format = '%{path}:%{line}:%{check}:%{KIND}:%{message}'
+PuppetLint.configuration.fail_on_warnings = true
+PuppetLint.configuration.send('relative')
+PuppetLint.configuration.send('disable_140chars')
+PuppetLint.configuration.send('disable_class_inherits_from_params_class')
+PuppetLint.configuration.send('disable_documentation')
+
+exclude_paths = %w(
+  pkg/**/*
+  vendor/**/*
+  .vendor/**/*
+  spec/**/*
+)
+PuppetLint.configuration.ignore_paths = exclude_paths
+PuppetSyntax.exclude_paths = exclude_paths
+
+desc 'Run acceptance tests'
+RSpec::Core::RakeTask.new(:acceptance) do |t|
+  t.pattern = 'spec/acceptance'
+end
+
+desc 'Run tests metadata_lint, release_checks'
+task test: [
+  :metadata_lint,
+  :release_checks,
+]
 
 begin
-  require 'puppet_blacksmith/rake_tasks'
+  require 'github_changelog_generator/task'
+  GitHubChangelogGenerator::RakeTask.new :changelog do |config|
+    version = (Blacksmith::Modulefile.new).version
+    config.future_release = "#{version}"
+    config.header = "# Change log\n\nAll notable changes to this project will be documented in this file.\nEach new release typically also includes the latest modulesync defaults.\nThese should not impact the functionality of the module."
+    config.exclude_labels = %w{duplicate question invalid wontfix modulesync}
+    config.user = 'b4ldr'
+  end
 rescue LoadError
 end
-
-PuppetSyntax.exclude_paths = ['spec/fixtures/**/*']
-
-PuppetLint::RakeTask.new :lint do |config|
-  config.pattern          = 'manifests/**/*.pp'
-  config.fail_on_warnings = true
-end
-
-namespace :travis do
-  desc "Syntax check travis.yml"
-  task :lint do
-    # warnings are currently non-fatal due to suspected problems with
-    # validation of matrix::include
-    #sh "travis lint --exit-code" do |ok, res|
-    sh "travis lint --no-interactive" do |ok, res|
-      unless ok
-        # exit without verbose rake error message
-        exit res.exitstatus
-      end
-    end
-  end
-end
-
-task :default => [
-  'travis:lint',
-  :validate,
-  :lint,
-  :spec,
-]
+# vim: syntax=ruby
