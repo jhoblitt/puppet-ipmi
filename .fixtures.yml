@@ -2,6 +2,6 @@ fixtures:
   repositories:
     stdlib:
       repo: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
-      ref:  '4.6.0'
+      ref:  '4.25.0'
   symlinks:
     "ipmi": "#{source_dir}"
