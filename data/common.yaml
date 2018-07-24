@@ -1,0 +1,13 @@
+ipmi::enable: true
+ipmi::packages:
+  - openipmi
+  - ipmitool
+ipmi::conf_file: /etc/default/openipmi
+ipmi::ipmi_service_name: openipmi
+ipmi::ipmi_service_ensure: running
+ipmi::ipmievd_service_name: ipmievd
+ipmi::ipmievd_service_ensure: stopped
+ipmi::watchdog: false
+ipmi::snmp_communities: ~
+ipmi::users: ~
+ipmi::networks: ~

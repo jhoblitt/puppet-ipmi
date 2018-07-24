@@ -1,17 +1,22 @@
 {
   "name": "jhoblitt-ipmi",
-  "version": "2.3.0",
+  "version": "3.1.1",
   "author": "Joshua Hoblitt <jhoblitt@cpan.org>",
   "summary": "manages the OpenIPMI package",
   "license": "Apache-2.0",
   "source": "https://github.com/jhoblitt/puppet-ipmi.git",
   "project_page": "https://github.com/jhoblitt/puppet-ipmi",
   "issues_url": "https://github.com/jhoblitt/puppet-ipmi/issues",
+  "dependencies": [
+    {
+      "name": "puppetlabs/stdlib",
+      "version_requirement": ">= 4.25.0 < 5.0.0"
+    }
+  ],
   "operatingsystem_support": [
     {
       "operatingsystem": "RedHat",
       "operatingsystemrelease": [
-        "5",
         "6",
         "7"
       ]
@@ -19,7 +24,6 @@
     {
       "operatingsystem": "CentOS",
       "operatingsystemrelease": [
-        "5",
         "6",
         "7"
       ]
@@ -27,7 +31,6 @@
     {
       "operatingsystem": "Scientific",
       "operatingsystemrelease": [
-        "5",
         "6",
         "7"
       ]
@@ -35,7 +38,7 @@
     {
       "operatingsystem": "Ubuntu",
       "operatingsystemrelease": [
-        "12.04",
+        "14.04",
         "16.04"
       ]
     },
@@ -47,10 +50,13 @@
       ]
     }
   ],
-  "dependencies": [
+  "requirements": [
     {
-      "name": "puppetlabs/stdlib",
-      "version_requirement": ">= 4.6.0 < 5.0.0"
+      "name": "puppet",
+      "version_requirement": ">= 4.7.0 < 6.0.0"
     }
-  ]
+  ],
+  "pdk-version": "1.5.0",
+  "template-url": "https://github.com/puppetlabs/pdk-templates",
+  "template-ref": "heads/master-0-g6b0d497"
 }
