@@ -10,7 +10,8 @@ class ipmi (
   $snmps                  = {},
   $users                  = {},
   $networks               = {},
-) inherits ipmi::params {
+) {
+  include ipmi::params
   validate_re($service_ensure, '^running$|^stopped$')
   validate_re($ipmievd_service_ensure, '^running$|^stopped$')
   validate_bool($watchdog)
@@ -32,10 +33,15 @@ class ipmi (
   include ::ipmi::install
   include ::ipmi::config
 
-  class { '::ipmi::service::ipmi':
-    ensure            => $service_ensure,
-    enable            => $enable_ipmi,
-    ipmi_service_name => $ipmi::params::ipmi_service_name,
+  if (($facts['os']['family'] == 'RedHat') and (($facts['os']['release']['major']+0) < 6))
+  {
+    class { '::ipmi::service::ipmi':
+      ensure            => $service_ensure,
+      enable            => $enable_ipmi,
+      ipmi_service_name => $ipmi::params::ipmi_service_name,
+      notify            => Class['::ipmi::service::ipmievd'],
+      subscribe         => Class['::ipmi::config']
+    }
   }
 
   class { '::ipmi::service::ipmievd':
@@ -47,8 +53,10 @@ class ipmi (
   anchor { 'ipmi::end': }
 
   Anchor['ipmi::begin'] -> Class['::ipmi::install'] ~> Class['::ipmi::config']
-    ~> Class['::ipmi::service::ipmi'] ~> Class['::ipmi::service::ipmievd']
+    ~> Class['::ipmi::service::ipmievd']
     -> Anchor['ipmi::end']
+
+
 
   if $snmps {
     create_resources('ipmi::snmp', $snmps)

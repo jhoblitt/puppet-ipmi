@@ -29,13 +29,13 @@ define ipmi::user (
 
   exec { "ipmi_user_add_${title}":
     command => "/usr/bin/ipmitool user set name ${user_id} ${user}",
-    unless  => "/usr/bin/test \"$(ipmitool user list 1 | grep '^${user_id}' | awk '{print \$2}')\" = \"${user}\"",
+    unless  => "/usr/bin/test \"$(ipmitool user list 1 | awk '/^${user_id}/ {print \$2}')\" = \"${user}\"",
     notify  => [Exec["ipmi_user_priv_${title}"], Exec["ipmi_user_setpw_${title}"]],
   }
 
   exec { "ipmi_user_priv_${title}":
     command => "/usr/bin/ipmitool user priv ${user_id} ${priv} 1",
-    unless  => "/usr/bin/test \"$(ipmitool user list 1 | grep '^${user_id}' | awk '{print \$6}')\" = ${privilege}",
+    unless  => "/usr/bin/test \"$(ipmitool user list 1 | awk '/^${user_id}/ {print \$6}')\" = ${privilege}",
     notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
   }
 
