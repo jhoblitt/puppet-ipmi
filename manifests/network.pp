@@ -6,7 +6,7 @@ define ipmi::network (
   $netmask = '255.255.255.0',
   $gateway = '0.0.0.0',
   $type = 'dhcp',
-  $lan_channel = 1,
+  $lan_channel = $::ipmi_lan_channel,
 )
 {
   require ::ipmi
