@@ -101,7 +101,7 @@ class { 'ipmi':
 
 ##### `service_ensure`
 
-`String` defaults to: `running`
+`String` defaults to: `running` if an IPMI device is detected, otherwise it is `stopped`.
 
 Possible values: `running`, `stopped`
 

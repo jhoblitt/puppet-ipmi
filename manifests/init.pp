@@ -4,7 +4,7 @@
 # parameter documentation.
 #
 class ipmi (
-  $service_ensure         = 'running',
+  $service_ensure         = $ipmi::params::service_ensure,
   $ipmievd_service_ensure = 'stopped',
   $watchdog               = false,
   $snmps                  = {},

@@ -43,4 +43,10 @@ class ipmi::params {
     }
   }
 
+  if $::ipmi_macaddress == undef {
+    $service_ensure = 'stopped'
+  } else {
+    $service_ensure = 'running'
+  }
+
 }

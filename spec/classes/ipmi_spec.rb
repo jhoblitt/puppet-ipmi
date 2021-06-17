@@ -2,11 +2,12 @@ require 'spec_helper'
 
 describe 'ipmi', :type => :class do
 
-  describe 'for osfamily RedHat' do
+  describe 'for osfamily RedHat with ipmi_macaddress' do
     let :facts do
       {
         :osfamily                  => 'RedHat',
         :operatingsystemmajrelease => '6',
+        :ipmi_macaddress           => '00:DE:AD:BE:EF:00',
       }
     end
 
@@ -245,11 +246,53 @@ describe 'ipmi', :type => :class do
 
   end
 
-  describe 'for osfamily Debian' do
+  describe 'for osfamily RedHat no detected ipmi_macaddress' do
+    let :facts do
+      {
+        :osfamily                  => 'RedHat',
+        :operatingsystemmajrelease => '6',
+      }
+    end
+
+    describe 'no params' do
+      it { should create_class('ipmi') }
+      it { should contain_class('ipmi::params') }
+      it { should contain_class('ipmi::install') }
+      it { should contain_class('ipmi::config') }
+      it do
+        should contain_augeas('/etc/sysconfig/ipmi').with({
+          'context' => '/files/etc/sysconfig/ipmi',
+          'changes' => [
+            'set IPMI_WATCHDOG no',
+          ],
+        })
+      end
+      it do
+        should contain_class('ipmi::service::ipmi').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+        should contain_service('ipmi').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+      end
+      it do
+        should contain_class('ipmi::service::ipmievd').with({
+          :ensure => 'stopped',
+          :enable => false,
+        })
+      end
+    end
+  end
+
+
+  describe 'for osfamily Debian with ipmi_macaddress' do
     let :facts do
       {
         :osfamily                  => 'Debian',
         :operatingsystem           => 'Ubuntu',
+        :ipmi_macaddress           => '00:DE:AD:BE:EF:00',
       }
     end
 
