@@ -24,11 +24,30 @@ group :development, :test do
 end
 
 group :beaker do
-  gem 'serverspec',               :require => false
-  gem 'beaker',                   :require => false
-  gem 'beaker-rspec',             :require => false
-  gem 'pry',                      :require => false
-  gem 'puppet-blacksmith',        :require => false
+  gem 'winrm',                              :require => false
+  if beaker_version = ENV['BEAKER_VERSION']
+    gem 'beaker', *location_for(beaker_version)
+  else
+    gem 'beaker', '>= 4.2.0', :require => false
+  end
+  if beaker_rspec_version = ENV['BEAKER_RSPEC_VERSION']
+    gem 'beaker-rspec', *location_for(beaker_rspec_version)
+  else
+    gem 'beaker-rspec',  :require => false
+  end
+  gem 'serverspec',                         :require => false
+  gem 'beaker-hostgenerator', '>= 1.1.22',  :require => false
+  gem 'beaker-docker',                      :require => false
+  gem 'beaker-puppet',                      :require => false
+  gem 'beaker-puppet_install_helper',       :require => false
+  gem 'beaker-module_install_helper',       :require => false
+  gem 'rbnacl', '>= 4',                     :require => false if RUBY_VERSION >= '2.2.6'
+  gem 'rbnacl-libsodium',                   :require => false if RUBY_VERSION >= '2.2.6'
+  gem 'bcrypt_pbkdf',                       :require => false
+end
+
+group :release do
+  gem 'puppet-blacksmith', :require => false
 end
 
 # vim:ft=ruby
