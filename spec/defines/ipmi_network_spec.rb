@@ -27,6 +27,7 @@ describe 'ipmi::network', :type => :define do
     }}
 
     it { should contain_exec('ipmi_set_dhcp_1') }
+    it { should contain_exec('ipmi_set_interface_type_1') }
   end
 
   describe 'when deploying as static with minimal params' do
@@ -35,11 +36,13 @@ describe 'ipmi::network', :type => :define do
       :netmask        => '255.255.255.0',
       :gateway        => '1.1.1.1',
       :type           => 'static',
+      :interface_type => 'dedicated',
     }}
 
     it { should contain_exec('ipmi_set_static_1').that_notifies('Exec[ipmi_set_ipaddr_1]') }
     it { should contain_exec('ipmi_set_static_1').that_notifies('Exec[ipmi_set_defgw_1]') }
     it { should contain_exec('ipmi_set_static_1').that_notifies('Exec[ipmi_set_netmask_1]') }
+    it { should contain_exec('ipmi_set_interface_type_1') }
   end
 
   describe 'when deploying as static with all params' do
@@ -49,11 +52,29 @@ describe 'ipmi::network', :type => :define do
       :gateway        => '1.1.1.1',
       :type           => 'static',
       :lan_channel    => 2,
+      :interface_type => 'shared',
     }}
 
     it { should contain_exec('ipmi_set_static_2').that_notifies('Exec[ipmi_set_ipaddr_2]') }
     it { should contain_exec('ipmi_set_static_2').that_notifies('Exec[ipmi_set_defgw_2]') }
     it { should contain_exec('ipmi_set_static_2').that_notifies('Exec[ipmi_set_netmask_2]') }
+    it { should contain_exec('ipmi_set_interface_type_2') }
+  end
+
+  describe 'when deploying as static with all params and failover' do
+    let(:params) {{
+      :ip             => '1.1.1.10',
+      :netmask        => '255.255.255.0',
+      :gateway        => '1.1.1.1',
+      :type           => 'static',
+      :lan_channel    => 3,
+      :interface_type => 'failover',
+    }}
+
+    it { should contain_exec('ipmi_set_static_3').that_notifies('Exec[ipmi_set_ipaddr_3]') }
+    it { should contain_exec('ipmi_set_static_3').that_notifies('Exec[ipmi_set_defgw_3]') }
+    it { should contain_exec('ipmi_set_static_3').that_notifies('Exec[ipmi_set_netmask_3]') }
+    it { should contain_exec('ipmi_set_interface_type_3') }
   end
 
   describe 'when deploying with incorrect lan_channel' do
@@ -83,4 +104,20 @@ describe 'ipmi::network', :type => :define do
       expect { should contain_exec('ipmi_set_invalid_1') }.to raise_error(Puppet::Error, /Network type must be either dhcp or static/)
     end
   end
+
+  describe 'when deploying with invalid interface_type' do
+    let(:params) {{
+      :ip             => '1.1.1.1',
+      :netmask        => '255.255.255.0',
+      :gateway        => '2.2.2.2',
+      :type           => 'static',
+      :lan_channel    => 1,
+      :interface_type => 'invalid',
+    }}
+
+    it 'should fail with invalid type' do
+      expect { should contain_exec('ipmi_set_static_1') }.to raise_error(Puppet::Error, /Network interface type must be either dedicated, shared, or failover/)
+    end
+  end
+
 end
