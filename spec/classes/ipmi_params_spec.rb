@@ -22,6 +22,12 @@ describe 'ipmi::params', :type => :class do
      it { should create_class('ipmi::params') }
     end
 
+    describe 'el8.x' do
+      before { facts[:operatingsystemmajrelease] = '8' }
+
+     it { should create_class('ipmi::params') }
+    end
+
     describe 'unsupported operatingsystemmajrelease' do
       before { facts[:operatingsystemmajrelease] = '1' }
 

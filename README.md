@@ -276,6 +276,7 @@ Adding other Linux distrubtions should be trivial.
 * el5.x
 * el6.x
 * el7.x
+* el8.x
 * Debian
 * Ubuntu
 

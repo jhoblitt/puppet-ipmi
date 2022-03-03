@@ -11,7 +11,7 @@ class ipmi::params {
           $config_location = '/etc/sysconfig/ipmi'
           $ipmi_service_name = 'ipmi'
         }
-        '6', '7': {
+        '6', '7', '8': {
           $ipmi_package = ['OpenIPMI', 'ipmitool']
           $config_location = '/etc/sysconfig/ipmi'
           $ipmi_service_name = 'ipmi'
