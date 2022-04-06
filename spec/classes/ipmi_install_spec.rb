@@ -35,6 +35,14 @@ describe 'ipmi::install', :type => :class do
       it { should contain_package('OpenIPMI').with_ensure('present') }
       it { should contain_package('ipmitool').with_ensure('present') }
     end
+
+    describe 'el8.x' do
+      before { facts[:operatingsystemmajrelease] = '8' }
+
+      it { should create_class('ipmi::install') }
+      it { should contain_package('OpenIPMI').with_ensure('present') }
+      it { should contain_package('ipmitool').with_ensure('present') }
+    end
   end
 
 end
