@@ -1,9 +1,14 @@
 require 'spec_helper'
 
 describe 'ipmi::service::ipmi', :type => :class do
+  let(:facts) do
+    {
+      operatingsystem: 'CentOS',
+      osfamily: 'RedHat',
+    }
+  end
 
   describe 'no params' do
-    it { should create_class('ipmi::service::ipmi') }
     it do
       should contain_service('ipmi').with({
         :ensure     => 'running',
@@ -17,7 +22,6 @@ describe 'ipmi::service::ipmi', :type => :class do
   describe 'with enable => false' do
     let(:params) {{ :enable => false }}
 
-    it { should create_class('ipmi::service::ipmi') }
     it do
       should contain_service('ipmi').with({
         :ensure     => 'running',
@@ -31,7 +35,6 @@ describe 'ipmi::service::ipmi', :type => :class do
   describe 'with enable => true' do
     let(:params) {{ :enable => true }}
 
-    it { should create_class('ipmi::service::ipmi') }
     it do
       should contain_service('ipmi').with({
         :ensure     => 'running',
@@ -55,7 +58,6 @@ describe 'ipmi::service::ipmi', :type => :class do
   describe 'with ensure => running' do
     let(:params) {{ :ensure => 'running' }}
 
-    it { should create_class('ipmi::service::ipmi') }
     it do
       should contain_service('ipmi').with({
         :ensure     => 'running',
@@ -69,7 +71,6 @@ describe 'ipmi::service::ipmi', :type => :class do
   describe 'with ensure => running' do
     let(:params) {{ :ensure => 'stopped' }}
 
-    it { should create_class('ipmi::service::ipmi') }
     it do
       should contain_service('ipmi').with({
         :ensure     => 'stopped',
