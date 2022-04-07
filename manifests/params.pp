@@ -1,9 +1,10 @@
-# == Class: ipmi::params
 #
-# This class should be considered private.
+# @api private
 #
 class ipmi::params {
-  case $::osfamily {
+  assert_private()
+
+  case $facts['os']['family'] {
     'redhat': {
       case $::operatingsystemmajrelease {
         '5': {

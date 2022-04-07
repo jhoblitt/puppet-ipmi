@@ -1,10 +1,10 @@
-# == Class: ipmi::config
 #
-# This class should be considered private.
+# @api private
 #
 class ipmi::config {
+  assert_private()
 
-  $watchdog_real = $::ipmi::watchdog ? {
+  $watchdog_real = $ipmi::watchdog ? {
     true    => 'yes',
     default => 'no',
   }

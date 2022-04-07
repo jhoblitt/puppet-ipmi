@@ -1,19 +1,16 @@
-# == Class: ipmi::service::ipmievd
 #
-# This class should be considered private.
+# @api private
 #
 class ipmi::service::ipmievd (
-  $ensure = 'running',
-  $enable = true,
+  Stdlib::Ensure::Service $ensure = 'running',
+  Boolean $enable                 = true,
 ) {
-  validate_re($ensure, '^running$|^stopped$')
-  validate_bool($enable)
+  assert_private()
 
-  service{ 'ipmievd':
+  service { 'ipmievd':
     ensure     => $ensure,
     hasstatus  => true,
     hasrestart => true,
     enable     => $enable,
   }
-
 }
