@@ -9,7 +9,7 @@ class ipmi::config {
     default => 'no',
   }
 
-  augeas { $ipmi::config_file:
+  augeas { 'ipmi_watchdog':
     context => "/files${ipmi::config_file}",
     changes => [
       "set IPMI_WATCHDOG ${watchdog_real}",
