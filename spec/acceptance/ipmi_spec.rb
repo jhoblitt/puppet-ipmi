@@ -18,10 +18,6 @@ describe 'ipmi class' do
 
   describe 'running puppet code' do
     pp = <<-PP
-      if $::osfamily == 'RedHat' {
-        class { 'epel': } -> Class['ipmi']
-      }
-
       include ipmi
     PP
 
