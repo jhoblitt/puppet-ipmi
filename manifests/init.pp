@@ -1,8 +1,16 @@
 #
 # @summary Manages OpenIPMI
 #
+# @param packages
+#   List of packages to install.
+# @param config_file
+#   Absolute path to the ipmi service config file.
+# @param service_name
+#   Name of IPMI service.
 # @param service_ensure
 #   Controls the state of the `ipmi` service. Possible values: `running`, `stopped`
+# @param ipmievd_service_name
+#   Name of ipmievd service.
 # @param ipmievd_service_ensure
 #   Controls the state of the `ipmievd` service. Possible values: `running`, `stopped`
 # @param watchdog
@@ -15,13 +23,17 @@
 #   `ipmi::network` resources to create.
 #
 class ipmi (
-  Stdlib::Ensure::Service $service_ensure         = 'running',
-  Stdlib::Ensure::Service $ipmievd_service_ensure = 'stopped',
-  Boolean $watchdog                               = false,
-  Hash $snmps                                     = {},
-  Hash $users                                     = {},
-  Hash $networks                                  = {},
-) inherits ipmi::params {
+  Array[String] $packages,
+  Stdlib::Absolutepath $config_file,
+  String $service_name,
+  Stdlib::Ensure::Service $service_ensure,
+  String $ipmievd_service_name,
+  Stdlib::Ensure::Service $ipmievd_service_ensure,
+  Boolean $watchdog,
+  Optional[Hash] $snmps,
+  Optional[Hash] $users,
+  Optional[Hash] $networks,
+) {
   $enable_ipmi = $service_ensure ? {
     'running' => true,
     'stopped' => false,
@@ -38,7 +50,7 @@ class ipmi (
   class { 'ipmi::service::ipmi':
     ensure            => $service_ensure,
     enable            => $enable_ipmi,
-    ipmi_service_name => $ipmi::params::ipmi_service_name,
+    ipmi_service_name => $service_name,
   }
 
   class { 'ipmi::service::ipmievd':
