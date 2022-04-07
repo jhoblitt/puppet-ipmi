@@ -33,6 +33,10 @@ needed for communicating with the BMC from user space.
 
 ## Usage
 
+### Reference
+
+See [REFERENCE](REFERENCE.md)
+
 ### Examples
 
 ```puppet
