@@ -1,15 +1,16 @@
-# == Defined resource type: ipmi::snmp
 #
-
+# @summary Manage SNMP community strings
+#
+# @param snmp
+#   Controls the snmp string of the IPMI network interface.
+# @param lan_channel
+#   Controls the lan channel of the IPMI network on which snmp is to be configured.
+#
 define ipmi::snmp (
-  $snmp = 'public',
-  $lan_channel = 1,
-)
-{
-  require ::ipmi
-
-  validate_string($snmp)
-  validate_integer($lan_channel)
+  String $snmp         = 'public',
+  Integer $lan_channel = 1,
+) {
+  require ipmi
 
   exec { "ipmi_set_snmp_${lan_channel}":
     command => "/usr/bin/ipmitool lan set ${lan_channel} snmp ${snmp}",

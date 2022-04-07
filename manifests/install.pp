@@ -1,9 +1,8 @@
-# == Class: ipmi::install
 #
-# This class should be considered private.
+# @api private
 #
 class ipmi::install {
-  package { $ipmi::params::ipmi_package:
-    ensure => present,
-  }
+  assert_private()
+
+  ensure_packages($ipmi::packages)
 }

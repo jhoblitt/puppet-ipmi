@@ -1,24 +1,39 @@
-# == Class: ipmi
 #
-# Please refer to https://github.com/jhoblitt/puppet-ipmi#usage for
-# parameter documentation.
+# @summary Manages OpenIPMI
+#
+# @param packages
+#   List of packages to install.
+# @param config_file
+#   Absolute path to the ipmi service config file.
+# @param service_name
+#   Name of IPMI service.
+# @param service_ensure
+#   Controls the state of the `ipmi` service. Possible values: `running`, `stopped`
+# @param ipmievd_service_name
+#   Name of ipmievd service.
+# @param ipmievd_service_ensure
+#   Controls the state of the `ipmievd` service. Possible values: `running`, `stopped`
+# @param watchdog
+#   Controls whether the IPMI watchdog is enabled.
+# @param snmps
+#   `ipmi::snmp` resources to create.
+# @param users
+#   `ipmi::user` resources to create.
+# @param networks
+#   `ipmi::network` resources to create.
 #
 class ipmi (
-  $service_ensure         = 'running',
-  $ipmievd_service_ensure = 'stopped',
-  $watchdog               = false,
-  $snmps                  = {},
-  $users                  = {},
-  $networks               = {},
-) inherits ipmi::params {
-  validate_re($service_ensure, '^running$|^stopped$')
-  validate_re($ipmievd_service_ensure, '^running$|^stopped$')
-  validate_bool($watchdog)
-
-  validate_hash($snmps)
-  validate_hash($users)
-  validate_hash($networks)
-
+  Array[String] $packages,
+  Stdlib::Absolutepath $config_file,
+  String $service_name,
+  Stdlib::Ensure::Service $service_ensure,
+  String $ipmievd_service_name,
+  Stdlib::Ensure::Service $ipmievd_service_ensure,
+  Boolean $watchdog,
+  Optional[Hash] $snmps,
+  Optional[Hash] $users,
+  Optional[Hash] $networks,
+) {
   $enable_ipmi = $service_ensure ? {
     'running' => true,
     'stopped' => false,
@@ -29,26 +44,24 @@ class ipmi (
     'stopped' => false,
   }
 
-  include ::ipmi::install
-  include ::ipmi::config
+  contain ipmi::install
+  contain ipmi::config
 
-  class { '::ipmi::service::ipmi':
+  class { 'ipmi::service::ipmi':
     ensure            => $service_ensure,
     enable            => $enable_ipmi,
-    ipmi_service_name => $ipmi::params::ipmi_service_name,
+    ipmi_service_name => $service_name,
   }
 
-  class { '::ipmi::service::ipmievd':
+  class { 'ipmi::service::ipmievd':
     ensure => $ipmievd_service_ensure,
     enable => $enable_ipmievd,
   }
 
-  anchor { 'ipmi::begin': }
-  anchor { 'ipmi::end': }
-
-  Anchor['ipmi::begin'] -> Class['::ipmi::install'] ~> Class['::ipmi::config']
-    ~> Class['::ipmi::service::ipmi'] ~> Class['::ipmi::service::ipmievd']
-    -> Anchor['ipmi::end']
+  Class['ipmi::install']
+  ~> Class['ipmi::config']
+  ~> Class['ipmi::service::ipmi']
+  ~> Class['ipmi::service::ipmievd']
 
   if $snmps {
     create_resources('ipmi::snmp', $snmps)
@@ -61,5 +74,4 @@ class ipmi (
   if $networks {
     create_resources('ipmi::network', $networks)
   }
-
 }
