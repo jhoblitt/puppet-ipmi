@@ -273,10 +273,16 @@ Adding other Linux distrubtions should be trivial.
 
 ### Tested Platforms
 
-* el7.x
-* el8.x
-* Debian
-* Ubuntu
+* el7
+* el8
+* Debian 8
+* Debian 9
+* Debian 10
+* Debian 11
+* Ubuntu 14.04
+* Ubuntu 16.04
+* Ubuntu 18.04
+* Ubuntu 20.04
 
 ### Puppet Version Compatibility
 
