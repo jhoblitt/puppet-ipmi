@@ -1,7 +1,5 @@
 # Puppet ipmi Module
 
-[![Build Status](https://travis-ci.org/jhoblitt/puppet-ipmi.png)](https://travis-ci.org/jhoblitt/puppet-ipmi)
-
 ## Table of Contents
 
 1. [Overview](#overview)
