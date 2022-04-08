@@ -1,6 +1,6 @@
 {
   "name": "jhoblitt-ipmi",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": "Joshua Hoblitt <jhoblitt@cpan.org>",
   "summary": "manages the OpenIPMI package",
   "license": "Apache-2.0",
