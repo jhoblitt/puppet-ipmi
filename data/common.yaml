@@ -3,7 +3,7 @@ ipmi::packages:
   - ipmitool
 ipmi::config_file: /etc/default/openipmi
 ipmi::service_name: openipmi
-ipmi::service_ensure: running
+ipmi::service_ensure: "%{facts.ipmitool_mc_info.IPMI_Puppet_Service_Recommend}"
 ipmi::ipmievd_service_name: ipmievd
 ipmi::ipmievd_service_ensure: stopped
 ipmi::watchdog: false

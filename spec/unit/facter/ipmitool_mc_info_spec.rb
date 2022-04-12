@@ -47,7 +47,7 @@ Aux Firmware Rev Info     :
     end
 
     it do
-      expect(fact.value).to eq({})
+      expect(fact.value).to eq({ 'IPMI_Puppet_Service_Recommend' => 'stopped' })
     end
   end
 
@@ -64,6 +64,7 @@ Aux Firmware Rev Info     :
           'Device Revision' => '1',
           'Firmware Revision' => '2.49',
           'IPMI Version' => '2.0',
+          'IPMI_Puppet_Service_Recommend' => 'running',
           'Manufacturer ID' => '10876',
           'Manufacturer Name' => 'Supermicro',
           'Product ID' => '43707 (0xaabb)',

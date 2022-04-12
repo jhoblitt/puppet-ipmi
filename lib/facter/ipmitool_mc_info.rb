@@ -6,6 +6,7 @@ Facter.add(:ipmitool_mc_info) do
   confine kernel: 'Linux'
 
   retval = {}
+  retval['IPMI_Puppet_Service_Recommend'] = 'stopped'
 
   if Facter::Util::Resolution.which('ipmitool')
     ipmitool_output = Facter::Util::Resolution.exec('ipmitool mc info 2>/dev/null')
@@ -15,6 +16,9 @@ Facter.add(:ipmitool_mc_info) do
       if info.length == 2 && (info[1].strip != '')
         retval[info[0].strip] = info[1].strip
       end
+    end
+    if retval.fetch('Device Available', 'no') == 'yes'
+      retval['IPMI_Puppet_Service_Recommend'] = 'running'
     end
   end
 
