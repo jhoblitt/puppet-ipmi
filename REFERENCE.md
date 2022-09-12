@@ -210,7 +210,7 @@ Default value: `'root'`
 
 ##### <a name="password"></a>`password`
 
-Data type: `String`
+Data type: `Variant[Sensitive[String[1]], String[1]]`
 
 Controls the password of the user to be created.
 
