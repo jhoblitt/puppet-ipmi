@@ -3,7 +3,7 @@
 require 'spec_helper'
 
 describe 'ipmi facts' do
-  before(:each) do
+  before do
     Facter.clear
     File.stubs(:executable?) # Stub all other calls
     Facter::Util::Resolution.stubs(:exec) # Catch all other calls
@@ -12,7 +12,7 @@ describe 'ipmi facts' do
   describe 'ipmi' do
     context 'when ipmitool present' do
       context 'with ipmi_* facts taken from channel 1' do
-        before(:each) do
+        before do
           ipmitool_output = <<-OUTPUT
           Set in Progress         : Set Complete
           Auth Type Support       :
@@ -72,7 +72,7 @@ describe 'ipmi facts' do
       end
 
       context 'when multiple channels' do
-        before(:each) do
+        before do
           ipmitool_2_output = <<-OUTPUT
           Set in Progress         : Set Complete
           Auth Type Support       :
@@ -189,7 +189,7 @@ describe 'ipmi facts' do
   end
 
   context 'when ipmitool not present' do
-    before(:each) do
+    before do
       Facter.fact(:kernel).stubs(:value).returns('Linux')
     end
 
