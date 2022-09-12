@@ -2,7 +2,8 @@
 # yamllint disable rule:quoted-strings
 name: markdownlint
 
-"on": pull_request
+"on":
+  - push
 
 jobs:
   markdownlint:
