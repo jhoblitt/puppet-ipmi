@@ -13,13 +13,9 @@ Facter.add(:ipmitool_mc_info) do
 
     ipmitool_output.each_line do |line|
       info = line.split(':')
-      if info.length == 2 && (info[1].strip != '')
-        retval[info[0].strip] = info[1].strip
-      end
+      retval[info[0].strip] = info[1].strip if info.length == 2 && (info[1].strip != '')
     end
-    if retval.fetch('Device Available', 'no') == 'yes'
-      retval['IPMI_Puppet_Service_Recommend'] = 'running'
-    end
+    retval['IPMI_Puppet_Service_Recommend'] = 'running' if retval.fetch('Device Available', 'no') == 'yes'
   end
 
   setcode do
