@@ -24,7 +24,7 @@ end
 describe 'ipmi', type: :class do
   on_supported_os.each do |os, facts|
     context "on #{os}" do
-      let(:facts) { facts }
+      let(:facts) { facts.merge(ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' }) }
 
       case facts[:os]['family']
       when 'RedHat'

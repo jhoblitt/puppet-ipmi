@@ -8,6 +8,7 @@ describe 'ipmi::snmp', type: :define do
       operatingsystem: 'RedHat',
       osfamily: 'redhat',
       operatingsystemmajrelease: '7',
+      ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' },
     }
   end
 
