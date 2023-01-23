@@ -18,7 +18,7 @@ define ipmi::network (
   Enum['dhcp', 'static'] $type = 'dhcp',
   Integer $lan_channel         = 1,
 ) {
-  require ipmi
+  require ipmi::install
 
   if $type == 'dhcp' {
     exec { "ipmi_set_dhcp_${lan_channel}":
