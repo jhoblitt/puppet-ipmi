@@ -62,6 +62,10 @@ describe 'ipmi', type: :class do
             enable: false
           )
         end
+
+        it do
+          is_expected.not_to contain_exec('ipmi_set_interface_type_1')
+        end
       end
 
       context 'with service_ensure => running' do
@@ -235,6 +239,28 @@ describe 'ipmi', type: :class do
             ensure: 'stopped',
             enable: false
           )
+        end
+      end
+
+      context 'with interface type management (known)' do
+        let(:facts) { facts.merge({ ipmitool_mc_info: { 'Manufacturer Name': 'Supermicro' } }) }
+        let(:params) { { interface_type: 'failover' } }
+
+        it_behaves_like 'installs packages', facts
+
+        it do
+          is_expected.to contain_exec('ipmi_set_interface_type_1')
+        end
+      end
+
+      context 'with interface type management (unknown)' do
+        let(:facts) { facts.merge({ ipmitool_mc_info: { 'Manufacturer Name': 'UNKNOWN' } }) }
+        let(:params) { { interface_type: 'failover' } }
+
+        it_behaves_like 'installs packages', facts
+
+        it do
+          is_expected.not_to contain_exec('ipmi_set_interface_type_1')
         end
       end
     end
