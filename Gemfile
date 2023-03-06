@@ -7,7 +7,7 @@ group :test do
   gem 'voxpupuli-test', '~> 5.4',                   :require => false
   gem 'coveralls',                                  :require => false
   gem 'simplecov-console',                          :require => false
-  gem 'puppet_metadata', '~> 1.0',                  :require => false
+  gem 'puppet_metadata', '~> 2.0',                  :require => false
   gem 'puppet-lint-legacy_facts-check',             :require => false
   gem 'puppet-lint-package_ensure-check',           :require => false
   gem 'puppet-lint-resource_reference_syntax',      :require => false
@@ -30,8 +30,7 @@ end
 
 group :release do
   gem 'github_changelog_generator', '>= 1.16.1',  :require => false if RUBY_VERSION >= '2.5'
-  gem 'voxpupuli-release', '>= 1.2.0',            :require => false
-  gem 'puppet-strings', '>= 2.2',                 :require => false
+  gem 'voxpupuli-release', '~> 2.0',              :require => false
 end
 
 gem 'rake', :require => false
