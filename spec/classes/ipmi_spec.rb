@@ -237,6 +237,18 @@ describe 'ipmi', type: :class do
           )
         end
       end
+
+      context 'with defines' do
+        let(:params) do
+          {
+            users: { newuser: { user: 'newuser', password: 'password' } },
+            networks: { dhcp: {} },
+            snmps: { snmp1: { snmp: 'secret', lan_channel: 1 } }
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+      end
     end
   end
 end

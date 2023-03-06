@@ -36,6 +36,9 @@ describe 'ipmi::user', type: :define do
 
     it { is_expected.to contain_exec('ipmi_user_enable_sol_newuser').with('refreshonly' => 'true') }
     it { is_expected.to contain_exec('ipmi_user_channel_setaccess_newuser').with('refreshonly' => 'true') }
+
+    it { is_expected.not_to contain_exec('ipmi_user_disable_newuser') }
+    it { is_expected.not_to contain_exec('ipmi_user_disable_sol_newuser') }
   end
 
   context 'when deploying with all params' do
@@ -94,7 +97,7 @@ describe 'ipmi::user', type: :define do
 
   describe 'when deploying with no params' do
     it 'fails and raise password required error' do
-      expect { is_expected.to contain_exec('ipmi_user_enable_newuser') }.to raise_error(Puppet::Error, %r{password})
+      expect { is_expected.to contain_exec('ipmi_user_enable_newuser') }.to raise_error(Puppet::Error, %r{You must supply a password to enable})
     end
   end
 
@@ -111,5 +114,36 @@ describe 'ipmi::user', type: :define do
     it 'fails and raise invalid privilege error' do
       expect { is_expected.to contain_exec('ipmi_user_enable_newuser') }.to raise_error(Puppet::Error, %r{invalid privilege level specified})
     end
+  end
+
+  describe 'when deploying without a password set' do
+    let(:params) do
+      {
+        enable: true
+      }
+    end
+
+    it 'fails and raise password required error' do
+      expect { is_expected.to contain_exec('ipmi_user_enable_newuser') }.to raise_error(Puppet::Error, %r{You must supply a password to enable})
+    end
+  end
+
+  describe 'when disabling a user' do
+    let(:params) do
+      {
+        enable: false
+      }
+    end
+
+    it { is_expected.to contain_exec('ipmi_user_priv_newuser').that_notifies('Exec[ipmi_user_disable_newuser]') }
+    it { is_expected.to contain_exec('ipmi_user_priv_newuser').that_notifies('Exec[ipmi_user_disable_sol_newuser]') }
+    it { is_expected.to contain_exec('ipmi_user_priv_newuser').that_notifies('Exec[ipmi_user_channel_setaccess_newuser]') }
+
+    it { is_expected.to contain_exec('ipmi_user_disable_newuser').with('refreshonly' => 'true') }
+    it { is_expected.to contain_exec('ipmi_user_disable_sol_newuser').with('refreshonly' => 'true') }
+    it { is_expected.to contain_exec('ipmi_user_channel_setaccess_newuser').with('refreshonly' => 'true') }
+
+    it { is_expected.not_to contain_exec('ipmi_user_enable_newuser') }
+    it { is_expected.not_to contain_exec('ipmi_user_enable_sol_newuser') }
   end
 end

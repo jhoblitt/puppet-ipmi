@@ -10,7 +10,7 @@ define ipmi::snmp (
   String $snmp         = 'public',
   Integer $lan_channel = 1,
 ) {
-  require ipmi
+  require ipmi::install
 
   exec { "ipmi_set_snmp_${lan_channel}":
     command => "/usr/bin/ipmitool lan set ${lan_channel} snmp ${snmp}",
