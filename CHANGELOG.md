@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not affect the functionality of the module.
 
+## [v5.0.0](https://github.com/jhoblitt/puppet-ipmi/tree/v5.0.0) (2023-03-06)
+
+[Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v4.0.0...v5.0.0)
+
+**Breaking changes:**
+
+- drop puppet6 support \(EOL\) [\#60](https://github.com/jhoblitt/puppet-ipmi/pull/60) ([jhoblitt](https://github.com/jhoblitt))
+- drop debian 8 & 9, ubuntu 14.04 & 16.04 support [\#58](https://github.com/jhoblitt/puppet-ipmi/pull/58) ([jhoblitt](https://github.com/jhoblitt))
+
+**Implemented enhancements:**
+
+- Add option to disable users [\#59](https://github.com/jhoblitt/puppet-ipmi/pull/59) ([jcpunk](https://github.com/jcpunk))
+- add EL9 support [\#57](https://github.com/jhoblitt/puppet-ipmi/pull/57) ([jhoblitt](https://github.com/jhoblitt))
+- add AlmaLinux and Rocky support [\#56](https://github.com/jhoblitt/puppet-ipmi/pull/56) ([jhoblitt](https://github.com/jhoblitt))
+
 ## [v4.0.0](https://github.com/jhoblitt/puppet-ipmi/tree/v4.0.0) (2022-09-12)
 
 [Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v3.1.0...v4.0.0)
