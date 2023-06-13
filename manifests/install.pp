@@ -6,5 +6,5 @@ class ipmi::install {
 
   include ipmi
 
-  ensure_packages($ipmi::packages)
+  stdlib::ensure_packages($ipmi::packages)
 }
