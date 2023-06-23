@@ -1,7 +1,7 @@
 {
   "name": "jhoblitt-ipmi",
   "version": "5.0.1-rc0",
-  "author": "Joshua Hoblitt <jhoblitt@cpan.org>",
+  "author": "Joshua Hoblitt <josh@hoblitt.com>",
   "summary": "manages the OpenIPMI package",
   "license": "Apache-2.0",
   "source": "https://github.com/jhoblitt/puppet-ipmi.git",
