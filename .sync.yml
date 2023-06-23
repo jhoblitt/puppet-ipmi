@@ -1,33 +1,28 @@
 ---
 Rakefile:
   config.user: jhoblitt
-
-.puppet-lint.rc:
+".puppet-lint.rc":
   enabled_lint_checks:
-    - parameter_documentation
-    - parameter_types
-
+  - parameter_documentation
+  - parameter_types
+spec/spec_helper.rb:
+  mock_with: ":mocha"
 spec/spec_helper_acceptance.rb:
   unmanaged: false
-
-.github/CONTRIBUTING.md:
+  configure_beaker: ~
+".github/CONTRIBUTING.md":
   delete: true
-.github/ISSUE_TEMPLATE.md:
+".github/ISSUE_TEMPLATE.md":
   delete: true
-.github/PULL_REQUEST_TEMPLATE.md:
+".github/PULL_REQUEST_TEMPLATE.md":
   delete: true
-.github/SECURITY.md:
+".github/SECURITY.md":
   delete: true
-
 Gemfile:
   optional:
-    ':test':
-      - gem: puppet-lint-legacy_facts-check
-      - gem: puppet-lint-package_ensure-check
-      - gem: puppet-lint-resource_reference_syntax
-      - gem: puppet-lint-strict_indent-check
-      - gem: puppet-lint-template_file_extension-check
-      - gem: puppet-lint-top_scope_facts-check
-      - gem: puppet-lint-trailing_newline-check
-      - gem: puppet-lint-unquoted_string-check
-      - gem: puppet-lint-variable_contains_upcase
+    ":test":
+    - gem: puppet-lint-package_ensure-check
+    - gem: puppet-lint-resource_reference_syntax
+    - gem: puppet-lint-strict_indent-check
+    - gem: puppet-lint-unquoted_string-check
+    - gem: puppet-lint-variable_contains_upcase
