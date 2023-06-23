@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not affect the functionality of the module.
 
+## [v5.1.0](https://github.com/jhoblitt/puppet-ipmi/tree/v5.1.0) (2023-06-23)
+
+[Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.0.0...v5.1.0)
+
+**Implemented enhancements:**
+
+- add support for puppet8 [\#66](https://github.com/jhoblitt/puppet-ipmi/pull/66) ([jhoblitt](https://github.com/jhoblitt))
+
 ## [v5.0.0](https://github.com/jhoblitt/puppet-ipmi/tree/v5.0.0) (2023-03-06)
 
 [Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v4.0.0...v5.0.0)
