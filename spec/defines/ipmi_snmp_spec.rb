@@ -5,9 +5,14 @@ require 'spec_helper'
 describe 'ipmi::snmp', type: :define do
   let(:facts) do
     {
-      operatingsystem: 'RedHat',
-      osfamily: 'redhat',
-      operatingsystemmajrelease: '7',
+      os: {
+        family: 'RedHat',
+        name: 'CentOS',
+        release: {
+          major: 9,
+        }
+
+      },
       ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' },
     }
   end
