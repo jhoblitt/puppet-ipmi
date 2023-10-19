@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not affect the functionality of the module.
 
+## [v5.2.0](https://github.com/jhoblitt/puppet-ipmi/tree/v5.2.0) (2023-10-19)
+
+[Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.1.0...v5.2.0)
+
+**Implemented enhancements:**
+
+- allow stdlib 9.x [\#68](https://github.com/jhoblitt/puppet-ipmi/pull/68) ([jhoblitt](https://github.com/jhoblitt))
+
+**Closed issues:**
+
+- stdlib 9.x.x compat [\#63](https://github.com/jhoblitt/puppet-ipmi/issues/63)
+
 ## [v5.1.0](https://github.com/jhoblitt/puppet-ipmi/tree/v5.1.0) (2023-06-23)
 
 [Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.0.0...v5.1.0)
