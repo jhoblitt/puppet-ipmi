@@ -15,7 +15,6 @@
 1. [Additional Facts](#additional-facts)
 1. [Limitations](#limitations)
   * [Tested Platforms](#tested-platforms)
-  * [Puppet Version Compatibility](#puppet-version-compatibility)
 1. [Versioning](#versioning)
 1. [Support](#support)
 1. [Contributing](#contributing)
@@ -189,14 +188,6 @@ Adding other Linux distrubtions should be trivial.
 * Ubuntu 16.04
 * Ubuntu 18.04
 * Ubuntu 20.04
-
-### Puppet Version Compatibility
-
-Versions | Puppet 2.7 | Puppet 3.x | Puppet 4.x | Puppet 5.x | Puppet 6.x | Puppet 7.x
-:--------|:----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
-**1.x**  | **yes**    | **yes**    |            |            |            |            |
-**2.x**  |            | **yes**    | **yes**    |            |            |            |
-**3.x**  |            |            |            |            | **yes**    | **yes**    |
 
 ## Versioning
 
