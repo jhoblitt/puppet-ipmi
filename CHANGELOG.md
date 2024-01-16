@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not affect the functionality of the module.
 
+## [v5.3.0](https://github.com/jhoblitt/puppet-ipmi/tree/v5.3.0) (2024-01-16)
+
+[Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.2.0...v5.3.0)
+
+**Implemented enhancements:**
+
+- ipmi::user: Mask passwords [\#70](https://github.com/jhoblitt/puppet-ipmi/pull/70) ([b4ldr](https://github.com/b4ldr))
+
 ## [v5.2.0](https://github.com/jhoblitt/puppet-ipmi/tree/v5.2.0) (2023-10-19)
 
 [Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.1.0...v5.2.0)
