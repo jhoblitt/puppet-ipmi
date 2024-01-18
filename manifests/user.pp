@@ -68,8 +68,8 @@ define ipmi::user (
 
     exec { "ipmi_user_setpw_${title}":
       environment => ["PASSWORD=${real_password}"],
-      command     => "/usr/bin/ipmitool user set password ${user_id} \'\$PASSWORD\'",
-      unless      => "/usr/bin/ipmitool user test ${user_id} 16 \'\$PASSWORD\'",
+      command     => "/usr/bin/ipmitool user set password ${user_id} \"\$PASSWORD\"",
+      unless      => "/usr/bin/ipmitool user test ${user_id} 16 \"\$PASSWORD\"",
       notify      => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
     }
 
