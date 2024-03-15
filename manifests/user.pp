@@ -67,7 +67,7 @@ define ipmi::user (
     }
 
     $unless_cmd = @("CMD"/L$)
-      /usr/bin/ipmitool user test ${user_id} 16 "\$PASSWORD" ||
+      /usr/bin/ipmitool user test ${user_id} 16 "\$PASSWORD" || \
       /usr/bin/ipmitool user test ${user_id} 20 "\$PASSWORD"
       |- CMD
     exec { "ipmi_user_setpw_${title}":
