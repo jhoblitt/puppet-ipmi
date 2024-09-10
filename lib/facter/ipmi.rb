@@ -46,7 +46,7 @@ class IPMIChannel
       case line.strip
       when %r{^IP Address\s*:\s+(\S.*)}
         add_ipmi_fact('ipaddress', Regexp.last_match(1))
-        add_ipmi_fact("lan_channel", @channel_nr)
+        add_ipmi_fact('lan_channel', @channel_nr)
       when %r{^IP Address Source\s*:\s+(\S.*)}
         add_ipmi_fact('ipaddress_source', Regexp.last_match(1))
       when %r{^Subnet Mask\s*:\s+(\S.*)}
