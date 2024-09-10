@@ -160,21 +160,21 @@ formats:
 ```text
 ipmi => {
   default => {
-    channel => 1
-    gateway => 192.168.10.1
-    ipaddress => 192.168.10.201
-    ipaddress_source => Static Address
-    macaddress => 00:30:48:c9:64:2a
-    subnet_mask => 255.255.255.0
-  }
+    channel => 1,
+    gateway => 192.168.10.1,
+    ipaddress => 192.168.10.201,
+    ipaddress_source => Static Address,
+    macaddress => 00:30:48:c9:64:2a,
+    subnet_mask => 255.255.255.0,
+  },
   1 => {
-    channel => 1
-    gateway => 192.168.10.1
-    ipaddress => 192.168.10.201
-    ipaddress_source => Static Address
-    macaddress => 00:30:48:c9:64:2a
-    subnet_mask => 255.255.255.0
-  }
+    channel => 1,
+    gateway => 192.168.10.1,
+    ipaddress => 192.168.10.201,
+    ipaddress_source => Static Address,
+    macaddress => 00:30:48:c9:64:2a,
+    subnet_mask => 255.255.255.0,
+  },
 }
 ```
 
