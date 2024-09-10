@@ -65,7 +65,17 @@ Create a user with operator privileges:
     user_id  => 5,
   }
 ```
+Create a user with user privileges on a specific channel:
 
+```puppet
+  ipmi::user { 'newuser3':
+    user     => 'newuser3',
+    password => 'password3',
+    priv     => 2,
+    user_id  => 6,
+    channel  => 3,
+  }
+```
 Configure a static ip on IPMI lan channel 1:
 
 ```puppet

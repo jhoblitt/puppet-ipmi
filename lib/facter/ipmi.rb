@@ -46,6 +46,7 @@ class IPMIChannel
       case line.strip
       when %r{^IP Address\s*:\s+(\S.*)}
         add_ipmi_fact('ipaddress', Regexp.last_match(1))
+        add_ipmi_fact("lan_channel", @channel_nr)
       when %r{^IP Address Source\s*:\s+(\S.*)}
         add_ipmi_fact('ipaddress_source', Regexp.last_match(1))
       when %r{^Subnet Mask\s*:\s+(\S.*)}
@@ -60,7 +61,9 @@ class IPMIChannel
 
   def add_ipmi_fact(name, value)
     fact_names = []
-    fact_names.push("ipmi_#{name}") if @channel_nr == 1
+    if not fact_names.include?("ipmi_#{name}") then
+      fact_names.push("ipmi_#{name}")
+    end
     fact_names.push("ipmi#{@channel_nr}_#{name}")
     fact_names.each do |n|
       Facter.add(n) do

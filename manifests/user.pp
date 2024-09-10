@@ -19,6 +19,9 @@
 #   On ASUS IPMI, user id 2 is reserved for the 'admin' username.
 # @param password
 #   Controls the password of the user to be created.
+# @param channel
+#   Controls the channel of the IPMI user to be configured.
+#   Defaults to the first detected lan channel, starting at 1 ending at 11
 #
 define ipmi::user (
   String $user     = 'root',
@@ -26,6 +29,7 @@ define ipmi::user (
   Boolean $enable  = true,
   Integer $user_id = 3,
   Optional[Variant[Sensitive[String[1]], String[1]]] $password = undef,
+  Integer $channel = $facts['ipmi_channel'],
 ) {
   require ipmi::install
 
@@ -56,13 +60,13 @@ define ipmi::user (
 
     exec { "ipmi_user_add_${title}":
       command => "/usr/bin/ipmitool user set name ${user_id} ${user}",
-      unless  => "/usr/bin/test \"$(ipmitool user list 1 | grep '^${user_id}' | awk '{print \$2}' | head -n1)\" = \"${user}\"",
+      unless  => "/usr/bin/test \"$(ipmitool user list ${channel} | grep '^${user_id}' | awk '{print \$2}' | head -n1)\" = \"${user}\"",
       notify  => [Exec["ipmi_user_priv_${title}"], Exec["ipmi_user_setpw_${title}"]],
     }
 
     exec { "ipmi_user_priv_${title}":
-      command => "/usr/bin/ipmitool user priv ${user_id} ${priv} 1",
-      unless  => "/usr/bin/test \"$(ipmitool user list 1 | grep '^${user_id}' | awk '{print \$6}' | head -n1)\" = ${privilege}",
+      command => "/usr/bin/ipmitool user priv ${user_id} ${priv} ${channel}",
+      unless  => "/usr/bin/test \"$(ipmitool user list ${channel} | grep '^${user_id}' | awk '{print \$6}' | head -n1)\" = ${privilege}",
       notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
     }
 
@@ -82,18 +86,18 @@ define ipmi::user (
     }
 
     exec { "ipmi_user_enable_sol_${title}":
-      command     => "/usr/bin/ipmitool sol payload enable 1 ${user_id}",
+      command     => "/usr/bin/ipmitool sol payload enable ${channel} ${user_id}",
       refreshonly => true,
     }
 
     exec { "ipmi_user_channel_setaccess_${title}":
-      command     => "/usr/bin/ipmitool channel setaccess 1 ${user_id} callin=on ipmi=on link=on privilege=${priv}",
+      command     => "/usr/bin/ipmitool channel setaccess ${channel} ${user_id} callin=on ipmi=on link=on privilege=${priv}",
       refreshonly => true,
     }
   } else {
     exec { "ipmi_user_priv_${title}":
-      command => "/usr/bin/ipmitool user priv ${user_id} 0xF 1",
-      unless  => "/usr/bin/test \"$(ipmitool user list 1 | grep '^${user_id}' | awk '{print \$6}' | head -n1)\" = 'NO ACCESS'",
+      command => "/usr/bin/ipmitool user priv ${user_id} 0xF ${channel}",
+      unless  => "/usr/bin/test \"$(ipmitool user list ${channel} | grep '^${user_id}' | awk '{print \$6}' | head -n1)\" = 'NO ACCESS'",
       notify  => [Exec["ipmi_user_disable_${title}"], Exec["ipmi_user_disable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
     }
 
@@ -103,12 +107,12 @@ define ipmi::user (
     }
 
     exec { "ipmi_user_disable_sol_${title}":
-      command     => "/usr/bin/ipmitool sol payload disable 1 ${user_id}",
+      command     => "/usr/bin/ipmitool sol payload disable ${channel} ${user_id}",
       refreshonly => true,
     }
 
     exec { "ipmi_user_channel_setaccess_${title}":
-      command     => "/usr/bin/ipmitool channel setaccess 1 ${user_id} callin=off ipmi=off link=off privilege=15",
+      command     => "/usr/bin/ipmitool channel setaccess ${channel} ${user_id} callin=off ipmi=off link=off privilege=15",
       refreshonly => true,
     }
   }

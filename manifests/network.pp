@@ -10,13 +10,14 @@
 #   Controls the if IP will be from DHCP or Static.
 # @param lan_channel
 #   Controls the lan channel of the IPMI network to be configured.
+#   Defaults to the first detected lan channel, starting at 1 ending at 11
 #
 define ipmi::network (
   Stdlib::IP::Address $ip      = '0.0.0.0',
   Stdlib::IP::Address $netmask = '255.255.255.0',
   Stdlib::IP::Address $gateway = '0.0.0.0',
   Enum['dhcp', 'static'] $type = 'dhcp',
-  Integer $lan_channel         = 1,
+  Integer $lan_channel         = $facts['ipmi_lan_channel'],
 ) {
   require ipmi::install
 
