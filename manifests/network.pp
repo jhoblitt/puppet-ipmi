@@ -17,7 +17,7 @@ define ipmi::network (
   Stdlib::IP::Address $netmask = '255.255.255.0',
   Stdlib::IP::Address $gateway = '0.0.0.0',
   Enum['dhcp', 'static'] $type = 'dhcp',
-  Integer $lan_channel         = $facts['ipmi_lan_channel'],
+  Integer $lan_channel         = $facts['ipmi']['default']['channel'],
 ) {
   require ipmi::install
 

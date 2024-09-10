@@ -5,7 +5,12 @@ require 'spec_helper'
 describe 'ipmi::network', type: :define do
   on_supported_os.each do |os, facts|
     context "on #{os}" do
-      let(:facts) { facts.merge(ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' }) }
+      let(:facts) let(:facts) { facts.merge(
+        {
+          :ipmitool_mc_info => { :IPMI_Puppet_Service_Recommend => 'running' },
+          :ipmi => { :default => { :channel => 1}}
+        }
+      ) }
       let(:title) { 'example' }
 
       describe 'when deploying as dhcp with minimal params' do

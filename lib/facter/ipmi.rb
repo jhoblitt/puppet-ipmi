@@ -82,3 +82,38 @@ channel_array.each do |channel|
   @channel_nr = channel
   IPMIChannel.new(@channel_nr).load_facts
 end
+
+Facter.add(:ipmi) do
+  confine kernel: 'Linux'
+  setcode do
+    ipmi_hash = {}
+    if Facter::Util::Resolution.which('ipmitool') then
+      (1..11).each do |channel_nr|
+        lan_channel_hash = {}
+        ipmitool_output = Facter::Util::Resolution.exec("ipmitool lan print #{channel_nr} 2>&1")
+        ipmitool_output.each_line do |line|
+          case line.strip
+          when %r{^IP Address\s*:\s+(\S.*)}
+            lan_channel_hash['ipaddress'] = Regexp.last_match(1)
+          when %r{^IP Address Source\s*:\s+(\S.*)}
+            lan_channel_hash['ipaddress_source'] = Regexp.last_match(1)
+          when %r{^Subnet Mask\s*:\s+(\S.*)}
+            lan_channel_hash['subnet_mask'] = Regexp.last_match(1)
+          when %r{^MAC Address\s*:\s+(\S.*)}
+            lan_channel_hash['macaddress'] = Regexp.last_match(1)
+          when %r{^Default Gateway IP\s*:\s+(\S.*)}
+            lan_channel_hash['gateway'] = Regexp.last_match(1)
+          end
+        end
+        if not lan_channel_hash.empty?() then
+          lan_channel_hash['channel'] = channel_nr
+          if not ipmi_hash.key?('default') then
+            ipmi_hash['default'] = lan_channel_hash
+          end
+          ipmi_hash[channel_nr] = lan_channel_hash
+        end
+      end
+    end
+    ipmi_hash
+  end
+end

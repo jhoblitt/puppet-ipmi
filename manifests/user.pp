@@ -29,7 +29,7 @@ define ipmi::user (
   Boolean $enable  = true,
   Integer $user_id = 3,
   Optional[Variant[Sensitive[String[1]], String[1]]] $password = undef,
-  Integer $channel = $facts['ipmi_channel'],
+  Integer $channel = $facts['ipmi']['default']['channel'],
 ) {
   require ipmi::install
 

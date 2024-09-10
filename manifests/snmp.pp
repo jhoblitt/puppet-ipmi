@@ -9,7 +9,7 @@
 #
 define ipmi::snmp (
   String $snmp         = 'public',
-  Integer $lan_channel = $facts['ipmi_lan_channel'],
+  Integer $lan_channel = $facts['ipmi']['default']['channel'],
 ) {
   require ipmi::install
 
