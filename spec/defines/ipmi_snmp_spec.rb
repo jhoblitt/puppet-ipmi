@@ -14,7 +14,7 @@ describe 'ipmi::snmp', type: :define do
 
       },
       ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' },
-      ipmi: { default:{ channel: 1}},
+      ipmi: { default: { channel: 1 } },
     }
   end
 

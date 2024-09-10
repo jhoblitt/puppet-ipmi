@@ -61,9 +61,7 @@ class IPMIChannel
 
   def add_ipmi_fact(name, value)
     fact_names = []
-    if not fact_names.include?("ipmi_#{name}") then
-      fact_names.push("ipmi_#{name}")
-    end
+    fact_names.push("ipmi_#{name}") unless fact_names.include?("ipmi_#{name}")
     fact_names.push("ipmi#{@channel_nr}_#{name}")
     fact_names.each do |n|
       Facter.add(n) do
@@ -87,7 +85,7 @@ Facter.add(:ipmi) do
   confine kernel: 'Linux'
   setcode do
     ipmi_hash = {}
-    if Facter::Util::Resolution.which('ipmitool') then
+    if Facter::Util::Resolution.which('ipmitool')
       (1..11).each do |channel_nr|
         lan_channel_hash = {}
         ipmitool_output = Facter::Util::Resolution.exec("ipmitool lan print #{channel_nr} 2>&1")
@@ -105,13 +103,12 @@ Facter.add(:ipmi) do
             lan_channel_hash['gateway'] = Regexp.last_match(1)
           end
         end
-        if not lan_channel_hash.empty?() then
-          lan_channel_hash['channel'] = channel_nr
-          if not ipmi_hash.key?('default') then
-            ipmi_hash['default'] = lan_channel_hash
-          end
-          ipmi_hash[channel_nr] = lan_channel_hash
-        end
+
+        next if lan_channel_hash.empty?
+
+        lan_channel_hash['channel'] = channel_nr
+        ipmi_hash['default'] = lan_channel_hash unless ipmi_hash.key?('default')
+        ipmi_hash[channel_nr] = lan_channel_hash
       end
     end
     ipmi_hash
