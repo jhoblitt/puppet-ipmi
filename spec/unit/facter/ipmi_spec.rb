@@ -52,32 +52,32 @@ describe 'ipmi facts' do
 
         it do
           expect(Facter.value(:ipmi_ipaddress)).to eq('192.168.0.37')
-          expect(Facter.value(:ipmi)['default']['ipaddress']).to eq('192.168.0.37')
-          expect(Facter.value(:ipmi)[1]['ipaddress']).to eq('192.168.0.37')
+          expect(Facter.value('ipmi.default.ipaddress')).to eq('192.168.0.37')
+          expect(Facter.value('ipmi.1.ipaddress')).to eq('192.168.0.37')
         end
 
         it do
           expect(Facter.value(:ipmi_ipaddress_source)).to eq('DHCP Address')
-          expect(Facter.value(:ipmi)['default']['ipaddress_source']).to eq('DHCP Address')
-          expect(Facter.value(:ipmi)[1]['ipaddress_source']).to eq('DHCP Address')
+          expect(Facter.value('ipmi.default.ipaddress_source')).to eq('DHCP Address')
+          expect(Facter.value('ipmi.1.ipaddress_source')).to eq('DHCP Address')
         end
 
         it do
           expect(Facter.value(:ipmi_subnet_mask)).to eq('255.255.255.0')
-          expect(Facter.value(:ipmi)['default']['subnet_mask']).to eq('255.255.255.0')
-          expect(Facter.value(:ipmi)[1]['subnet_mask']).to eq('255.255.255.0')
+          expect(Facter.value('ipmi.default.subnet_mask')).to eq('255.255.255.0')
+          expect(Facter.value('ipmi.1.subnet_mask')).to eq('255.255.255.0')
         end
 
         it do
           expect(Facter.value(:ipmi_macaddress)).to eq('3c:a8:2a:9f:9a:92')
-          expect(Facter.value(:ipmi)['default']['macaddress']).to eq('3c:a8:2a:9f:9a:92')
-          expect(Facter.value(:ipmi)[1]['macaddress']).to eq('3c:a8:2a:9f:9a:92')
+          expect(Facter.value('ipmi.default.macaddress')).to eq('3c:a8:2a:9f:9a:92')
+          expect(Facter.value('ipmi.1.macaddress')).to eq('3c:a8:2a:9f:9a:92')
         end
 
         it do
           expect(Facter.value(:ipmi_gateway)).to eq('192.168.0.1')
-          expect(Facter.value(:ipmi)['default']['gateway']).to eq('192.168.0.1')
-          expect(Facter.value(:ipmi)[1]['gateway']).to eq('192.168.0.1')
+          expect(Facter.value('ipmi.default.gateway')).to eq('192.168.0.1')
+          expect(Facter.value('ipmi.1.gateway')).to eq('192.168.0.1')
         end
       end
 
@@ -154,64 +154,59 @@ describe 'ipmi facts' do
         describe 'ipmi2_* facts' do
           it do
             expect(Facter.value(:ipmi2_gateway)).to eq('192.168.0.2')
-            expect(Facter.value(:ipmi)['default']['gateway']).to eq('192.168.0.2')
-            expect(Facter.value(:ipmi)[2]['gateway']).to eq('192.168.0.2')
+            expect(Facter.value('ipmi.default.gateway')).to eq('192.168.0.2')
+            expect(Facter.value('ipmi.2.gateway')).to eq('192.168.0.2')
           end
 
           it do
             expect(Facter.value(:ipmi2_ipaddress)).to eq('192.168.0.22')
-            expect(Facter.value(:ipmi)['default']['ipaddress']).to eq('192.168.0.22')
-            expect(Facter.value(:ipmi)[2]['ipaddress']).to eq('192.168.0.22')
+            expect(Facter.value('ipmi.default.ipaddress')).to eq('192.168.0.22')
+            expect(Facter.value('ipmi.2.ipaddress')).to eq('192.168.0.22')
           end
 
           it do
             expect(Facter.value(:ipmi2_ipaddress_source)).to eq('DHCP Address')
-            expect(Facter.value(:ipmi)['default']['ipaddress_source']).to eq('DHCP Address')
-            expect(Facter.value(:ipmi)[2]['ipaddress_source']).to eq('DHCP Address')
+            expect(Facter.value('ipmi.default.ipaddress_source')).to eq('DHCP Address')
+            expect(Facter.value('ipmi.2.ipaddress_source')).to eq('DHCP Address')
           end
 
           it do
             expect(Facter.value(:ipmi2_subnet_mask)).to eq('255.255.255.0')
-            expect(Facter.value(:ipmi)['default']['subnet_mask']).to eq('255.255.255.0')
-            expect(Facter.value(:ipmi)[2]['subnet_mask']).to eq('255.255.255.0')
+            expect(Facter.value('ipmi.default.subnet_mask')).to eq('255.255.255.0')
+            expect(Facter.value('ipmi.2.subnet_mask')).to eq('255.255.255.0')
           end
 
           it do
             expect(Facter.value(:ipmi2_macaddress)).to eq('c6:92:00:22:79:f3')
-            expect(Facter.value(:ipmi)['default']['macaddress']).to eq('c6:92:00:22:79:f3')
-            expect(Facter.value(:ipmi)[2]['macaddress']).to eq('c6:92:00:22:79:f3')
+            expect(Facter.value('ipmi.default.macaddress')).to eq('c6:92:00:22:79:f3')
+            expect(Facter.value('ipmi.2.macaddress')).to eq('c6:92:00:22:79:f3')
           end
         end
 
         describe 'ipmi3_* facts' do
           it do
             expect(Facter.value(:ipmi3_gateway)).to eq('192.168.0.3')
-            expect(Facter.value(:ipmi)['default']['gateway']).to eq('192.168.0.3')
-            expect(Facter.value(:ipmi)[3]['gateway']).to eq('192.168.0.3')
+            expect(Facter.value('ipmi.3.gateway')).to eq('192.168.0.3')
           end
 
           it do
             expect(Facter.value(:ipmi3_ipaddress)).to eq('192.168.0.33')
-            expect(Facter.value(:ipmi)['default']['ipaddress']).to eq('192.168.0.33')
-            expect(Facter.value(:ipmi)[3]['ipaddress']).to eq('192.168.0.33')
+            expect(Facter.value('ipmi.3.ipaddress')).to eq('192.168.0.33')
           end
 
           it do
             expect(Facter.value(:ipmi3_ipaddress_source)).to eq('DHCP Address')
-            expect(Facter.value(:ipmi)['default']['ipaddress_source']).to eq('DHCP Address')
-            expect(Facter.value(:ipmi)[3]['ipaddress_source']).to eq('DHCP Address')
+            expect(Facter.value('ipmi.3.ipaddress_source')).to eq('DHCP Address')
           end
 
           it do
             expect(Facter.value(:ipmi3_subnet_mask)).to eq('255.255.255.0')
-            expect(Facter.value(:ipmi)['default']['subnet_mask']).to eq('255.255.255.0')
-            expect(Facter.value(:ipmi)[3]['subnet_mask']).to eq('255.255.255.0')
+            expect(Facter.value('ipmi.3.subnet_mask')).to eq('255.255.255.0')
           end
 
           it do
             expect(Facter.value(:ipmi3_macaddress)).to eq('1a:16:97:fb:64:d8')
-            expect(Facter.value(:ipmi)['default']['macaddress']).to eq('1a:16:97:fb:64:d8')
-            expect(Facter.value(:ipmi)[3]['macaddress']).to eq('1a:16:97:fb:64:d8')
+            expect(Facter.value('ipmi.3.macaddress')).to eq('1a:16:97:fb:64:d8')
           end
         end
       end
