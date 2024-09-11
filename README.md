@@ -65,6 +65,7 @@ Create a user with operator privileges:
     user_id  => 5,
   }
 ```
+
 Create a user with user privileges on a specific channel:
 
 ```puppet
@@ -76,6 +77,7 @@ Create a user with user privileges on a specific channel:
     channel  => 3,
   }
 ```
+
 Configure a static ip on IPMI lan channel 1:
 
 ```puppet
@@ -157,6 +159,7 @@ This module provides additional facts for Facter with the following
 formats:
 
 ### Structured Format
+
 ```text
 ipmi => {
   default => {
