@@ -75,8 +75,8 @@ class IPMIChannel
   end
 end
 
-channel_array = (1..11).to_a
-channel_array.each do |channel|
+channels = (1..11).to_a
+channels.each do |channel|
   @channel_nr = channel
   IPMIChannel.new(@channel_nr).load_facts
 end
@@ -84,33 +84,33 @@ end
 Facter.add(:ipmi) do
   confine kernel: 'Linux'
   setcode do
-    ipmi_hash = {}
+    ipmi = {}
     if Facter::Util::Resolution.which('ipmitool')
       (1..11).each do |channel_nr|
-        lan_channel_hash = {}
+        lan_channel = {}
         ipmitool_output = Facter::Util::Resolution.exec("ipmitool lan print #{channel_nr} 2>&1")
         ipmitool_output.each_line do |line|
           case line.strip
           when %r{^IP Address\s*:\s+(\S.*)}
-            lan_channel_hash['ipaddress'] = Regexp.last_match(1)
+            lan_channel['ipaddress'] = Regexp.last_match(1)
           when %r{^IP Address Source\s*:\s+(\S.*)}
-            lan_channel_hash['ipaddress_source'] = Regexp.last_match(1)
+            lan_channel['ipaddress_source'] = Regexp.last_match(1)
           when %r{^Subnet Mask\s*:\s+(\S.*)}
-            lan_channel_hash['subnet_mask'] = Regexp.last_match(1)
+            lan_channel['subnet_mask'] = Regexp.last_match(1)
           when %r{^MAC Address\s*:\s+(\S.*)}
-            lan_channel_hash['macaddress'] = Regexp.last_match(1)
+            lan_channel['macaddress'] = Regexp.last_match(1)
           when %r{^Default Gateway IP\s*:\s+(\S.*)}
-            lan_channel_hash['gateway'] = Regexp.last_match(1)
+            lan_channel['gateway'] = Regexp.last_match(1)
           end
         end
 
-        next if lan_channel_hash.empty?
+        next if lan_channel.empty?
 
-        lan_channel_hash['channel'] = channel_nr
-        ipmi_hash['default'] = lan_channel_hash unless ipmi_hash.key?('default')
-        ipmi_hash[channel_nr] = lan_channel_hash
+        lan_channel['channel'] = channel_nr
+        ipmi['default'] = lan_channel unless ipmi.key?('default')
+        ipmi[channel_nr] = lan_channel
       end
     end
-    ipmi_hash
+    ipmi
   end
 end
