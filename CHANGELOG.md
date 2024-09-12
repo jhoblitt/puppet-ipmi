@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not affect the functionality of the module.
 
+## [v6.0.0](https://github.com/jhoblitt/puppet-ipmi/tree/v6.0.0) (2024-09-12)
+
+[Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.3.1...v6.0.0)
+
+**Breaking changes:**
+
+- drop support for Debian 10 -- EOL [\#81](https://github.com/jhoblitt/puppet-ipmi/pull/81) ([jhoblitt](https://github.com/jhoblitt))
+- drop support for ubuntu 18.04 -- EOL [\#80](https://github.com/jhoblitt/puppet-ipmi/pull/80) ([jhoblitt](https://github.com/jhoblitt))
+- drop support for EL7 -- EOL [\#79](https://github.com/jhoblitt/puppet-ipmi/pull/79) ([jhoblitt](https://github.com/jhoblitt))
+
+**Implemented enhancements:**
+
+- Add lan channel fact and user channel support [\#78](https://github.com/jhoblitt/puppet-ipmi/pull/78) ([nathanlcarlson](https://github.com/nathanlcarlson))
+- Test password [\#76](https://github.com/jhoblitt/puppet-ipmi/pull/76) ([b4ldr](https://github.com/b4ldr))
+
+**Fixed bugs:**
+
+- user: check for password with byte size of 16 and 20 [\#77](https://github.com/jhoblitt/puppet-ipmi/pull/77) ([b4ldr](https://github.com/b4ldr))
+
 ## [v5.3.1](https://github.com/jhoblitt/puppet-ipmi/tree/v5.3.1) (2024-01-25)
 
 [Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.3.0...v5.3.1)
