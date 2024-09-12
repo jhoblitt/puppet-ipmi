@@ -14,7 +14,6 @@
   * [Classes](#classes)
 1. [Additional Facts](#additional-facts)
 1. [Limitations](#limitations)
-  * [Tested Platforms](#tested-platforms)
 1. [Versioning](#versioning)
 1. [Support](#support)
 1. [Contributing](#contributing)
@@ -212,19 +211,6 @@ At present, only support for RedHat and Debian distributions
 has been implemented.
 
 Adding other Linux distrubtions should be trivial.
-
-### Tested Platforms
-
-* el7
-* el8
-* Debian 8
-* Debian 9
-* Debian 10
-* Debian 11
-* Ubuntu 14.04
-* Ubuntu 16.04
-* Ubuntu 18.04
-* Ubuntu 20.04
 
 ## Versioning
 
