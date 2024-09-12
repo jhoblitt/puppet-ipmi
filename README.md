@@ -66,6 +66,18 @@ Create a user with operator privileges:
   }
 ```
 
+Create a user with user privileges on a specific channel:
+
+```puppet
+  ipmi::user { 'newuser3':
+    user     => 'newuser3',
+    password => 'password3',
+    priv     => 2,
+    user_id  => 6,
+    channel  => 3,
+  }
+```
+
 Configure a static ip on IPMI lan channel 1:
 
 ```puppet
@@ -144,7 +156,32 @@ Configure IPMI snmp string on lan channel 1:
 ## Additional Facts
 
 This module provides additional facts for Facter with the following
-format:
+formats:
+
+### Structured Format
+
+```text
+ipmi => {
+  default => {
+    channel => 1,
+    gateway => 192.168.10.1,
+    ipaddress => 192.168.10.201,
+    ipaddress_source => Static Address,
+    macaddress => 00:30:48:c9:64:2a,
+    subnet_mask => 255.255.255.0,
+  },
+  1 => {
+    channel => 1,
+    gateway => 192.168.10.1,
+    ipaddress => 192.168.10.201,
+    ipaddress_source => Static Address,
+    macaddress => 00:30:48:c9:64:2a,
+    subnet_mask => 255.255.255.0,
+  },
+}
+```
+
+### DEPRECATED Flat Format
 
 ```text
 ipmi1_gateway => 192.168.10.1

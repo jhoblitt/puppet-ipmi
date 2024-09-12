@@ -46,6 +46,7 @@ class IPMIChannel
       case line.strip
       when %r{^IP Address\s*:\s+(\S.*)}
         add_ipmi_fact('ipaddress', Regexp.last_match(1))
+        add_ipmi_fact('lan_channel', @channel_nr)
       when %r{^IP Address Source\s*:\s+(\S.*)}
         add_ipmi_fact('ipaddress_source', Regexp.last_match(1))
       when %r{^Subnet Mask\s*:\s+(\S.*)}
@@ -60,7 +61,7 @@ class IPMIChannel
 
   def add_ipmi_fact(name, value)
     fact_names = []
-    fact_names.push("ipmi_#{name}") if @channel_nr == 1
+    fact_names.push("ipmi_#{name}") unless fact_names.include?("ipmi_#{name}")
     fact_names.push("ipmi#{@channel_nr}_#{name}")
     fact_names.each do |n|
       Facter.add(n) do
@@ -74,8 +75,42 @@ class IPMIChannel
   end
 end
 
-channel_array = (1..11).to_a
-channel_array.each do |channel|
+channels = (1..11).to_a
+channels.each do |channel|
   @channel_nr = channel
   IPMIChannel.new(@channel_nr).load_facts
+end
+
+Facter.add(:ipmi) do
+  confine kernel: 'Linux'
+  setcode do
+    ipmi = {}
+    if Facter::Util::Resolution.which('ipmitool')
+      (1..11).each do |channel_nr|
+        lan_channel = {}
+        ipmitool_output = Facter::Util::Resolution.exec("ipmitool lan print #{channel_nr} 2>&1")
+        ipmitool_output.each_line do |line|
+          case line.strip
+          when %r{^IP Address\s*:\s+(\S.*)}
+            lan_channel['ipaddress'] = Regexp.last_match(1)
+          when %r{^IP Address Source\s*:\s+(\S.*)}
+            lan_channel['ipaddress_source'] = Regexp.last_match(1)
+          when %r{^Subnet Mask\s*:\s+(\S.*)}
+            lan_channel['subnet_mask'] = Regexp.last_match(1)
+          when %r{^MAC Address\s*:\s+(\S.*)}
+            lan_channel['macaddress'] = Regexp.last_match(1)
+          when %r{^Default Gateway IP\s*:\s+(\S.*)}
+            lan_channel['gateway'] = Regexp.last_match(1)
+          end
+        end
+
+        next if lan_channel.empty?
+
+        lan_channel['channel'] = channel_nr
+        ipmi['default'] = lan_channel unless ipmi.key?('default')
+        ipmi[channel_nr] = lan_channel
+      end
+    end
+    ipmi
+  end
 end
