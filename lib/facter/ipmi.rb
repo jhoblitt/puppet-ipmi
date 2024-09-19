@@ -107,6 +107,24 @@ Facter.add(:ipmi) do
         next if lan_channel.empty?
 
         lan_channel['channel'] = channel_nr
+
+        # Get Users
+        ipmitool_user_output = Facter::Util::Resolution.exec("ipmitool user list #{channel_nr} 2>&1")
+        lan_channel['users'] = {}
+        ipmitool_user_output.each_line do |line|
+          case line.strip
+          when %r{^(\d+)\s+(.+)(\s+(true|false)\s+){3}(USER|ADMINISTRATOR|CALLBACK|OPERATOR|NO ACCESS)$}
+            id = Regexp.last_match(1).strip.to_i
+            name = Regexp.last_match(2).strip
+            privilege = Regexp.last_match(5).strip
+            lan_channel['users'][id] = {
+              id: id,
+              name: name,
+              privilege: privilege,
+            }
+          end
+        end
+
         ipmi['default'] = lan_channel unless ipmi.key?('default')
         ipmi[channel_nr] = lan_channel
       end

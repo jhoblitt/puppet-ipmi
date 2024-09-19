@@ -40,15 +40,49 @@ describe 'ipmi facts' do
           :     O=OEM
           Bad Password Threshold  : Not Available
           OUTPUT
+          ipmitool_user_output = <<-USEROUTPUT
+          ID  Name	     Callin  Link Auth	IPMI Msg   Channel Priv Limit
+          1                    true    false      true       ADMINISTRATOR
+          2   admin            true    false      true       ADMINISTRATOR
+          3   foo_123_bar      true    false      true       ADMINISTRATOR
+          4   (Empty User)     true    false      false      NO ACCESS
+          5   (Empty User)     true    false      false      NO ACCESS
+          6   (Empty User)     true    false      false      NO ACCESS
+          7   (Empty User)     true    false      false      NO ACCESS
+          8   (Empty User)     true    false      false      NO ACCESS
+          9   (Empty User)     true    false      false      NO ACCESS
+          10  (Empty User)     true    false      false      NO ACCESS
+          11  (Empty User)     true    false      false      NO ACCESS
+          12  foobar           true    false      true       USER
+          USEROUTPUT
           Facter::Util::Resolution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
           Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 1 2>&1').returns(ipmitool_output)
           (2..11).to_a.each do |mocked_channel|
             Facter::Util::Resolution.expects(:exec).at_least(1).with("ipmitool lan print #{mocked_channel} 2>&1").returns("Invalid channel: #{mocked_channel}")
           end
+          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool user list 1 2>&1').returns(ipmitool_user_output)
           Facter.fact(:kernel).stubs(:value).returns('Linux')
         end
 
         let(:facts) { { kernel: 'Linux' } }
+
+        it do
+          expect(Facter.value('ipmi.1.users.1.id')).to eq(1)
+          expect(Facter.value('ipmi.1.users.1.name')).to eq('')
+          expect(Facter.value('ipmi.1.users.1.privilege')).to eq('ADMINISTRATOR')
+        end
+
+        it do
+          expect(Facter.value('ipmi.1.users.12.id')).to eq(12)
+          expect(Facter.value('ipmi.1.users.12.name')).to eq('foobar')
+          expect(Facter.value('ipmi.1.users.12.privilege')).to eq('USER')
+        end
+
+        it do
+          expect(Facter.value('ipmi.1.users.4.id')).to eq(4)
+          expect(Facter.value('ipmi.1.users.4.name')).to eq('(Empty User)')
+          expect(Facter.value('ipmi.1.users.4.privilege')).to eq('NO ACCESS')
+        end
 
         it do
           expect(Facter.value(:ipmi_ipaddress)).to eq('192.168.0.37')
@@ -138,11 +172,27 @@ describe 'ipmi facts' do
           :     O=OEM
           Bad Password Threshold  : Not Available
           OUTPUT
-
+          ipmitool_user_output = <<-USEROUTPUT
+          ID  Name	     Callin  Link Auth	IPMI Msg   Channel Priv Limit
+          1                    true    false      true       ADMINISTRATOR
+          2   admin            true    false      true       ADMINISTRATOR
+          3   foo_123_bar      true    false      true       ADMINISTRATOR
+          4   (Empty User)     true    false      false      NO ACCESS
+          5   (Empty User)     true    false      false      NO ACCESS
+          6   (Empty User)     true    false      false      NO ACCESS
+          7   (Empty User)     true    false      false      NO ACCESS
+          8   (Empty User)     true    false      false      NO ACCESS
+          9   (Empty User)     true    false      false      NO ACCESS
+          10  (Empty User)     true    false      false      NO ACCESS
+          11  (Empty User)     true    false      false      NO ACCESS
+          12  foobar           true    false      true       USER
+          USEROUTPUT
           Facter::Util::Resolution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
           Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 2 2>&1').returns(ipmitool_2_output)
           Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 3 2>&1').returns(ipmitool_3_output)
           Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 1 2>&1').returns('Invalid channel: 1')
+          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool user list 2 2>&1').returns(ipmitool_user_output)
+          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool user list 3 2>&1').returns(ipmitool_user_output)
           (4..11).to_a.each do |mocked_channel|
             Facter::Util::Resolution.expects(:exec).at_least(1).with("ipmitool lan print #{mocked_channel} 2>&1").returns("Invalid channel: #{mocked_channel}")
           end
