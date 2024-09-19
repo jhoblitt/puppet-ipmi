@@ -60,13 +60,13 @@ define ipmi::user (
 
     exec { "ipmi_user_add_${title}":
       command => "/usr/bin/ipmitool user set name ${user_id} ${user}",
-      unless  => "/usr/bin/test \"$(ipmitool user list ${channel} | grep '^${user_id}' | awk '{print \$2}' | head -n1)\" = \"${user}\"",
+      unless  => "/usr/bin/ipmitool user list ${channel} | grep -qE '^${user_id}[ ]+${user} '",
       notify  => [Exec["ipmi_user_priv_${title}"], Exec["ipmi_user_setpw_${title}"]],
     }
 
     exec { "ipmi_user_priv_${title}":
       command => "/usr/bin/ipmitool user priv ${user_id} ${priv} ${channel}",
-      unless  => "/usr/bin/test \"$(ipmitool user list ${channel} | grep '^${user_id}' | awk '{print \$6}' | head -n1)\" = ${privilege}",
+      unless  => "/usr/bin/ipmitool user list ${channel} | grep -qE '^${user_id} .+ ${privilege}$'",
       notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
     }
 
@@ -97,7 +97,7 @@ define ipmi::user (
   } else {
     exec { "ipmi_user_priv_${title}":
       command => "/usr/bin/ipmitool user priv ${user_id} 0xF ${channel}",
-      unless  => "/usr/bin/test \"$(ipmitool user list ${channel} | grep '^${user_id}' | awk '{print \$6}' | head -n1)\" = 'NO ACCESS'",
+      unless  => "/usr/bin/ipmitool user list ${channel} | grep -qE '^${user_id} .+ NO ACCESS$'",
       notify  => [Exec["ipmi_user_disable_${title}"], Exec["ipmi_user_disable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
     }
 
