@@ -70,13 +70,24 @@ define ipmi::user (
       notify  => [Exec["ipmi_user_enable_${title}"], Exec["ipmi_user_enable_sol_${title}"], Exec["ipmi_user_channel_setaccess_${title}"]],
     }
 
+    if $real_password.length > 20 {
+      fail('ipmi v2 restricts passwords to 20 or fewer characters')
+    }
+    # Password capacity parameter defaults to 16 if not provided
+    #  and will result in truncated passwords
+    if $real_password.length <= 16 {
+      $password_capacity = '16'
+    } else {
+      $password_capacity = '20'
+    }
+
     $unless_cmd = @("CMD"/L$)
       /usr/bin/ipmitool user test ${user_id} 16 "\$PASSWORD" || \
       /usr/bin/ipmitool user test ${user_id} 20 "\$PASSWORD"
       |- CMD
     exec { "ipmi_user_setpw_${title}":
       environment => ["PASSWORD=${real_password}"],
-      command     => "/usr/bin/ipmitool user set password ${user_id} \"\$PASSWORD\"",
+      command     => "/usr/bin/ipmitool user set password ${user_id} \"\$PASSWORD\" ${password_capacity}",
       unless      => $unless_cmd,
       notify      => Exec[
         "ipmi_user_enable_${title}",
