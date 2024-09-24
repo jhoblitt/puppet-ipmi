@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not affect the functionality of the module.
 
+## [v6.1.0](https://github.com/jhoblitt/puppet-ipmi/tree/v6.1.0) (2024-09-24)
+
+[Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v6.0.0...v6.1.0)
+
+**Implemented enhancements:**
+
+- Addition of 'users' facts [\#86](https://github.com/jhoblitt/puppet-ipmi/pull/86) ([nathanlcarlson](https://github.com/nathanlcarlson))
+- More reliably test for current user state [\#85](https://github.com/jhoblitt/puppet-ipmi/pull/85) ([nathanlcarlson](https://github.com/nathanlcarlson))
+
+**Fixed bugs:**
+
+- `ipmi::network` is broken when `ipmitool` is not installed and the `lan_channel` param is unset [\#88](https://github.com/jhoblitt/puppet-ipmi/issues/88)
+- add ipmi::default\_channel param to fix chicken and egg failure [\#89](https://github.com/jhoblitt/puppet-ipmi/pull/89) ([jhoblitt](https://github.com/jhoblitt))
+- Provide password capacity parameter to set password command [\#87](https://github.com/jhoblitt/puppet-ipmi/pull/87) ([nathanlcarlson](https://github.com/nathanlcarlson))
+
 ## [v6.0.0](https://github.com/jhoblitt/puppet-ipmi/tree/v6.0.0) (2024-09-12)
 
 [Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v5.3.1...v6.0.0)
