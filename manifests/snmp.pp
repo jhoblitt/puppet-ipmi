@@ -8,13 +8,18 @@
 #   Defaults to the first detected lan channel, starting at 1 ending at 11
 #
 define ipmi::snmp (
-  String $snmp         = 'public',
-  Integer $lan_channel = $facts['ipmi']['default']['channel'],
+  String $snmp                   = 'public',
+  Optional[Integer] $lan_channel = undef,
 ) {
   require ipmi::install
 
-  exec { "ipmi_set_snmp_${lan_channel}":
-    command => "/usr/bin/ipmitool lan set ${lan_channel} snmp ${snmp}",
-    onlyif  => "/usr/bin/test \"$(ipmitool lan print ${lan_channel} | grep 'SNMP Community String' | sed -e 's/.* : //g')\" != \"${snmp}\"",
+  $_real_lan_channel = $lan_channel ? {
+    undef => $ipmi::default_channel,
+    default => $lan_channel,
+  }
+
+  exec { "ipmi_set_snmp_${_real_lan_channel}":
+    command => "/usr/bin/ipmitool lan set ${_real_lan_channel} snmp ${snmp}",
+    onlyif  => "/usr/bin/test \"$(ipmitool lan print ${_real_lan_channel} | grep 'SNMP Community String' | sed -e 's/.* : //g')\" != \"${snmp}\"",
   }
 }

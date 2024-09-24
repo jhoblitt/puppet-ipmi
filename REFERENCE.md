@@ -43,6 +43,7 @@ The following parameters are available in the `ipmi` class:
 * [`snmps`](#-ipmi--snmps)
 * [`users`](#-ipmi--users)
 * [`networks`](#-ipmi--networks)
+* [`default_channel`](#-ipmi--default_channel)
 
 ##### <a name="-ipmi--packages"></a>`packages`
 
@@ -104,6 +105,14 @@ Data type: `Optional[Hash]`
 
 `ipmi::network` resources to create.
 
+##### <a name="-ipmi--default_channel"></a>`default_channel`
+
+Data type: `Integer[0]`
+
+Default channel to use for IPMI commands.
+
+Default value: `Integer(fact('ipmi.default.channel') or 1)`
+
 ## Defined types
 
 ### <a name="ipmi--network"></a>`ipmi::network`
@@ -154,12 +163,12 @@ Default value: `'dhcp'`
 
 ##### <a name="-ipmi--network--lan_channel"></a>`lan_channel`
 
-Data type: `Integer`
+Data type: `Optional[Integer]`
 
 Controls the lan channel of the IPMI network to be configured.
 Defaults to the first detected lan channel, starting at 1 ending at 11
 
-Default value: `$facts['ipmi']['default']['channel']`
+Default value: `undef`
 
 ### <a name="ipmi--snmp"></a>`ipmi::snmp`
 
@@ -182,12 +191,12 @@ Default value: `'public'`
 
 ##### <a name="-ipmi--snmp--lan_channel"></a>`lan_channel`
 
-Data type: `Integer`
+Data type: `Optional[Integer]`
 
 Controls the lan channel of the IPMI network on which snmp is to be configured.
 Defaults to the first detected lan channel, starting at 1 ending at 11
 
-Default value: `$facts['ipmi']['default']['channel']`
+Default value: `undef`
 
 ### <a name="ipmi--user"></a>`ipmi::user`
 
@@ -254,10 +263,10 @@ Default value: `undef`
 
 ##### <a name="-ipmi--user--channel"></a>`channel`
 
-Data type: `Integer`
+Data type: `Optional[Integer]`
 
 Controls the channel of the IPMI user to be configured.
 Defaults to the first detected lan channel, starting at 1 ending at 11
 
-Default value: `$facts['ipmi']['default']['channel']`
+Default value: `undef`
 
