@@ -168,6 +168,18 @@ ipmi => {
     ipaddress_source => Static Address,
     macaddress => 00:30:48:c9:64:2a,
     subnet_mask => 255.255.255.0,
+    users => {
+      1 => {
+        id => 1,
+        name => '',
+        privilege => 'NO ACCESS',
+      },
+      2 => {
+        id => 2,
+        name => 'admin',
+        privilege => 'ADMINISTRATOR',
+      }
+    },
   },
   1 => {
     channel => 1,
@@ -176,6 +188,18 @@ ipmi => {
     ipaddress_source => Static Address,
     macaddress => 00:30:48:c9:64:2a,
     subnet_mask => 255.255.255.0,
+    users => {
+      1 => {
+        id => 1,
+        name => '',
+        privilege => 'NO ACCESS',
+      },
+      2 => {
+        id => 2,
+        name => 'admin',
+        privilege => 'ADMINISTRATOR',
+      }
+    },
   },
 }
 ```
