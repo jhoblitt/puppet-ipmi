@@ -21,6 +21,8 @@
 #   `ipmi::user` resources to create.
 # @param networks
 #   `ipmi::network` resources to create.
+# @param default_channel
+#   Default channel to use for IPMI commands.
 #
 class ipmi (
   Array[String] $packages,
@@ -33,6 +35,7 @@ class ipmi (
   Optional[Hash] $snmps,
   Optional[Hash] $users,
   Optional[Hash] $networks,
+  Integer[0] $default_channel = Integer(fact('ipmi.default.channel') or 1),
 ) {
   $enable_ipmi = $service_ensure ? {
     'running' => true,
