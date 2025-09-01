@@ -9,6 +9,7 @@ describe 'ipmi::user', type: :define do
         facts.merge(
           {
             ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' },
+            ipmitool: { mc_info: { 'Manufacturer Name' => 'Generic' } },
             ipmi: { default: { channel: 1 } }
           }
         )
@@ -146,7 +147,50 @@ describe 'ipmi::user', type: :define do
 
         it { is_expected.not_to contain_exec('ipmi_user_enable_newuser') }
         it { is_expected.not_to contain_exec('ipmi_user_enable_sol_newuser') }
+
       end
+    end
+  end
+  
+  # Test Dell-specific functionality separately
+  describe 'ipmi::user Dell functionality', type: :define do
+    let(:title) { 'newuser' }
+    let(:params) { { enable: false } }
+    
+    context 'with Dell hardware' do
+      let(:facts) do
+        {
+          ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' },
+          ipmitool: { 
+            mc_info: { 
+              'Manufacturer Name' => 'Dell Inc.'
+            }
+          },
+          ipmi: { default: { channel: 1, users: { '3' => { 'name' => 'newuser' }}}}
+        }
+      end
+      
+      it { is_expected.to contain_exec('ipmi_dell_clear_username_newuser').with(
+        'command' => '/usr/bin/ipmitool user set name 3 \'\'',
+        'onlyif' => "/bin/test -n 'newuser'",
+        'subscribe' => 'Exec[ipmi_user_priv_newuser]'
+      )}
+    end
+    
+    context 'with non-Dell hardware' do
+      let(:facts) do
+        {
+          ipmitool_mc_info: { IPMI_Puppet_Service_Recommend: 'running' },
+          ipmitool: { 
+            mc_info: { 
+              'Manufacturer Name' => 'SuperMicro'
+            }
+          },
+          ipmi: { default: { channel: 1 }}
+        }
+      end
+      
+      it { is_expected.not_to contain_exec('ipmi_dell_clear_username_newuser') }
     end
   end
 end
