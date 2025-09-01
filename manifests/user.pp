@@ -131,5 +131,18 @@ define ipmi::user (
       command     => "/usr/bin/ipmitool channel setaccess ${_real_channel} ${user_id} callin=off ipmi=off link=off privilege=15",
       refreshonly => true,
     }
+
+    if downcase($facts['ipmitool']['mc_info']['Manufacturer Name']) =~ /dell/ {
+      # this looks weird, but ${facts['ipmi']['default']['users'][$user_id] expects
+      # $user_id to be a string wrapped in quotes (check the ipmi fact). Separating it
+      # out here works around shell quoting issues, and quoting lint checks
+      $user_id_str = String($user_id)
+      exec { "ipmi_dell_clear_username_${title}":
+        command   => "/usr/bin/ipmitool user set name ${user_id} ''",
+        # test this by using -z instead of -n to verify the code is "not not" working
+        onlyif    => "/bin/test -n '${facts['ipmi']['default']['users'][$user_id_str]['name']}'",
+        subscribe => Exec["ipmi_user_priv_${title}"],
+      }
+    }
   }
 }
