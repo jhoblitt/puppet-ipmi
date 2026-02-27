@@ -128,6 +128,7 @@ The following parameters are available in the `ipmi::network` defined type:
 * [`gateway`](#-ipmi--network--gateway)
 * [`type`](#-ipmi--network--type)
 * [`lan_channel`](#-ipmi--network--lan_channel)
+* [`interface_type`](#-ipmi--network--interface_type)
 
 ##### <a name="-ipmi--network--ip"></a>`ip`
 
@@ -167,6 +168,17 @@ Data type: `Optional[Integer]`
 
 Controls the lan channel of the IPMI network to be configured.
 Defaults to the first detected lan channel, starting at 1 ending at 11
+
+Default value: `undef`
+
+##### <a name="-ipmi--network--interface_type"></a>`interface_type`
+
+Data type: `Optional[Enum['dedicated', 'shared', 'failover']]`
+
+Controls the NIC selection mode for the BMC.
+Supported values: 'dedicated', 'shared', 'failover'.
+Only applied when the manufacturer is known (Supermicro or Dell).
+Leave undef to skip interface type configuration.
 
 Default value: `undef`
 
