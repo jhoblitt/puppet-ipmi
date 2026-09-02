@@ -22,7 +22,14 @@ describe 'ipmi::network', type: :define do
           }
         end
 
-        it { is_expected.to contain_exec('ipmi_set_dhcp_1') }
+        it { is_expected.to compile.with_all_deps }
+
+        it {
+          is_expected.to contain_ipmi_network('ipmi_network_example').with(
+            lan_channel: 1,
+            type: 'dhcp'
+          )
+        }
       end
 
       describe 'when deploying as dhcp with all params' do
@@ -36,7 +43,14 @@ describe 'ipmi::network', type: :define do
           }
         end
 
-        it { is_expected.to contain_exec('ipmi_set_dhcp_1') }
+        it { is_expected.to compile.with_all_deps }
+
+        it {
+          is_expected.to contain_ipmi_network('ipmi_network_example').with(
+            lan_channel: 1,
+            type: 'dhcp'
+          )
+        }
       end
 
       describe 'when deploying as static with minimal params' do
@@ -49,9 +63,17 @@ describe 'ipmi::network', type: :define do
           }
         end
 
-        it { is_expected.to contain_exec('ipmi_set_static_1').that_notifies('Exec[ipmi_set_ipaddr_1]') }
-        it { is_expected.to contain_exec('ipmi_set_static_1').that_notifies('Exec[ipmi_set_defgw_1]') }
-        it { is_expected.to contain_exec('ipmi_set_static_1').that_notifies('Exec[ipmi_set_netmask_1]') }
+        it { is_expected.to compile.with_all_deps }
+
+        it {
+          is_expected.to contain_ipmi_network('ipmi_network_example').with(
+            lan_channel: 1,
+            type: 'static',
+            ip: '1.1.1.10',
+            netmask: '255.255.255.0',
+            gateway: '1.1.1.1'
+          )
+        }
       end
 
       describe 'when deploying as static with all params' do
@@ -65,9 +87,17 @@ describe 'ipmi::network', type: :define do
           }
         end
 
-        it { is_expected.to contain_exec('ipmi_set_static_2').that_notifies('Exec[ipmi_set_ipaddr_2]') }
-        it { is_expected.to contain_exec('ipmi_set_static_2').that_notifies('Exec[ipmi_set_defgw_2]') }
-        it { is_expected.to contain_exec('ipmi_set_static_2').that_notifies('Exec[ipmi_set_netmask_2]') }
+        it { is_expected.to compile.with_all_deps }
+
+        it {
+          is_expected.to contain_ipmi_network('ipmi_network_example').with(
+            lan_channel: 2,
+            type: 'static',
+            ip: '1.1.1.10',
+            netmask: '255.255.255.0',
+            gateway: '1.1.1.1'
+          )
+        }
       end
     end
   end

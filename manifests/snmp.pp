@@ -14,12 +14,12 @@ define ipmi::snmp (
   require ipmi::install
 
   $_real_lan_channel = $lan_channel ? {
-    undef => $ipmi::default_channel,
+    undef   => $ipmi::default_channel,
     default => $lan_channel,
   }
 
-  exec { "ipmi_set_snmp_${_real_lan_channel}":
-    command => "/usr/bin/ipmitool lan set ${_real_lan_channel} snmp ${snmp}",
-    onlyif  => "/usr/bin/test \"$(ipmitool lan print ${_real_lan_channel} | grep 'SNMP Community String' | sed -e 's/.* : //g')\" != \"${snmp}\"",
+  ipmi_snmp { "ipmi_snmp_${title}":
+    lan_channel => $_real_lan_channel,
+    community   => $snmp,
   }
 }

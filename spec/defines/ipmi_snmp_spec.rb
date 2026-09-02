@@ -21,7 +21,14 @@ describe 'ipmi::snmp', type: :define do
   let(:title) { 'example' }
 
   describe 'when deploying with no params' do
-    it { is_expected.to contain_exec('ipmi_set_snmp_1') }
+    it { is_expected.to compile.with_all_deps }
+
+    it {
+      is_expected.to contain_ipmi_snmp('ipmi_snmp_example').with(
+        lan_channel: 1,
+        community: 'public'
+      )
+    }
   end
 
   describe 'when deploying with all params' do
@@ -32,6 +39,13 @@ describe 'ipmi::snmp', type: :define do
       }
     end
 
-    it { is_expected.to contain_exec('ipmi_set_snmp_2') }
+    it { is_expected.to compile.with_all_deps }
+
+    it {
+      is_expected.to contain_ipmi_snmp('ipmi_snmp_example').with(
+        lan_channel: 2,
+        community: 'secret'
+      )
+    }
   end
 end
