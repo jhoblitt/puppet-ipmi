@@ -84,6 +84,28 @@ describe 'ipmi::user', type: :define do
         }
       end
 
+      context 'when deploying with user_id auto' do
+        let(:params) do
+          {
+            user: 'newuser1',
+            password: 'password',
+            user_id: 'auto',
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+
+        it {
+          is_expected.to contain_ipmi_user('ipmi_user_newuser').with(
+            user: 'newuser1',
+            user_id: :auto,
+            priv: 4,
+            channel: 1,
+            enable: true
+          )
+        }
+      end
+
       describe 'when deploying with no params' do
         it 'fails and raise password required error' do
           expect { is_expected.to contain_ipmi_user('ipmi_user_newuser') }.to raise_error(Puppet::Error, %r{You must supply a password to enable})

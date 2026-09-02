@@ -14,7 +14,14 @@
 # @param enable
 #   Should this user be enabled?
 # @param user_id
-#   The user id of the user to be created. Should be unique from existing users.
+#   The user id of the user to be created, or 'auto' to let the provider
+#   select one. Should be unique from existing users.
+#
+#   When set to 'auto', the provider first checks for an existing user with
+#   the requested username and reuses that ID.  Otherwise it selects the
+#   lowest unused ID reported by the BMC.  ID 1 is the anonymous slot and is
+#   never returned by 'auto'.
+#
 #   On SuperMicro IPMI, user id 2 is reserved for the 'ADMIN' username.
 #   On ASUS IPMI, user id 2 is reserved for the 'admin' username.
 # @param password
@@ -32,7 +39,7 @@ define ipmi::user (
   String $user                                                 = 'root',
   Integer $priv                                                = 4,
   Boolean $enable                                              = true,
-  Integer $user_id                                             = 3,
+  Variant[Integer, Enum['auto']] $user_id                      = 3,
   Optional[Variant[Sensitive[String[1]], String[1]]] $password = undef,
   Optional[Integer] $channel                                   = undef,
   Boolean $purge_id_mismatch                                   = false,

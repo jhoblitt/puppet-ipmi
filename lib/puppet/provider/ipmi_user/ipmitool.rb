@@ -32,8 +32,15 @@ Puppet::Type.type(:ipmi_user).provide(
     @resource[:channel]
   end
 
-  def user_id
-    @resource[:user_id]
+  def resolved_user_id
+    return @resolved_user_id if defined?(@resolved_user_id)
+
+    requested = @resource[:user_id]
+    @resolved_user_id = if requested == :auto
+                          resolve_auto_user_id(user_name, parse_user_list)
+                        else
+                          requested
+                        end
   end
 
   def user_name
@@ -48,6 +55,9 @@ Puppet::Type.type(:ipmi_user).provide(
   end
 
   # Parse `ipmitool user list <channel>` output and return array of hashes.
+  #
+  # Empty slots and slots with an unknown privilege limit are included with an
+  # empty name so that the BMC-reported range is preserved for `user_id => 'auto'`.
   def parse_user_list
     output = ipmitool_exec("user list #{channel} 2>/dev/null")
     users = []
@@ -55,12 +65,12 @@ Puppet::Type.type(:ipmi_user).provide(
 
     output.each_line do |line|
       stripped = line.strip
-      next unless stripped =~ %r{^(\d+)\s+(.+?)(\s+(true|false)\s+){3}(USER|ADMINISTRATOR|CALLBACK|OPERATOR|NO ACCESS)$}
+      next unless stripped =~ %r{^(\d+)\s+(.*?)\s+(true|false)\s+(true|false)\s+(true|false)\s+(.+)$}
 
       users << {
         id: Regexp.last_match(1).strip.to_i,
         name: Regexp.last_match(2).strip,
-        privilege: Regexp.last_match(5).strip,
+        privilege: Regexp.last_match(6).strip,
       }
     end
     users
@@ -80,11 +90,11 @@ Puppet::Type.type(:ipmi_user).provide(
     return unless [:true, true].include?(@resource[:enable])
 
     parse_user_list.each do |entry|
-      next if entry[:id] == user_id
+      next if entry[:id] == resolved_user_id
       next unless entry[:name] == user_name
       next if entry[:name] =~ %r{^DISABLED_}
 
-      Puppet.debug("ipmi_user: purging #{user_name} from slot #{entry[:id]} (expected at #{user_id})")
+      Puppet.debug("ipmi_user: purging #{user_name} from slot #{entry[:id]} (expected at #{resolved_user_id})")
       ipmitool_exec("user set name #{entry[:id]} DISABLED_#{entry[:id]}", failonfail: true)
       ipmitool_exec("user disable #{entry[:id]}", failonfail: true)
       ipmitool_exec(
@@ -99,7 +109,7 @@ Puppet::Type.type(:ipmi_user).provide(
   # ---------------------------------------------------------------------------
 
   def enable
-    entry = find_user_by_id(user_id)
+    entry = find_user_by_id(resolved_user_id)
     return :false if entry.nil?
 
     # A user with NO ACCESS privilege is considered disabled
@@ -117,7 +127,7 @@ Puppet::Type.type(:ipmi_user).provide(
   end
 
   def priv
-    entry = find_user_by_id(user_id)
+    entry = find_user_by_id(resolved_user_id)
     return nil if entry.nil?
 
     priv_name = entry[:privilege]
@@ -125,9 +135,9 @@ Puppet::Type.type(:ipmi_user).provide(
   end
 
   def priv=(val)
-    ipmitool_exec("user priv #{user_id} #{val} #{channel}", failonfail: true)
+    ipmitool_exec("user priv #{resolved_user_id} #{val} #{channel}", failonfail: true)
     ipmitool_exec(
-      "channel setaccess #{channel} #{user_id} callin=on ipmi=on link=on privilege=#{val}",
+      "channel setaccess #{channel} #{resolved_user_id} callin=on ipmi=on link=on privilege=#{val}",
       failonfail: true
     )
   end
@@ -136,48 +146,48 @@ Puppet::Type.type(:ipmi_user).provide(
 
   def enable_user!
     # Set username
-    ipmitool_exec("user set name #{user_id} #{shellescape(user_name)}", failonfail: true)
+    ipmitool_exec("user set name #{resolved_user_id} #{shellescape(user_name)}", failonfail: true)
 
     # Set password
     pw = real_password
     if pw && !pw.empty?
       password_capacity = pw.length <= 16 ? '16' : '20'
       ipmitool_exec(
-        "user set password #{user_id} #{shellescape(pw)} #{password_capacity}",
+        "user set password #{resolved_user_id} #{shellescape(pw)} #{password_capacity}",
         failonfail: true
       )
     end
 
     # Set privilege
     priv_level = @resource[:priv] || 4
-    ipmitool_exec("user priv #{user_id} #{priv_level} #{channel}", failonfail: true)
+    ipmitool_exec("user priv #{resolved_user_id} #{priv_level} #{channel}", failonfail: true)
 
     # Enable user
-    ipmitool_exec("user enable #{user_id}", failonfail: true)
+    ipmitool_exec("user enable #{resolved_user_id}", failonfail: true)
 
     # Enable SOL payload
-    ipmitool_exec("sol payload enable #{channel} #{user_id}", failonfail: true)
+    ipmitool_exec("sol payload enable #{channel} #{resolved_user_id}", failonfail: true)
 
     # Set channel access
     ipmitool_exec(
-      "channel setaccess #{channel} #{user_id} callin=on ipmi=on link=on privilege=#{priv_level}",
+      "channel setaccess #{channel} #{resolved_user_id} callin=on ipmi=on link=on privilege=#{priv_level}",
       failonfail: true
     )
   end
 
   def disable_user!
     # Set privilege to NO ACCESS (0xF)
-    ipmitool_exec("user priv #{user_id} 0xF #{channel}", failonfail: true)
+    ipmitool_exec("user priv #{resolved_user_id} 0xF #{channel}", failonfail: true)
 
     # Disable user
-    ipmitool_exec("user disable #{user_id}", failonfail: true)
+    ipmitool_exec("user disable #{resolved_user_id}", failonfail: true)
 
     # Disable SOL payload
-    ipmitool_exec("sol payload disable #{channel} #{user_id}", failonfail: true)
+    ipmitool_exec("sol payload disable #{channel} #{resolved_user_id}", failonfail: true)
 
     # Remove channel access
     ipmitool_exec(
-      "channel setaccess #{channel} #{user_id} callin=off ipmi=off link=off privilege=15",
+      "channel setaccess #{channel} #{resolved_user_id} callin=off ipmi=off link=off privilege=15",
       failonfail: true
     )
   end

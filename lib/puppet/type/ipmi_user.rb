@@ -25,6 +25,15 @@ Puppet::Type.newtype(:ipmi_user) do
         channel => 1,
         enable  => false,
       }
+
+    @example Automatically select a user ID
+      ipmi_user { 'auto_user':
+        user     => 'admin',
+        password => Sensitive('s3cret'),
+        user_id  => 'auto',
+        priv     => 4,
+        channel  => 1,
+      }
   DOC
 
   newparam(:name, namevar: true) do
@@ -38,15 +47,24 @@ Puppet::Type.newtype(:ipmi_user) do
 
   newparam(:user_id) do
     desc <<-DESC
-      The numeric IPMI user slot ID.
+      The numeric IPMI user slot ID, or 'auto' to let the provider select one.
+
+      When set to 'auto', the provider first checks for an existing user with
+      the requested username and reuses that ID.  Otherwise it selects the
+      lowest unused ID reported by the BMC.  ID 1 is the anonymous slot and is
+      never returned by 'auto'.
+
       On SuperMicro IPMI, user id 2 is reserved for the ADMIN username.
       On ASUS IPMI, user id 2 is reserved for the admin username.
     DESC
     defaultto 3
     validate do |value|
-      raise Puppet::Error, 'user_id must be a positive integer' unless value.to_s =~ %r{^\d+$} && value.to_i.positive?
+      str = value.to_s
+      raise Puppet::Error, 'user_id must be a positive integer or "auto"' unless str == 'auto' || (str =~ %r{^\d+$} && value.to_i.positive?)
     end
-    munge(&:to_i)
+    munge do |value|
+      value.to_s == 'auto' ? :auto : value.to_i
+    end
   end
 
   newparam(:password) do

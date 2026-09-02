@@ -31,12 +31,50 @@ Puppet::Type.type(:ipmi_user).provide(
     @resource[:channel]
   end
 
-  def user_id
-    @resource[:user_id]
+  def resolved_user_id
+    return @resolved_user_id if defined?(@resolved_user_id)
+
+    requested = @resource[:user_id]
+    @resolved_user_id = if requested == :auto
+                          resolve_auto_user_id(user_name, list_all_users)
+                        else
+                          requested
+                        end
   end
 
   def user_name
     @resource[:user]
+  end
+
+  # Build a list of all BMC user slots from a single bmc-config checkout.
+  def list_all_users
+    return @list_all_users if defined?(@list_all_users)
+
+    output = bmcconfig_exec('--checkout 2>/dev/null')
+    return @list_all_users = [] if output.nil? || output.empty?
+
+    section_ids = []
+    names = {}
+    current_id = nil
+    output.each_line do |line|
+      if line =~ %r{^\s*Section\s+User(\d+)}i
+        current_id = Regexp.last_match(1).to_i
+        section_ids << current_id
+      elsif current_id && line =~ %r{^\s*Username\s+(.+)$}
+        name = Regexp.last_match(1).strip
+        name = '' if ['<username-not-set-yet>', 'NULL'].include?(name)
+        names[current_id] = name
+        current_id = nil
+      end
+    end
+
+    @list_all_users = section_ids.sort.map do |id|
+      { id: id, name: names.fetch(id, '') }
+    end
+  end
+
+  def max_user_slot
+    (list_all_users.map { |u| u[:id] }.max || 15)
   end
 
   def real_password
@@ -47,21 +85,21 @@ Puppet::Type.type(:ipmi_user).provide(
   end
 
   def user_section
-    "User#{user_id}"
+    "User#{resolved_user_id}"
   end
 
   # ---------------------------------------------------------------------------
   # Purge ID mismatch
   # ---------------------------------------------------------------------------
 
-  # Scan all standard IPMI user slots (1-15) and disable any slot that holds
-  # the target username at an ID other than user_id.
+  # Scan all BMC user slots and disable any slot that holds the target
+  # username at an ID other than resolved_user_id.
   def purge_mismatched_ids!
     return unless [:true, true].include?(@resource[:purge_id_mismatch])
     return unless [:true, true].include?(@resource[:enable])
 
-    (1..15).each do |slot|
-      next if slot == user_id
+    (1..max_user_slot).each do |slot|
+      next if slot == resolved_user_id
 
       slot_section = "User#{slot}"
       slot_username = bmc_config_get(slot_section, 'Username')
@@ -69,7 +107,7 @@ Puppet::Type.type(:ipmi_user).provide(
       next unless slot_username == user_name
       next if slot_username =~ %r{^DISABLED_}
 
-      Puppet.debug("ipmi_user: purging #{user_name} from slot #{slot} (expected at #{user_id})")
+      Puppet.debug("ipmi_user: purging #{user_name} from slot #{slot} (expected at #{resolved_user_id})")
       bmc_config_set(slot_section, 'Username', "DISABLED_#{slot}")
       bmc_config_set(slot_section, 'Enable_User', 'No')
       bmc_config_set(slot_section, "Lan_Channel_Channel_#{channel}_Privilege_Limit", 'No_Access')

@@ -252,9 +252,16 @@ Default value: `true`
 
 ##### <a name="-ipmi--user--user_id"></a>`user_id`
 
-Data type: `Integer`
+Data type: `Variant[Integer, Enum['auto']]`
 
-The user id of the user to be created. Should be unique from existing users.
+The user id of the user to be created, or 'auto' to let the provider
+select one. Should be unique from existing users.
+
+When set to 'auto', the provider first checks for an existing user with
+the requested username and reuses that ID.  Otherwise it selects the
+lowest unused ID reported by the BMC.  ID 1 is the anonymous slot and is
+never returned by 'auto'.
+
 On SuperMicro IPMI, user id 2 is reserved for the 'ADMIN' username.
 On ASUS IPMI, user id 2 is reserved for the 'admin' username.
 
@@ -488,6 +495,18 @@ ipmi_user { 'old_user':
 }
 ```
 
+##### Automatically select a user ID
+
+```puppet
+ipmi_user { 'auto_user':
+  user     => 'admin',
+  password => Sensitive('s3cret'),
+  user_id  => 'auto',
+  priv     => 4,
+  channel  => 1,
+}
+```
+
 #### Properties
 
 The following properties are available in the `ipmi_user` type.
@@ -576,7 +595,13 @@ Default value: `root`
 
 ##### <a name="-ipmi_user--user_id"></a>`user_id`
 
-The numeric IPMI user slot ID.
+The numeric IPMI user slot ID, or 'auto' to let the provider select one.
+
+When set to 'auto', the provider first checks for an existing user with
+the requested username and reuses that ID.  Otherwise it selects the
+lowest unused ID reported by the BMC.  ID 1 is the anonymous slot and is
+never returned by 'auto'.
+
 On SuperMicro IPMI, user id 2 is reserved for the ADMIN username.
 On ASUS IPMI, user id 2 is reserved for the admin username.
 

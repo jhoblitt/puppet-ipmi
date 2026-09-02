@@ -1,0 +1,16 @@
+ID  Name             Callin  Link Auth  IPMI Msg   Channel Priv Limit
+1                    false   false      false      NO ACCESS
+2   admin            false   false      true       ADMINISTRATOR
+3   ADMIN            true    true       true       ADMINISTRATOR
+4   SLAM             true    true       true       ADMINISTRATOR
+5   Administrator    true    true       true       ADMINISTRATOR
+6                    true    false      false      NO ACCESS
+7                    true    false      false      NO ACCESS
+8                    true    false      false      NO ACCESS
+9                    true    false      false      NO ACCESS
+10                   true    false      false      NO ACCESS
+11                   true    false      false      NO ACCESS
+12                   true    false      false      NO ACCESS
+13                   true    false      false      NO ACCESS
+14                   true    false      false      NO ACCESS
+15                   true    false      false      NO ACCESS

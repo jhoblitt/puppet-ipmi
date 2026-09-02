@@ -78,7 +78,23 @@ describe Puppet::Type.type(:ipmi_user) do
     it 'rejects invalid user_id' do
       expect do
         described_class.new(name: 'test', enable: :false, user_id: 0)
-      end.to raise_error(Puppet::Error, %r{user_id must be a positive integer})
+      end.to raise_error(Puppet::Error, %r{user_id must be a positive integer or "auto"})
+    end
+
+    it 'accepts user_id auto as a string' do
+      resource = described_class.new(name: 'test', enable: :false, user_id: 'auto')
+      expect(resource[:user_id]).to eq(:auto)
+    end
+
+    it 'accepts user_id auto as a symbol' do
+      resource = described_class.new(name: 'test', enable: :false, user_id: :auto)
+      expect(resource[:user_id]).to eq(:auto)
+    end
+
+    it 'rejects non-auto string user_id values' do
+      expect do
+        described_class.new(name: 'test', enable: :false, user_id: 'foo')
+      end.to raise_error(Puppet::Error, %r{user_id must be a positive integer or "auto"})
     end
   end
 end
