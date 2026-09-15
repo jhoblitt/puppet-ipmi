@@ -314,14 +314,14 @@ describe 'ipmi', type: :class do
         let(:facts) { super().merge(ipmi: { default: { channel: 2 } }) }
         let(:params) { { networks: { dhcp: {} } } }
 
-        it { is_expected.to contain_exec('ipmi_set_dhcp_2') }
+        it { is_expected.to contain_ipmi_network('ipmi_network_2') }
       end
 
       context 'without the ipmi fact' do
         let(:facts) { super().except(:ipmi) }
         let(:params) { { networks: { dhcp: {} } } }
 
-        it { is_expected.to contain_exec('ipmi_set_dhcp_1') }
+        it { is_expected.to contain_ipmi_network('ipmi_network_1') }
       end
     end
   end
