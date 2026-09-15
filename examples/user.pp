@@ -1,5 +1,3 @@
-ipmi::user { 'test':
-  user     => 'test',
+ipmi_user { 'test':
   password => 'password',
-  user_id  => 4,
 }
