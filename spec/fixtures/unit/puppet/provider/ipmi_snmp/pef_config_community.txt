@@ -1,0 +1,4 @@
+Section Community_String_Channel_1
+        ## Give Community String
+        Community_String                              secret
+EndSection
