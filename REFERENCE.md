@@ -14,6 +14,7 @@
 
 * `ipmi::config`
 * `ipmi::install`
+* `ipmi::service`
 * `ipmi::service::ipmi`
 * `ipmi::service::ipmievd`
 

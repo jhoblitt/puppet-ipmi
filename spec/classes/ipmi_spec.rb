@@ -21,6 +21,13 @@ shared_examples 'installs packages' do |facts|
   end
 end
 
+shared_examples 'contains ipmi::service' do
+  it { is_expected.to contain_class('ipmi::service') }
+  it { is_expected.to contain_class('ipmi::service::ipmi') }
+  it { is_expected.to contain_class('ipmi::service::ipmievd') }
+  it { is_expected.to contain_class('ipmi::config').that_notifies('Class[ipmi::service]') }
+end
+
 describe 'ipmi', type: :class do
   on_supported_os.each do |os, facts|
     context "on #{os}" do
@@ -46,6 +53,7 @@ describe 'ipmi', type: :class do
 
       context 'with no params' do
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -75,6 +83,7 @@ describe 'ipmi', type: :class do
         let(:params) { { service_ensure: 'running' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -104,6 +113,7 @@ describe 'ipmi', type: :class do
         let(:params) { { service_ensure: 'stopped' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -133,6 +143,7 @@ describe 'ipmi', type: :class do
         let(:params) { { ipmievd_service_ensure: 'running' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -162,6 +173,7 @@ describe 'ipmi', type: :class do
         let(:params) { { ipmievd_service_ensure: 'stopped' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -191,6 +203,7 @@ describe 'ipmi', type: :class do
         let(:params) { { watchdog: true } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -220,6 +233,7 @@ describe 'ipmi', type: :class do
         let(:params) { { watchdog: false } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -255,6 +269,23 @@ describe 'ipmi', type: :class do
         end
 
         it { is_expected.to compile.with_all_deps }
+
+        it_behaves_like 'contains ipmi::service'
+      end
+
+      context 'with ipmievd_service_name' do
+        let(:params) { { ipmievd_service_name: 'custom_ipmievd' } }
+
+        it { is_expected.to compile.with_all_deps }
+
+        it do
+          is_expected.to contain_service('custom_ipmievd').with(
+            ensure: 'stopped',
+            enable: false,
+          )
+        end
+
+        it { is_expected.not_to contain_service('ipmievd') }
       end
     end
   end
