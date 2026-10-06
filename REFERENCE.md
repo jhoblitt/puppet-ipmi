@@ -17,11 +17,11 @@
 * `ipmi::service::ipmi`
 * `ipmi::service::ipmievd`
 
-### Defined types
+### Resource types
 
-* [`ipmi::network`](#ipmi--network): Manage BMC network configuration
-* [`ipmi::snmp`](#ipmi--snmp): Manage SNMP community strings
-* [`ipmi::user`](#ipmi--user): Manage BMC users
+* [`ipmi_network`](#ipmi_network): Manages BMC network configuration via IPMI.
+* [`ipmi_snmp`](#ipmi_snmp): Manages SNMP community string on a BMC LAN channel via IPMI.
+* [`ipmi_user`](#ipmi_user): Manages BMC user accounts via IPMI.
 
 ## Classes
 
@@ -105,7 +105,7 @@ Default value: `false`
 
 Data type: `Optional[Hash]`
 
-`ipmi::snmp` resources to create.
+`ipmi_snmp` resources to create.
 
 Default value: `undef`
 
@@ -113,7 +113,7 @@ Default value: `undef`
 
 Data type: `Optional[Hash]`
 
-`ipmi::user` resources to create.
+`ipmi_user` resources to create.
 
 Default value: `undef`
 
@@ -121,183 +121,336 @@ Default value: `undef`
 
 Data type: `Optional[Hash]`
 
-`ipmi::network` resources to create.
+`ipmi_network` resources to create.
 
 Default value: `undef`
 
 ##### <a name="-ipmi--default_channel"></a>`default_channel`
 
-Data type: `Integer[0]`
+Data type: `Optional[Integer[1, 15]]`
 
-Default channel to use for IPMI commands.
-
-Default value: `Integer(fact('ipmi.default.channel') or 1)`
-
-## Defined types
-
-### <a name="ipmi--network"></a>`ipmi::network`
-
-Manage BMC network configuration
-
-#### Parameters
-
-The following parameters are available in the `ipmi::network` defined type:
-
-* [`ip`](#-ipmi--network--ip)
-* [`netmask`](#-ipmi--network--netmask)
-* [`gateway`](#-ipmi--network--gateway)
-* [`type`](#-ipmi--network--type)
-* [`lan_channel`](#-ipmi--network--lan_channel)
-
-##### <a name="-ipmi--network--ip"></a>`ip`
-
-Data type: `Stdlib::IP::Address`
-
-Controls the IP of the IPMI network.
-
-Default value: `'0.0.0.0'`
-
-##### <a name="-ipmi--network--netmask"></a>`netmask`
-
-Data type: `Stdlib::IP::Address`
-
-Controls the subnet mask of the IPMI network.
-
-Default value: `'255.255.255.0'`
-
-##### <a name="-ipmi--network--gateway"></a>`gateway`
-
-Data type: `Stdlib::IP::Address`
-
-Controls the gateway of the IPMI network.
-
-Default value: `'0.0.0.0'`
-
-##### <a name="-ipmi--network--type"></a>`type`
-
-Data type: `Enum['dhcp', 'static']`
-
-Controls the if IP will be from DHCP or Static.
-
-Default value: `'dhcp'`
-
-##### <a name="-ipmi--network--lan_channel"></a>`lan_channel`
-
-Data type: `Optional[Integer]`
-
-Controls the lan channel of the IPMI network to be configured.
-Defaults to the first detected lan channel, starting at 1 ending at 11
+Optional default IPMI channel (1-15) to use for resources that do not
+specify one. When unset, class-declared resources use the node's
+ipmi.default.channel fact if valid; otherwise the class uses an integer
+LAN title or channel 1. Directly declared native resources
+do not use facts for their defaults.
 
 Default value: `undef`
 
-### <a name="ipmi--snmp"></a>`ipmi::snmp`
+## Resource types
 
-Manage SNMP community strings
+### <a name="ipmi_network"></a>`ipmi_network`
+
+Supports both ipmitool and freeipmi backends.  Each property is
+independently managed - leave a property unset to skip management
+of that setting.
+
+The lan channel is derived from the title when it is an integer.
+Otherwise it defaults to 1 when declared directly. The ipmi class can
+inject the node's ipmi.default.channel fact or ipmi::default_channel.
+
+Two resources may not target the same LAN channel; doing so will fail
+the pre-run check instead of fighting on every run.
+
+#### Examples
+
+##### Configure DHCP on channel 1
+
+```puppet
+ipmi_network { 'lan1':
+  type => 'dhcp',
+}
+```
+
+##### Configure static IP on channel 2
+
+```puppet
+ipmi_network { 'bmc_network':
+  lan_channel => 2,
+  type        => 'static',
+  ip          => '192.168.1.100',
+  netmask     => '255.255.255.0',
+  gateway     => '192.168.1.1',
+}
+```
+
+#### Properties
+
+The following properties are available in the `ipmi_network` type.
+
+##### `gateway`
+
+Default gateway for the BMC (only used when type is static).
+
+##### `ip`
+
+IP address for the BMC (only used when type is static).
+
+##### `netmask`
+
+Subnet mask for the BMC (only used when type is static).
+
+##### `type`
+
+Valid values: `dhcp`, `static`
+
+IP address source: dhcp or static.  No default; leave unset to skip managing this property.
 
 #### Parameters
 
-The following parameters are available in the `ipmi::snmp` defined type:
+The following parameters are available in the `ipmi_network` type.
 
-* [`snmp`](#-ipmi--snmp--snmp)
-* [`lan_channel`](#-ipmi--snmp--lan_channel)
+* [`name`](#-ipmi_network--name)
+* [`provider`](#-ipmi_network--provider)
 
-##### <a name="-ipmi--snmp--snmp"></a>`snmp`
+##### <a name="-ipmi_network--name"></a>`name`
 
-Data type: `String`
+namevar
 
-Controls the snmp string of the IPMI network interface.
+Resource title. When it is an integer, the lan channel is derived automatically.
 
-Default value: `'public'`
+##### <a name="-ipmi_network--provider"></a>`provider`
 
-##### <a name="-ipmi--snmp--lan_channel"></a>`lan_channel`
+The specific backend to use for this `ipmi_network` resource. You will seldom need to specify this --- Puppet will
+usually discover the appropriate provider for your platform.
 
-Data type: `Optional[Integer]`
+### <a name="ipmi_snmp"></a>`ipmi_snmp`
 
-Controls the lan channel of the IPMI network on which snmp is to be configured.
-Defaults to the first detected lan channel, starting at 1 ending at 11
+Supports both ipmitool and freeipmi backends. Omitting `community`
+actively sets the BMC community to `public`; it does not leave the
+existing credential unchanged. Set it explicitly to avoid surprises.
 
-Default value: `undef`
+The lan channel is derived from the title when it is an integer.
+Otherwise it defaults to 1 when declared directly. The ipmi class can
+inject the node's ipmi.default.channel fact or ipmi::default_channel.
 
-### <a name="ipmi--user"></a>`ipmi::user`
+Two resources may not target the same LAN channel; doing so will fail
+the pre-run check instead of fighting on every run.
 
-Manage BMC users
+#### Examples
+
+##### Set SNMP community string on channel 1
+
+```puppet
+ipmi_snmp { 'snmp1':
+  community => 'public',
+}
+```
+
+##### Set SNMP community string on channel 2
+
+```puppet
+ipmi_snmp { 'bmc_snmp':
+  lan_channel => 2,
+  community   => 'secret',
+}
+```
+
+#### Properties
+
+The following properties are available in the `ipmi_snmp` type.
+
+##### `community`
+
+SNMP community string. Defaults to public and actively replaces any existing BMC community.
+
+Default value: `public`
 
 #### Parameters
 
-The following parameters are available in the `ipmi::user` defined type:
+The following parameters are available in the `ipmi_snmp` type.
 
-* [`user`](#-ipmi--user--user)
-* [`priv`](#-ipmi--user--priv)
-* [`enable`](#-ipmi--user--enable)
-* [`user_id`](#-ipmi--user--user_id)
-* [`password`](#-ipmi--user--password)
-* [`channel`](#-ipmi--user--channel)
-* [`purge_id_mismatch`](#-ipmi--user--purge_id_mismatch)
+* [`name`](#-ipmi_snmp--name)
+* [`provider`](#-ipmi_snmp--provider)
 
-##### <a name="-ipmi--user--user"></a>`user`
+##### <a name="-ipmi_snmp--name"></a>`name`
 
-Data type: `String`
+namevar
 
-Controls the username of the user to be created.
+Resource title. When it is an integer, the lan channel is derived automatically.
 
-Default value: `'root'`
+##### <a name="-ipmi_snmp--provider"></a>`provider`
 
-##### <a name="-ipmi--user--priv"></a>`priv`
+The specific backend to use for this `ipmi_snmp` resource. You will seldom need to specify this --- Puppet will usually
+discover the appropriate provider for your platform.
 
-Data type: `Integer`
+### <a name="ipmi_user"></a>`ipmi_user`
 
-Possible values:
-`4` - ADMINISTRATOR,
-`3` - OPERATOR,
-`2` - USER,
-`1` - CALLBACK
+Supports both ipmitool and freeipmi backends.  Manages user name,
+password, privilege level, enabled state, SOL access, and channel
+access in an idempotent fashion.
 
-Controls the rights of the user to be created.
+The resource title is used as the IPMI username unless the `username`
+property is given explicitly.  `user_id` defaults to `'auto'`, which
+lets the provider select a slot.
 
-Default value: `4`
+#### Examples
 
-##### <a name="-ipmi--user--enable"></a>`enable`
+##### Create an admin user
 
-Data type: `Boolean`
+```puppet
+ipmi_user { 'admin':
+  password => Sensitive('s3cret'),
+  priv     => 4,
+  channel  => 1,
+  enable   => true,
+}
+```
 
-Should this user be enabled?
+##### Disable a user
+
+```puppet
+ipmi_user { 'old_user':
+  user_id  => 5,
+  channel  => 1,
+  enable   => false,
+}
+```
+
+##### Reserve a user ID with a name but no access
+
+```puppet
+ipmi_user { 'reserved_operator':
+  username => 'OPERATOR',
+  user_id  => 5,
+  channel  => 1,
+  enable   => false,
+}
+```
+
+##### Automatically select a user ID
+
+```puppet
+ipmi_user { 'auto_user':
+  password => Sensitive('s3cret'),
+  priv     => 4,
+  channel  => 1,
+}
+```
+
+##### Use a different resource title than username
+
+```puppet
+ipmi_user { 'admin_account':
+  username => 'admin',
+  password => Sensitive('s3cret'),
+  user_id  => 3,
+  priv     => 4,
+  channel  => 1,
+}
+```
+
+#### Properties
+
+The following properties are available in the `ipmi_user` type.
+
+##### `enable`
+
+Valid values: `true`, `false`
+
+Whether this user account should be enabled or disabled.
 
 Default value: `true`
 
-##### <a name="-ipmi--user--user_id"></a>`user_id`
+##### `ensure`
 
-Data type: `Integer`
+Valid values: `present`, `absent`
 
-The user id of the user to be created. Should be unique from existing users.
-On SuperMicro IPMI, user id 2 is reserved for the 'ADMIN' username.
-On ASUS IPMI, user id 2 is reserved for the 'admin' username.
+Whether the user exists.  IPMI cannot delete a user slot, so `absent`
+first removes channel and SOL access (only while the account is still
+enabled, because BMCs do not allow permission changes on a disabled
+account) and then renames the slot to `DISABLED_<id>`; the slot is then
+treated as free.
 
-Default value: `3`
+Default value: `present`
 
-##### <a name="-ipmi--user--password"></a>`password`
+##### `password`
 
-Data type: `Optional[Variant[Sensitive[String[1]], String[1]]]`
+Password for the IPMI user. A String or Sensitive[String], at most 20 bytes. Required when enable is true.
 
-Controls the password of the user to be created.
+##### `priv`
 
-Default value: `undef`
+      Privilege level for the user:
+4 - ADMINISTRATOR
+3 - OPERATOR
+2 - USER
+1 - CALLBACK
 
-##### <a name="-ipmi--user--channel"></a>`channel`
+Default value: `4`
 
-Data type: `Optional[Integer]`
+#### Parameters
 
-Controls the channel of the IPMI user to be configured.
-Defaults to the first detected lan channel, starting at 1 ending at 11
+The following parameters are available in the `ipmi_user` type.
 
-Default value: `undef`
+* [`channel`](#-ipmi_user--channel)
+* [`name`](#-ipmi_user--name)
+* [`provider`](#-ipmi_user--provider)
+* [`purge_duplicates`](#-ipmi_user--purge_duplicates)
+* [`user_id`](#-ipmi_user--user_id)
+* [`username`](#-ipmi_user--username)
 
-##### <a name="-ipmi--user--purge_id_mismatch"></a>`purge_id_mismatch`
+##### <a name="-ipmi_user--channel"></a>`channel`
 
-Data type: `Boolean`
+The IPMI channel number for user access configuration.
 
-When true, any IPMI user slot that holds $user at an ID other than $user_id
-will be blanked and disabled before the desired slot is configured.
-IPMI slots cannot be deleted; clearing the name and disabling access is the
-BMC-standard equivalent. Defaults to false. Only applies when $enable is true.
+Defaults to 1 when declared directly. The ipmi class can inject the
+node's ipmi.default.channel fact (or ipmi::default_channel).
+
+##### <a name="-ipmi_user--name"></a>`name`
+
+namevar
+
+Resource title.  Used as the IPMI username when `username` is not set.
+
+##### <a name="-ipmi_user--provider"></a>`provider`
+
+The specific backend to use for this `ipmi_user` resource. You will seldom need to specify this --- Puppet will usually
+discover the appropriate provider for your platform.
+
+##### <a name="-ipmi_user--purge_duplicates"></a>`purge_duplicates`
+
+Valid values: `true`, `false`, `yes`, `no`
+
+Also remove other slots that hold this username.
+
+A user normally lives in one slot.  When the same username appears in
+another slot (for example after the slot changed from one `user_id` to
+another) the extra slot is blanked and disabled.  Each duplicate is
+reported as its own generated `ipmi_user` resource with
+`ensure => absent`, applied before this resource, so it honours
+`--noop` and is idempotent.
+
+Slots managed by other resources in the catalog, and the anonymous
+slot 1, are never purged.
 
 Default value: `false`
+
+##### <a name="-ipmi_user--user_id"></a>`user_id`
+
+The numeric IPMI user slot ID (2-63), or 'auto' to let the provider select one.
+
+An explicit ID may be occupied: declaring an enabled user with a different
+username at that ID replaces/renames the account and configures its password
+and access. Check the target slot and retain alternate BMC access before
+applying. When moving the same username to a different slot, use
+`purge_duplicates => true` to revoke and rename its old slot; otherwise
+the old slot can remain enabled. `auto` never allocates a slot occupied
+by another username.
+
+With 'auto' the slot is chosen from the BMC's current user table and
+the whole catalog, so it does not depend on resource evaluation order:
+explicit `user_id` values are reserved first, a user that already holds
+a slot keeps it (lowest id if several), and remaining 'auto' resources
+take the lowest free slots in title order.  A slot is free when its id
+is 2 or more and its name is empty or `DISABLED_*`.  ID 1 is the
+anonymous slot and is never allocated.  A resource that finds no free
+slot fails on its own; the others still apply.
+
+On SuperMicro IPMI, user id 2 is reserved for the ADMIN username.
+On ASUS IPMI, user id 2 is reserved for the admin username.
+
+Default value: `auto`
+
+##### <a name="-ipmi_user--username"></a>`username`
+
+The IPMI username.  Defaults to the resource title.
