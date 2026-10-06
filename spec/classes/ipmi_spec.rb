@@ -47,6 +47,11 @@ describe 'ipmi', type: :class do
       context 'with no params' do
         it_behaves_like 'installs packages', facts
 
+        it { is_expected.to contain_class('ipmi::install') }
+        it { is_expected.to contain_class('ipmi::config') }
+        it { is_expected.to contain_class('ipmi::service::ipmi') }
+        it { is_expected.to contain_class('ipmi::service::ipmievd') }
+
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
@@ -245,16 +250,98 @@ describe 'ipmi', type: :class do
         end
       end
 
-      context 'with defines' do
+      context 'with native resources' do
         let(:params) do
           {
-            users: { newuser: { user: 'newuser', password: 'password' } },
+            users: { newuser: { password: 'password' } },
             networks: { dhcp: {} },
-            snmps: { snmp1: { snmp: 'secret', lan_channel: 1 } },
+            snmps: { snmp1: { community: 'secret', lan_channel: 1 } },
           }
         end
 
         it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser') }
+        it { is_expected.to contain_ipmi_network('dhcp') }
+        it { is_expected.to contain_ipmi_snmp('snmp1') }
+      end
+
+      context 'with default_channel set' do
+        let(:params) do
+          {
+            default_channel: 8,
+            users: { newuser: { password: 'password' } },
+            networks: { dhcp: {} },
+            snmps: { snmp1: { community: 'secret' } },
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(8) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(8) }
+        it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(8) }
+      end
+
+      context 'with a numeric LAN title and an explicit default_channel' do
+        let(:facts) do
+          super().merge(ipmi: { default: { channel: 3 } })
+        end
+        let(:params) do
+          {
+            default_channel: 8,
+            networks: { '4' => {} },
+            snmps: { '5' => { community: 'secret' } },
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_network('4').with_lan_channel(8) }
+        it { is_expected.to contain_ipmi_snmp('5').with_lan_channel(8) }
+      end
+
+      context 'with a node fact channel but no default_channel parameter' do
+        let(:facts) do
+          super().merge(ipmi: { default: { channel: 3 } })
+        end
+        let(:params) do
+          {
+            users: { newuser: { password: 'password' } },
+            networks: { dhcp: {}, '4' => {} },
+            snmps: { snmp1: { community: 'secret' } },
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(3) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(3) }
+        it { is_expected.to contain_ipmi_network('4').with_lan_channel(4) }
+        it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(3) }
+      end
+
+      context 'with a malformed node fact channel' do
+        let(:facts) do
+          super().merge(ipmi: { default: { channel: 'invalid' } })
+        end
+        let(:params) { { users: { newuser: { password: 'password' } }, networks: { dhcp: {} } } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(1) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(1) }
+      end
+
+      context 'with default_channel and explicit channels' do
+        let(:params) do
+          {
+            default_channel: 8,
+            users: { newuser: { username: 'newuser', password: 'password', channel: 3 } },
+            networks: { dhcp: { lan_channel: 2 } },
+            snmps: { snmp1: { community: 'secret', lan_channel: 1 } },
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(3) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(2) }
+        it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(1) }
       end
     end
   end
