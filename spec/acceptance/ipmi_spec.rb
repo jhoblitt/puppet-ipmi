@@ -17,13 +17,15 @@ describe 'ipmi class' do
   end
 
   describe 'running puppet code' do
-    pp = <<-PP
-      include ipmi
-    PP
+    let(:manifest) do
+      <<-PP
+        include ipmi
+      PP
+    end
 
     it 'applies the manifest' do
       # ipmi service startup will fail because there's no bmc
-      apply_manifest(pp, catch_failures: false)
+      apply_manifest(manifest, catch_failures: false)
     end
 
     packages.each do |pkg|
