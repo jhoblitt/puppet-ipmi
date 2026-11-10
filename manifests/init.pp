@@ -35,7 +35,7 @@ class ipmi (
   Optional[Hash] $snmps,
   Optional[Hash] $users,
   Optional[Hash] $networks,
-  Integer[0] $default_channel = Integer(fact('ipmi.default.channel') or 1),
+  Integer[0] $default_channel = Integer(pick(fact('ipmi.default.channel'), 1)),
 ) {
   contain ipmi::install
   contain ipmi::config

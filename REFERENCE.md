@@ -132,7 +132,7 @@ Data type: `Integer[0]`
 
 Default channel to use for IPMI commands.
 
-Default value: `Integer(fact('ipmi.default.channel') or 1)`
+Default value: `Integer(pick(fact('ipmi.default.channel'), 1))`
 
 ## Defined types
 
