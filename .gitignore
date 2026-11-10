@@ -20,6 +20,7 @@
 *.iml
 .*.sw?
 /.yardoc/
+/doc/
 /Guardfile
 bolt-debug.log
 .rerun.json

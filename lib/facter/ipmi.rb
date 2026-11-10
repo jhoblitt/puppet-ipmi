@@ -28,10 +28,13 @@
 #     ...
 #
 class IPMIChannel
+  # Creates a new IPMIChannel for the given channel number.
+  # @param channel_nr [Integer] The IPMI LAN channel number to query.
   def initialize(channel_nr)
     @channel_nr = channel_nr
   end
 
+  # Queries ipmitool for LAN information on this channel and registers Facter facts.
   def load_facts
     return unless Facter::Util::Resolution.which('ipmitool')
 
