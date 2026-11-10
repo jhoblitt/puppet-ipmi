@@ -32,6 +32,9 @@ provides IPMI facts in a format compatible with
 and enables the `ipmi` service. The latter loads the kernel drivers
 needed for communicating with the BMC from user space.
 
+It also manages the companion `ipmievd` daemon, whose name can be
+customized with the `ipmievd_service_name` parameter.
+
 ## Usage
 
 ### Reference

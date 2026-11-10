@@ -37,39 +37,13 @@ class ipmi (
   Optional[Hash] $networks,
   Integer[0] $default_channel = Integer(fact('ipmi.default.channel') or 1),
 ) {
-  $real_service_ensure = $service_ensure ? {
-    'running' => 'running',
-    default   => 'stopped',
-  }
-
-  $enable_ipmi = $real_service_ensure ? {
-    'running' => true,
-    'stopped' => false,
-  }
-
-  $enable_ipmievd = $ipmievd_service_ensure ? {
-    'running' => true,
-    'stopped' => false,
-  }
-
   contain ipmi::install
   contain ipmi::config
-
-  class { 'ipmi::service::ipmi':
-    ensure            => $real_service_ensure,
-    enable            => $enable_ipmi,
-    ipmi_service_name => $service_name,
-  }
-
-  class { 'ipmi::service::ipmievd':
-    ensure => $ipmievd_service_ensure,
-    enable => $enable_ipmievd,
-  }
+  contain ipmi::service
 
   Class['ipmi::install']
   ~> Class['ipmi::config']
-  ~> Class['ipmi::service::ipmi']
-  ~> Class['ipmi::service::ipmievd']
+  ~> Class['ipmi::service']
 
   if $snmps {
     create_resources('ipmi::snmp', $snmps)

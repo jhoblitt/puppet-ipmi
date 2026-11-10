@@ -9,9 +9,7 @@ class ipmi::service::ipmi (
   assert_private()
 
   service { $ipmi_service_name:
-    ensure     => $ensure,
-    hasstatus  => true,
-    hasrestart => true,
-    enable     => $enable,
+    ensure => $ensure,
+    enable => $enable,
   }
 }
