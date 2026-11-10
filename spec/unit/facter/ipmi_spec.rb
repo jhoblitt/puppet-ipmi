@@ -6,7 +6,7 @@ describe 'ipmi facts' do
   before do
     Facter.clear
     File.stubs(:executable?) # Stub all other calls
-    Facter::Util::Resolution.stubs(:exec) # Catch all other calls
+    Facter::Core::Execution.stubs(:execute) # Catch all other calls
   end
 
   describe 'ipmi' do
@@ -55,13 +55,15 @@ describe 'ipmi facts' do
           11  (Empty User)     true    false      false      NO ACCESS
           12  foobar           true    false      true       USER
           USEROUTPUT
-          Facter::Util::Resolution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
-          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 1 2>&1').returns(ipmitool_output)
+          Facter::Core::Execution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool lan print 1 2>&1', on_fail: '').returns(ipmitool_output)
           (2..11).to_a.each do |mocked_channel|
-            Facter::Util::Resolution.expects(:exec).at_least(1).with("ipmitool lan print #{mocked_channel} 2>&1").returns("Invalid channel: #{mocked_channel}")
+            Facter::Core::Execution.expects(:execute).at_least(1).with("ipmitool lan print #{mocked_channel} 2>&1", on_fail: '').returns("Invalid channel: #{mocked_channel}")
           end
-          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool user list 1 2>&1').returns(ipmitool_user_output)
-          Facter.fact(:kernel).stubs(:value).returns('Linux')
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool user list 1 2>&1', on_fail: '').returns(ipmitool_user_output)
+          kernel_fact = mock('kernel_fact')
+          kernel_fact.stubs(:value).returns('Linux')
+          Facter.stubs(:fact).with(:kernel).returns(kernel_fact)
         end
 
         let(:facts) { { kernel: 'Linux' } }
@@ -187,16 +189,18 @@ describe 'ipmi facts' do
           11  (Empty User)     true    false      false      NO ACCESS
           12  foobar           true    false      true       USER
           USEROUTPUT
-          Facter::Util::Resolution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
-          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 2 2>&1').returns(ipmitool_2_output)
-          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 3 2>&1').returns(ipmitool_3_output)
-          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool lan print 1 2>&1').returns('Invalid channel: 1')
-          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool user list 2 2>&1').returns(ipmitool_user_output)
-          Facter::Util::Resolution.expects(:exec).at_least(1).with('ipmitool user list 3 2>&1').returns(ipmitool_user_output)
+          Facter::Core::Execution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool lan print 2 2>&1', on_fail: '').returns(ipmitool_2_output)
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool lan print 3 2>&1', on_fail: '').returns(ipmitool_3_output)
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool lan print 1 2>&1', on_fail: '').returns('Invalid channel: 1')
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool user list 2 2>&1', on_fail: '').returns(ipmitool_user_output)
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool user list 3 2>&1', on_fail: '').returns(ipmitool_user_output)
           (4..11).to_a.each do |mocked_channel|
-            Facter::Util::Resolution.expects(:exec).at_least(1).with("ipmitool lan print #{mocked_channel} 2>&1").returns("Invalid channel: #{mocked_channel}")
+            Facter::Core::Execution.expects(:execute).at_least(1).with("ipmitool lan print #{mocked_channel} 2>&1", on_fail: '').returns("Invalid channel: #{mocked_channel}")
           end
-          Facter.fact(:kernel).stubs(:value).returns('Linux')
+          kernel_fact = mock('kernel_fact')
+          kernel_fact.stubs(:value).returns('Linux')
+          Facter.stubs(:fact).with(:kernel).returns(kernel_fact)
         end
 
         let(:facts) { { kernel: 'Linux' } }
@@ -261,15 +265,36 @@ describe 'ipmi facts' do
         end
       end
     end
+
+    context 'when the BMC command degrades to empty output' do
+      before do
+        Facter::Core::Execution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
+        # execute is called with on_fail: '' so a wedged BMC (300 s timeout), a
+        # non-zero exit, or a missing binary degrades to empty output instead of
+        # raising ExecutionFailure. Without that option, a wedged BMC would raise
+        # mid-load and abort the rest of the fact file.
+        Facter::Core::Execution.stubs(:execute).returns('')
+        kernel_fact = mock('kernel_fact')
+        kernel_fact.stubs(:value).returns('Linux')
+        Facter.stubs(:fact).with(:kernel).returns(kernel_fact)
+      end
+
+      it do
+        expect { Facter.value(:ipmi_ipaddress) }.not_to raise_error
+        expect(Facter.value(:ipmi_ipaddress)).to be_nil
+      end
+    end
   end
 
   context 'when ipmitool not present' do
     before do
-      Facter.fact(:kernel).stubs(:value).returns('Linux')
+      kernel_fact = mock('kernel_fact')
+      kernel_fact.stubs(:value).returns('Linux')
+      Facter.stubs(:fact).with(:kernel).returns(kernel_fact)
     end
 
     it do
-      Facter::Util::Resolution.expects(:which).at_least(1).with('ipmitool').returns(false)
+      Facter::Core::Execution.expects(:which).at_least(1).with('ipmitool').returns(false)
       expect(Facter.value(:ipmi_ipaddress)).to be_nil
       expect(Facter.value(:ipmi)).to be_empty
     end

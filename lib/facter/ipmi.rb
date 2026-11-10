@@ -33,9 +33,9 @@ class IPMIChannel
   end
 
   def load_facts
-    return unless Facter::Util::Resolution.which('ipmitool')
+    return unless Facter::Core::Execution.which('ipmitool')
 
-    ipmitool_output = Facter::Util::Resolution.exec("ipmitool lan print #{@channel_nr} 2>&1")
+    ipmitool_output = Facter::Core::Execution.execute("ipmitool lan print #{@channel_nr} 2>&1", on_fail: '')
     parse_ipmitool_output ipmitool_output
   end
 
@@ -85,10 +85,10 @@ Facter.add(:ipmi) do
   confine kernel: 'Linux'
   setcode do
     ipmi = {}
-    if Facter::Util::Resolution.which('ipmitool')
+    if Facter::Core::Execution.which('ipmitool')
       (1..11).each do |channel_nr|
         lan_channel = {}
-        ipmitool_output = Facter::Util::Resolution.exec("ipmitool lan print #{channel_nr} 2>&1")
+        ipmitool_output = Facter::Core::Execution.execute("ipmitool lan print #{channel_nr} 2>&1", on_fail: '')
         ipmitool_output.each_line do |line|
           case line.strip
           when %r{^IP Address\s*:\s+(\S.*)}
@@ -109,7 +109,7 @@ Facter.add(:ipmi) do
         lan_channel['channel'] = channel_nr
 
         # Get Users
-        ipmitool_user_output = Facter::Util::Resolution.exec("ipmitool user list #{channel_nr} 2>&1")
+        ipmitool_user_output = Facter::Core::Execution.execute("ipmitool user list #{channel_nr} 2>&1", on_fail: '')
         lan_channel['users'] = {}
         ipmitool_user_output.each_line do |line|
           case line.strip
