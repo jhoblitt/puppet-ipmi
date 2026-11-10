@@ -25,6 +25,7 @@ class ipmi::service {
     ensure            => $real_service_ensure,
     enable            => $enable_ipmi,
     ipmi_service_name => $ipmi::service_name,
+    service_manage    => $ipmi::service_manage,
   }
 
   class { 'ipmi::service::ipmievd':
