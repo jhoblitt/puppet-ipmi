@@ -28,8 +28,8 @@ describe 'ipmi', type: :class do
         facts.merge(
           {
             ipmitool: { mc_info: { IPMI_Puppet_Service_Recommend: 'running' } },
-            ipmi: { default: { channel: 1 } }
-          }
+            ipmi: { default: { channel: 1 } },
+          },
         )
       end
 
@@ -52,21 +52,21 @@ describe 'ipmi', type: :class do
             context: "/files#{config_file}",
             changes: [
               'set IPMI_WATCHDOG no',
-            ]
+            ],
           )
         end
 
         it do
           is_expected.to contain_service(service_name).with(
             ensure: 'running',
-            enable: true
+            enable: true,
           )
         end
 
         it do
           is_expected.to contain_service('ipmievd').with(
             ensure: 'stopped',
-            enable: false
+            enable: false,
           )
         end
       end
@@ -81,21 +81,21 @@ describe 'ipmi', type: :class do
             context: "/files#{config_file}",
             changes: [
               'set IPMI_WATCHDOG no',
-            ]
+            ],
           )
         end
 
         it do
           is_expected.to contain_service(service_name).with(
             ensure: 'running',
-            enable: true
+            enable: true,
           )
         end
 
         it do
           is_expected.to contain_service('ipmievd').with(
             ensure: 'stopped',
-            enable: false
+            enable: false,
           )
         end
       end
@@ -110,21 +110,21 @@ describe 'ipmi', type: :class do
             context: "/files#{config_file}",
             changes: [
               'set IPMI_WATCHDOG no',
-            ]
+            ],
           )
         end
 
         it do
           is_expected.to contain_service(service_name).with(
             ensure: 'stopped',
-            enable: false
+            enable: false,
           )
         end
 
         it do
           is_expected.to contain_service('ipmievd').with(
             ensure: 'stopped',
-            enable: false
+            enable: false,
           )
         end
       end
@@ -139,21 +139,21 @@ describe 'ipmi', type: :class do
             context: "/files#{config_file}",
             changes: [
               'set IPMI_WATCHDOG no',
-            ]
+            ],
           )
         end
 
         it do
           is_expected.to contain_service(service_name).with(
             ensure: 'running',
-            enable: true
+            enable: true,
           )
         end
 
         it do
           is_expected.to contain_service('ipmievd').with(
             ensure: 'running',
-            enable: true
+            enable: true,
           )
         end
       end
@@ -168,21 +168,21 @@ describe 'ipmi', type: :class do
             context: "/files#{config_file}",
             changes: [
               'set IPMI_WATCHDOG no',
-            ]
+            ],
           )
         end
 
         it do
           is_expected.to contain_service(service_name).with(
             ensure: 'running',
-            enable: true
+            enable: true,
           )
         end
 
         it do
           is_expected.to contain_service('ipmievd').with(
             ensure: 'stopped',
-            enable: false
+            enable: false,
           )
         end
       end
@@ -197,21 +197,21 @@ describe 'ipmi', type: :class do
             context: "/files#{config_file}",
             changes: [
               'set IPMI_WATCHDOG yes',
-            ]
+            ],
           )
         end
 
         it do
           is_expected.to contain_service(service_name).with(
             ensure: 'running',
-            enable: true
+            enable: true,
           )
         end
 
         it do
           is_expected.to contain_service('ipmievd').with(
             ensure: 'stopped',
-            enable: false
+            enable: false,
           )
         end
       end
@@ -226,21 +226,21 @@ describe 'ipmi', type: :class do
             context: "/files#{config_file}",
             changes: [
               'set IPMI_WATCHDOG no',
-            ]
+            ],
           )
         end
 
         it do
           is_expected.to contain_service(service_name).with(
             ensure: 'running',
-            enable: true
+            enable: true,
           )
         end
 
         it do
           is_expected.to contain_service('ipmievd').with(
             ensure: 'stopped',
-            enable: false
+            enable: false,
           )
         end
       end
@@ -250,7 +250,7 @@ describe 'ipmi', type: :class do
           {
             users: { newuser: { user: 'newuser', password: 'password' } },
             networks: { dhcp: {} },
-            snmps: { snmp1: { snmp: 'secret', lan_channel: 1 } }
+            snmps: { snmp1: { snmp: 'secret', lan_channel: 1 } },
           }
         end
 

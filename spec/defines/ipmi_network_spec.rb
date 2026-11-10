@@ -9,8 +9,8 @@ describe 'ipmi::network', type: :define do
         facts.merge(
           {
             ipmitool: { mc_info: { IPMI_Puppet_Service_Recommend: 'running' } },
-            ipmi: { default: { channel: 1 } }
-          }
+            ipmi: { default: { channel: 1 } },
+          },
         )
       end
       let(:title) { 'example' }

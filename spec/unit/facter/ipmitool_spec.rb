@@ -97,8 +97,8 @@ describe 'ipmitool', type: :fact do
             'product_manufacturer' => 'DELL',
             'product_name' => 'Test',
             'product_extra' => '000000',
-          }
-        }
+          },
+        },
       )
     end
   end

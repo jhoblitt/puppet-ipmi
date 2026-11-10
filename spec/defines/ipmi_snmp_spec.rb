@@ -10,7 +10,7 @@ describe 'ipmi::snmp', type: :define do
         name: 'CentOS',
         release: {
           major: 9,
-        }
+        },
 
       },
       ipmitool: { mc_info: { IPMI_Puppet_Service_Recommend: 'running' } },

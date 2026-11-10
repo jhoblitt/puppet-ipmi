@@ -51,11 +51,15 @@ Data type: `Array[String]`
 
 List of packages to install.
 
+Default value: `['openipmi', 'ipmitool']`
+
 ##### <a name="-ipmi--config_file"></a>`config_file`
 
 Data type: `Stdlib::Absolutepath`
 
 Absolute path to the ipmi service config file.
+
+Default value: `'/etc/default/openipmi'`
 
 ##### <a name="-ipmi--service_name"></a>`service_name`
 
@@ -63,11 +67,15 @@ Data type: `String`
 
 Name of IPMI service.
 
+Default value: `'openipmi'`
+
 ##### <a name="-ipmi--service_ensure"></a>`service_ensure`
 
 Data type: `Variant[Stdlib::Ensure::Service, String[0]]`
 
 Controls the state of the `ipmi` service. Possible values: `running`, `stopped`
+
+Default value: `'%{facts.ipmitool.mc_info.IPMI_Puppet_Service_Recommend}'`
 
 ##### <a name="-ipmi--ipmievd_service_name"></a>`ipmievd_service_name`
 
@@ -75,11 +83,15 @@ Data type: `String`
 
 Name of ipmievd service.
 
+Default value: `'ipmievd'`
+
 ##### <a name="-ipmi--ipmievd_service_ensure"></a>`ipmievd_service_ensure`
 
 Data type: `Stdlib::Ensure::Service`
 
 Controls the state of the `ipmievd` service. Possible values: `running`, `stopped`
+
+Default value: `'stopped'`
 
 ##### <a name="-ipmi--watchdog"></a>`watchdog`
 
@@ -87,11 +99,15 @@ Data type: `Boolean`
 
 Controls whether the IPMI watchdog is enabled.
 
+Default value: `false`
+
 ##### <a name="-ipmi--snmps"></a>`snmps`
 
 Data type: `Optional[Hash]`
 
 `ipmi::snmp` resources to create.
+
+Default value: `undef`
 
 ##### <a name="-ipmi--users"></a>`users`
 
@@ -99,11 +115,15 @@ Data type: `Optional[Hash]`
 
 `ipmi::user` resources to create.
 
+Default value: `undef`
+
 ##### <a name="-ipmi--networks"></a>`networks`
 
 Data type: `Optional[Hash]`
 
 `ipmi::network` resources to create.
+
+Default value: `undef`
 
 ##### <a name="-ipmi--default_channel"></a>`default_channel`
 
@@ -281,4 +301,3 @@ IPMI slots cannot be deleted; clearing the name and disabling access is the
 BMC-standard equivalent. Defaults to false. Only applies when $enable is true.
 
 Default value: `false`
-

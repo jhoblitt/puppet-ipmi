@@ -9,8 +9,8 @@ describe 'ipmi::user', type: :define do
         facts.merge(
           {
             ipmitool: { mc_info: { IPMI_Puppet_Service_Recommend: 'running' } },
-            ipmi: { default: { channel: 1 } }
-          }
+            ipmi: { default: { channel: 1 } },
+          },
         )
       end
       let(:title) { 'newuser' }
@@ -129,7 +129,7 @@ describe 'ipmi::user', type: :define do
       describe 'when deploying without a password set' do
         let(:params) do
           {
-            enable: true
+            enable: true,
           }
         end
 
@@ -141,7 +141,7 @@ describe 'ipmi::user', type: :define do
       describe 'when disabling a user' do
         let(:params) do
           {
-            enable: false
+            enable: false,
           }
         end
 
