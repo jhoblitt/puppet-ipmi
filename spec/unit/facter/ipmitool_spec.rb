@@ -55,9 +55,9 @@ describe 'ipmitool', type: :fact do
 
   context 'with no ipmitool' do
     before do
-      Facter::Util::Resolution.expects(:which).at_least(1).with('ipmitool').returns(nil)
-      Facter::Util::Resolution.expects(:exec).with('ipmitool mc info 2>/dev/null').never
-      Facter::Util::Resolution.expects(:exec).with('ipmitool fru print 0 2>/dev/null').never
+      Facter::Core::Execution.expects(:which).at_least(1).with('ipmitool').returns(nil)
+      Facter::Core::Execution.expects(:execute).with('ipmitool mc info 2>/dev/null', on_fail: '').never
+      Facter::Core::Execution.expects(:execute).with('ipmitool fru print 0 2>/dev/null', on_fail: '').never
     end
 
     it do
@@ -67,9 +67,9 @@ describe 'ipmitool', type: :fact do
 
   context 'with detailed output' do
     before do
-      Facter::Util::Resolution.expects(:which).with('ipmitool').returns(true)
-      Facter::Util::Resolution.expects(:exec).with('ipmitool mc info 2>/dev/null').returns(mc_output)
-      Facter::Util::Resolution.expects(:exec).with('ipmitool fru print 0 2>/dev/null').returns(fru_output)
+      Facter::Core::Execution.expects(:which).with('ipmitool').returns(true)
+      Facter::Core::Execution.expects(:execute).with('ipmitool mc info 2>/dev/null', on_fail: '').returns(mc_output)
+      Facter::Core::Execution.expects(:execute).with('ipmitool fru print 0 2>/dev/null', on_fail: '').returns(fru_output)
     end
 
     it do
