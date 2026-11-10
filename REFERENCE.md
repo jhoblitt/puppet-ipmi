@@ -301,4 +301,3 @@ IPMI slots cannot be deleted; clearing the name and disabling access is the
 BMC-standard equivalent. Defaults to false. Only applies when $enable is true.
 
 Default value: `false`
-
