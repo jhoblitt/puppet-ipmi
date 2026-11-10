@@ -287,6 +287,20 @@ describe 'ipmi', type: :class do
 
         it { is_expected.not_to contain_service('ipmievd') }
       end
+
+      context 'with the ipmi.default.channel fact set to 2' do
+        let(:facts) { super().merge(ipmi: { default: { channel: 2 } }) }
+        let(:params) { { networks: { dhcp: {} } } }
+
+        it { is_expected.to contain_exec('ipmi_set_dhcp_2') }
+      end
+
+      context 'without the ipmi fact' do
+        let(:facts) { super().except(:ipmi) }
+        let(:params) { { networks: { dhcp: {} } } }
+
+        it { is_expected.to contain_exec('ipmi_set_dhcp_1') }
+      end
     end
   end
 end
