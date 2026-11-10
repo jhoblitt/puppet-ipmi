@@ -19,6 +19,8 @@ shared_examples 'installs packages' do |facts|
   packages.each do |p|
     it { is_expected.to contain_package(p) }
   end
+
+  it { is_expected.to contain_class('ipmi::install') }
 end
 
 shared_examples 'contains ipmi::service' do

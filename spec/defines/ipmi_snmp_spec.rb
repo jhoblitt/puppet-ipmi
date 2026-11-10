@@ -34,4 +34,16 @@ describe 'ipmi::snmp', type: :define do
 
     it { is_expected.to contain_exec('ipmi_set_snmp_2') }
   end
+
+  describe 'when deployed via create_resources' do
+    let(:title) { 'snmp1' }
+    let(:params) do
+      {
+        snmp: 'secret',
+        lan_channel: 1,
+      }
+    end
+
+    it { is_expected.to contain_exec('ipmi_set_snmp_1').with(command: '/usr/bin/ipmitool lan set 1 snmp secret') }
+  end
 end
