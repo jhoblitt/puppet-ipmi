@@ -10,23 +10,11 @@
 # credentials, and presto, you can run basic IPMI actions (e.g. reboot
 # to PXE) from The Foreman's web UI.
 #
-# === Fact Format
-#
-#     ipmi1_ipaddress = 192.168.101.1
-#     ipmi1_subnet_mask = 255.255.255.0
-#     ...
-#
-# where the 1 in "ipmi1" corresponds to the ID of the BMC according to
-# ipmitool lan print.
-#
-# Additionally for compatibility with The Foreman, the first IPMI
-# interface (i.e. the one from ipmi lan print 1) gets all facts
-# repeated as just ipmi_foo:
-#
-#     ipmi_ipaddress = 192.168.101.1
-#     ipmi_subnet_mask = 255.255.255.0
-#     ...
-#
+
+# Flat facts are exported as channel-agnostic keys (e.g. ipmi_ipaddress)
+# for The Foreman. The deprecated per-channel ipmi<N>_<fact> keys were
+# removed; use the structured `ipmi` fact or these flat keys instead.
+
 class IPMIChannel
   # Creates a new IPMIChannel for the given channel number.
   # @param channel_nr [Integer] The IPMI LAN channel number to query.
@@ -62,26 +50,21 @@ class IPMIChannel
     end
   end
 
+  # Registers the channel-agnostic flat facts (e.g. ipmi_ipaddress) used
+  # for The Foreman compatibility.
   def add_ipmi_fact(name, value)
-    fact_names = []
-    fact_names.push("ipmi_#{name}") unless fact_names.include?("ipmi_#{name}")
-    fact_names.push("ipmi#{@channel_nr}_#{name}")
-    fact_names.each do |n|
-      Facter.add(n) do
-        confine kernel: 'Linux'
-        setcode do
-          value
-        end
+    Facter.add("ipmi_#{name}") do
+      confine kernel: 'Linux'
+      setcode do
+        value
       end
     end
-    @has_facts = true
   end
 end
 
 channels = (1..11).to_a
 channels.each do |channel|
-  @channel_nr = channel
-  IPMIChannel.new(@channel_nr).load_facts
+  IPMIChannel.new(channel).load_facts
 end
 
 Facter.add(:ipmi) do
