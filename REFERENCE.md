@@ -17,6 +17,9 @@
 * `ipmi::service`
 * `ipmi::service::ipmi`
 * `ipmi::service::ipmievd`
+* `ipmi::watchdog`: Coordinates the IPMI watchdog supervisors
+* `ipmi::watchdog::openipmi`: Have the OpenIPMI service load ipmi_watchdog
+* `ipmi::watchdog::openipmi::watchdog_param`: Write IPMI_WATCHDOG in the OpenIPMI service config
 
 ### Resource types
 
