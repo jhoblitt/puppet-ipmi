@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 Each new release typically also includes the latest modulesync defaults.
 These should not affect the functionality of the module.
 
+## [v8.1.0](https://github.com/jhoblitt/puppet-ipmi/tree/v8.1.0) (2026-11-11)
+
+[Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v8.0.0...v8.1.0)
+
+**Implemented enhancements:**
+
+- Increase test coverage [\#110](https://github.com/jhoblitt/puppet-ipmi/pull/110) ([jcpunk](https://github.com/jcpunk))
+- Make ipmi service management optional [\#108](https://github.com/jhoblitt/puppet-ipmi/pull/108) ([jcpunk](https://github.com/jcpunk))
+- Add EL10 to the OS matrix [\#106](https://github.com/jhoblitt/puppet-ipmi/pull/106) ([jcpunk](https://github.com/jcpunk))
+- Stop using deprecated facter interfaces [\#105](https://github.com/jhoblitt/puppet-ipmi/pull/105) ([jcpunk](https://github.com/jcpunk))
+- Contain the ipmi::service logic more directly [\#104](https://github.com/jhoblitt/puppet-ipmi/pull/104) ([jcpunk](https://github.com/jcpunk))
+- Remove on user\_id mismatch [\#94](https://github.com/jhoblitt/puppet-ipmi/pull/94) ([jcpunk](https://github.com/jcpunk))
+
+**Fixed bugs:**
+
+- Fix ipmi::default\_channel ignoring the ipmi fact [\#107](https://github.com/jhoblitt/puppet-ipmi/pull/107) ([jhoblitt](https://github.com/jhoblitt))
+- Fixup documentation nits [\#102](https://github.com/jhoblitt/puppet-ipmi/pull/102) ([jcpunk](https://github.com/jcpunk))
+- Ensure \_real\_channel replaces all channel instances [\#91](https://github.com/jhoblitt/puppet-ipmi/pull/91) ([nathanlcarlson](https://github.com/nathanlcarlson))
+
 ## [v8.0.0](https://github.com/jhoblitt/puppet-ipmi/tree/v8.0.0) (2026-03-12)
 
 [Full Changelog](https://github.com/jhoblitt/puppet-ipmi/compare/v7.0.0...v8.0.0)
