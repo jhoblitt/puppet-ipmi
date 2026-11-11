@@ -192,6 +192,8 @@ describe 'ipmi::user', type: :define do
         # purge exec must run before the add exec
         it { is_expected.to contain_exec('ipmi_user_purge_mismatch_newuser').that_comes_before('Exec[ipmi_user_add_newuser]') }
 
+        it { is_expected.to contain_file('/usr/libexec/puppet_ipmi_purge_id_mismatch') }
+
         # normal enable-path resources must still be present
         it { is_expected.to contain_exec('ipmi_user_enable_newuser').with('refreshonly' => 'true') }
         it { is_expected.to contain_exec('ipmi_user_add_newuser').that_notifies('Exec[ipmi_user_priv_newuser]') }
