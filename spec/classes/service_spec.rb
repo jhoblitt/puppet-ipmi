@@ -18,10 +18,12 @@ describe 'wrapper', type: :class do
         <<-PP
           class wrapper (
             String $service_ensure = 'running',
+            Boolean $service_manage = true,
             Stdlib::Ensure::Service $ipmievd_service_ensure = 'stopped',
           ) {
             class { 'ipmi':
               service_ensure         => $service_ensure,
+              service_manage         => $service_manage,
               ipmievd_service_ensure => $ipmievd_service_ensure,
             }
             contain ipmi::service
@@ -62,6 +64,24 @@ describe 'wrapper', type: :class do
 
         it do
           is_expected.to contain_service(service_name).with(
+            ensure: 'stopped',
+            enable: false,
+          )
+        end
+      end
+
+      context 'with service_manage => false' do
+        let(:params) { { service_manage: false } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_class('ipmi::service::ipmi') }
+
+        # the ipmi service is left unmanaged
+        it { is_expected.not_to contain_service(service_name) }
+
+        # the companion ipmievd daemon is still managed
+        it do
+          is_expected.to contain_service('ipmievd').with(
             ensure: 'stopped',
             enable: false,
           )

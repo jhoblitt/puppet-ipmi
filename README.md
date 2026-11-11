@@ -127,8 +127,14 @@ Configure IPMI snmp string on lan channel 1:
     service_ensure         => 'running', # default is 'running'
     ipmievd_service_ensure => 'running', # default is 'stopped'
     watchdog               => true,      # default is false
+    service_manage         => false,     # default is true
   }
 ```
+
+When `service_manage` is set to `false`, the `ipmi` service is not managed
+by the module; it is left to the administrator or an external tooling
+system to start and stop. The companion `ipmievd` daemon and the rest of
+the module continue to behave normally.
 
 ### Defined Resources
 

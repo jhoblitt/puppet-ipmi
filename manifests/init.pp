@@ -21,6 +21,10 @@
 #   `ipmi::user` resources to create.
 # @param networks
 #   `ipmi::network` resources to create.
+# @param service_manage
+#   Controls whether the `ipmi` service is managed. When `false`, the
+#   `service` resource is not declared and the service is left unmanaged
+#   (handled by the administrator or an external tooling system).
 # @param default_channel
 #   Default channel to use for IPMI commands.
 #
@@ -35,6 +39,7 @@ class ipmi (
   Optional[Hash] $snmps,
   Optional[Hash] $users,
   Optional[Hash] $networks,
+  Boolean $service_manage = true,
   Integer[0] $default_channel = Integer(pick(fact('ipmi.default.channel'), 1)),
 ) {
   contain ipmi::install

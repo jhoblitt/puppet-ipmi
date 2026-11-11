@@ -290,6 +290,26 @@ describe 'ipmi', type: :class do
         it { is_expected.not_to contain_service('ipmievd') }
       end
 
+      context 'with service_manage => false' do
+        let(:params) { { service_manage: false } }
+
+        it { is_expected.to compile.with_all_deps }
+
+        # the ipmi service is left unmanaged
+        it { is_expected.not_to contain_service(service_name) }
+
+        # config/install are still managed
+        it_behaves_like 'installs packages', facts
+
+        # the companion ipmievd daemon is still managed
+        it do
+          is_expected.to contain_service('ipmievd').with(
+            ensure: 'stopped',
+            enable: false,
+          )
+        end
+      end
+
       context 'with the ipmi.default.channel fact set to 2' do
         let(:facts) { super().merge(ipmi: { default: { channel: 2 } }) }
         let(:params) { { networks: { dhcp: {} } } }
