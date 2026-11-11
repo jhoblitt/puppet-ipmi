@@ -55,6 +55,10 @@
       "version_requirement": ">= 1.0.4 < 3.0.0"
     },
     {
+      "name": "puppet/systemd",
+      "version_requirement": ">= 11.0.0 < 12.0.0"
+    },
+    {
       "name": "puppet/kmod",
       "version_requirement": ">= 5.0.0 < 6.0.0"
     }

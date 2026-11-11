@@ -170,20 +170,44 @@ the same LAN channel, preventing them from fighting on every run.
 #### The IPMI hardware watchdog
 
 When `watchdog => true` the module loads the `ipmi_watchdog` kernel module,
-now and at boot (via `modules-load.d`), and sets `IPMI_WATCHDOG=yes` in the
-OpenIPMI service config, which makes that service load the module too. The
-module provides `/dev/watchdog`. Loading it does not start the BMC timer: the
-timer runs once something opens `/dev/watchdog`, or if the module is given the
-`start_now=1` option.
+now and at boot (via `modules-load.d`). The module provides `/dev/watchdog`.
+Loading it does not start the BMC timer: the timer runs once something opens
+`/dev/watchdog`, or if the module is given the `start_now=1` option.
 
-- `watchdog_timeout` sets the module `timeout` option, in seconds. The default,
-  `0`, writes no option and leaves the driver default (10 seconds).
+The device can only be opened once, so one component owns it, chosen by
+`watchdog_supervisor` (`auto` by default):
+
+- `systemd`: a `system.conf` drop-in
+  (`/etc/systemd/system.conf.d/50-ipmi-watchdog.conf`) makes PID 1 open and
+  ping `/dev/watchdog`. If the OpenIPMI config file exists, `IPMI_WATCHDOG` in
+  it is forced to `no` (the file is never created for this), so the OpenIPMI
+  service does not also manage the module.
+- `openipmi`: `IPMI_WATCHDOG=yes` is set in the OpenIPMI config, which makes
+  the OpenIPMI service load the module. Nothing in this module opens the
+  device, so the timer is started by whatever else does, such as the
+  `watchdog` daemon.
+- `auto`: `systemd` when the `systemd_version` fact is 252 or newer (the first
+  release that falls back to `/dev/watchdog`, the only node `ipmi_watchdog`
+  creates), otherwise `openipmi`.
+
+Options:
+
+- `watchdog_timeout` sets the module `timeout` option, in seconds, and under
+  `systemd` also `RuntimeWatchdogSec`. The default, `0`, writes no module
+  option (the driver default is 10 seconds) and writes `RuntimeWatchdogSec=0`,
+  which matches systemd's default of off: systemd does not touch the device.
+  Set a non-zero value to have systemd arm the BMC watchdog.
+- `watchdog_systemd_options` adds other `system.conf` [Manager] settings. A
+  `RuntimeWatchdogSec` here replaces `watchdog_timeout`; `0` keeps systemd off
+  the device on hardware with a buggy BMC watchdog. On a host with another
+  watchdog driver, such as `iTCO_wdt`, `/dev/watchdog0` may not be the BMC, so
+  set `WatchdogDevice`.
 - `watchdog_module_options` adds any other modprobe option. Setting `timeout`
   here as well as a non-zero `watchdog_timeout` is an error unless the two
   values match.
 - `watchdog_manage_module => false` skips the module load and its options, for
   hosts where `/dev/watchdog` already exists. `watchdog_timeout` and
-  `watchdog_module_options` then have no effect.
+  `watchdog_module_options` then have no effect on the module.
 
 Module options only apply the next time the module is loaded, usually after a
 reboot. Setting `watchdog => false` does not remove module configuration
@@ -191,9 +215,11 @@ written earlier.
 
 ```puppet
   class { 'ipmi':
-    watchdog                => true,
-    watchdog_timeout        => 60,
-    watchdog_module_options => { 'action' => 'power_cycle' },
+    watchdog                 => true,
+    watchdog_supervisor      => 'auto',
+    watchdog_timeout         => 60,
+    watchdog_module_options  => { 'action' => 'power_cycle' },
+    watchdog_systemd_options => { 'WatchdogDevice' => '/dev/watchdog' },
   }
 ```
 

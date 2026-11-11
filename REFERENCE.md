@@ -20,7 +20,8 @@
 * `ipmi::watchdog`: Coordinates the IPMI watchdog pieces
 * `ipmi::watchdog::kmod`: Load the ipmi_watchdog kernel module at boot
 * `ipmi::watchdog::openipmi`: Have the OpenIPMI service load ipmi_watchdog
-* `ipmi::watchdog::openipmi::watchdog_param`: Write IPMI_WATCHDOG in the OpenIPMI service config
+* `ipmi::watchdog::openipmi::watchdog_param`: Write IPMI_WATCHDOG in the OpenIPMI daemon config
+* `ipmi::watchdog::systemd`: Let systemd (PID 1) own /dev/watchdog
 
 ### Resource types
 
@@ -50,7 +51,9 @@ The following parameters are available in the `ipmi` class:
 * [`networks`](#-ipmi--networks)
 * [`service_manage`](#-ipmi--service_manage)
 * [`watchdog_manage_module`](#-ipmi--watchdog_manage_module)
+* [`watchdog_supervisor`](#-ipmi--watchdog_supervisor)
 * [`watchdog_timeout`](#-ipmi--watchdog_timeout)
+* [`watchdog_systemd_options`](#-ipmi--watchdog_systemd_options)
 * [`watchdog_module_options`](#-ipmi--watchdog_module_options)
 * [`default_channel`](#-ipmi--default_channel)
 
@@ -108,9 +111,11 @@ Data type: `Boolean`
 
 Controls whether the IPMI watchdog is enabled. When `true`, the
 `ipmi_watchdog` kernel module is loaded (see `watchdog_manage_module`) and
-`IPMI_WATCHDOG` is set to `yes`. When `false`, `IPMI_WATCHDOG` is set to
-`no` and the kernel module is not managed; module configuration written
-while it was `true` is left in place.
+the owner chosen by `watchdog_supervisor` is configured: under `openipmi`
+`IPMI_WATCHDOG` is set to `yes`, under `systemd` a system.conf drop-in is
+written. When `false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`) or the
+drop-in is removed (`systemd`), and the kernel module is not managed;
+module configuration written while it was `true` is left in place.
 
 Default value: `false`
 
@@ -156,19 +161,46 @@ Whether to load the `ipmi_watchdog` kernel module, and write its modprobe
 options, when `watchdog` is `true`. Set `false` when `/dev/watchdog`
 already exists, for example because the module is built in or loaded by
 other tooling. `watchdog_timeout` and `watchdog_module_options` have no
-effect when this is `false`.
+effect on the module when this is `false`.
 
 Default value: `true`
+
+##### <a name="-ipmi--watchdog_supervisor"></a>`watchdog_supervisor`
+
+Data type: `Enum['auto', 'systemd', 'openipmi']`
+
+Which component owns `/dev/watchdog`: `systemd`, `openipmi`, or `auto`.
+`systemd` writes a system.conf drop-in so PID 1 opens and pings the device,
+and forces `IPMI_WATCHDOG` to `no` if its file exists. `openipmi` sets
+`IPMI_WATCHDOG`, which only makes the OpenIPMI service load the module;
+nothing in this module opens the device. `auto` selects `systemd` when the
+`systemd_version` fact is 252 or newer (the first release that falls back
+to `/dev/watchdog`, the only node `ipmi_watchdog` creates), else
+`openipmi`.
+
+Default value: `'auto'`
 
 ##### <a name="-ipmi--watchdog_timeout"></a>`watchdog_timeout`
 
 Data type: `Integer[0]`
 
-Watchdog timeout in seconds, passed to the `ipmi_watchdog` module as its
-`timeout` option. `0` (the default, matching systemd's default of off)
-writes no option and leaves the driver default (10 seconds) in place.
+Watchdog timeout in seconds. Passed to the `ipmi_watchdog` module as its
+`timeout` option and, under `systemd`, written as RuntimeWatchdogSec. `0`
+(the default, matching systemd's default of off) writes no module option,
+leaving the driver default of 10 seconds, and writes `RuntimeWatchdogSec=0`
+so systemd does not touch the device.
 
 Default value: `0`
+
+##### <a name="-ipmi--watchdog_systemd_options"></a>`watchdog_systemd_options`
+
+Data type: `Systemd::ServiceManagerSettings`
+
+Extra system.conf [Manager] settings, used only under `systemd`. A
+`RuntimeWatchdogSec` here replaces `watchdog_timeout`, so setting it to `0`
+keeps systemd off the device while `watchdog` is `true`.
+
+Default value: `{}`
 
 ##### <a name="-ipmi--watchdog_module_options"></a>`watchdog_module_options`
 

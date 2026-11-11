@@ -1,14 +1,15 @@
 #
 # @summary Load the ipmi_watchdog kernel module at boot
 #
-# Writes /etc/modules-load.d/ipmi_watchdog.conf so the module is loaded at
-# boot, and loads it now if it is not loaded. Loading the module creates
-# /dev/watchdog but does not start the BMC timer.
+# Loads ipmi_watchdog through the puppet/kmod module. Loading the module
+# creates /dev/watchdog but does not start the BMC timer.
 #
-# Modprobe options are written to /etc/modprobe.d/ipmi_watchdog.conf before
-# the module is loaded. They only take effect the next time the module is
+# Modprobe options go through the same module and are applied before the
+# module loads. See the kmod module documentation for what it writes and how
+# options are applied; they take effect only the next time the module is
 # loaded, so changing them on a host where it is already loaded needs a reboot
 # or a manual reload.
+# https://forge.puppet.com/modules/puppet/kmod/readme
 #
 # @param timeout
 #   Watchdog timeout in seconds, passed as the `timeout` module option.

@@ -4,3 +4,4 @@ fixtures:
     stdlib: "puppetlabs/stdlib"
     augeas_core: "puppetlabs/augeas_core"
     kmod: "puppet/kmod"
+    systemd: "puppet/systemd"
