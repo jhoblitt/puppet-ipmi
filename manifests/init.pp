@@ -14,7 +14,11 @@
 # @param ipmievd_service_ensure
 #   Controls the state of the `ipmievd` service. Possible values: `running`, `stopped`
 # @param watchdog
-#   Controls whether the IPMI watchdog is enabled.
+#   Controls whether the IPMI watchdog is enabled. When `true`, the
+#   `ipmi_watchdog` kernel module is loaded (see `watchdog_manage_module`) and
+#   `IPMI_WATCHDOG` is set to `yes`. When `false`, `IPMI_WATCHDOG` is set to
+#   `no` and the kernel module is not managed; module configuration written
+#   while it was `true` is left in place.
 # @param snmps
 #   `ipmi_snmp` resources to create.
 # @param users
@@ -25,6 +29,19 @@
 #   Controls whether the `ipmi` service is managed. When `false`, the
 #   `service` resource is not declared and the service is left unmanaged
 #   (handled by the administrator or an external tooling system).
+# @param watchdog_manage_module
+#   Whether to load the `ipmi_watchdog` kernel module, and write its modprobe
+#   options, when `watchdog` is `true`. Set `false` when `/dev/watchdog`
+#   already exists, for example because the module is built in or loaded by
+#   other tooling. `watchdog_timeout` and `watchdog_module_options` have no
+#   effect when this is `false`.
+# @param watchdog_timeout
+#   Watchdog timeout in seconds, passed to the `ipmi_watchdog` module as its
+#   `timeout` option. `0` (the default, matching systemd's default of off)
+#   writes no option and leaves the driver default (10 seconds) in place.
+# @param watchdog_module_options
+#   Extra `ipmi_watchdog` modprobe options, for example `{ 'action' => 'power_cycle' }`.
+#   A `timeout` key must not disagree with a non-zero `watchdog_timeout`.
 # @param default_channel
 #   Optional default IPMI channel (1-15) to use for resources that do not
 #   specify one. When unset, class-declared resources use the node's
@@ -44,6 +61,9 @@ class ipmi (
   Optional[Hash] $users,
   Optional[Hash] $networks,
   Boolean $service_manage = true,
+  Boolean $watchdog_manage_module = true,
+  Integer[0] $watchdog_timeout = 0,
+  Hash[String[1], Scalar] $watchdog_module_options = {},
   Optional[Integer[1, 15]] $default_channel = undef,
 ) {
   contain ipmi::install

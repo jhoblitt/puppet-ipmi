@@ -17,7 +17,8 @@
 * `ipmi::service`
 * `ipmi::service::ipmi`
 * `ipmi::service::ipmievd`
-* `ipmi::watchdog`: Coordinates the IPMI watchdog supervisors
+* `ipmi::watchdog`: Coordinates the IPMI watchdog pieces
+* `ipmi::watchdog::kmod`: Load the ipmi_watchdog kernel module at boot
 * `ipmi::watchdog::openipmi`: Have the OpenIPMI service load ipmi_watchdog
 * `ipmi::watchdog::openipmi::watchdog_param`: Write IPMI_WATCHDOG in the OpenIPMI service config
 
@@ -48,6 +49,9 @@ The following parameters are available in the `ipmi` class:
 * [`users`](#-ipmi--users)
 * [`networks`](#-ipmi--networks)
 * [`service_manage`](#-ipmi--service_manage)
+* [`watchdog_manage_module`](#-ipmi--watchdog_manage_module)
+* [`watchdog_timeout`](#-ipmi--watchdog_timeout)
+* [`watchdog_module_options`](#-ipmi--watchdog_module_options)
 * [`default_channel`](#-ipmi--default_channel)
 
 ##### <a name="-ipmi--packages"></a>`packages`
@@ -102,7 +106,11 @@ Default value: `'stopped'`
 
 Data type: `Boolean`
 
-Controls whether the IPMI watchdog is enabled.
+Controls whether the IPMI watchdog is enabled. When `true`, the
+`ipmi_watchdog` kernel module is loaded (see `watchdog_manage_module`) and
+`IPMI_WATCHDOG` is set to `yes`. When `false`, `IPMI_WATCHDOG` is set to
+`no` and the kernel module is not managed; module configuration written
+while it was `true` is left in place.
 
 Default value: `false`
 
@@ -139,6 +147,37 @@ Controls whether the `ipmi` service is managed. When `false`, the
 (handled by the administrator or an external tooling system).
 
 Default value: `true`
+
+##### <a name="-ipmi--watchdog_manage_module"></a>`watchdog_manage_module`
+
+Data type: `Boolean`
+
+Whether to load the `ipmi_watchdog` kernel module, and write its modprobe
+options, when `watchdog` is `true`. Set `false` when `/dev/watchdog`
+already exists, for example because the module is built in or loaded by
+other tooling. `watchdog_timeout` and `watchdog_module_options` have no
+effect when this is `false`.
+
+Default value: `true`
+
+##### <a name="-ipmi--watchdog_timeout"></a>`watchdog_timeout`
+
+Data type: `Integer[0]`
+
+Watchdog timeout in seconds, passed to the `ipmi_watchdog` module as its
+`timeout` option. `0` (the default, matching systemd's default of off)
+writes no option and leaves the driver default (10 seconds) in place.
+
+Default value: `0`
+
+##### <a name="-ipmi--watchdog_module_options"></a>`watchdog_module_options`
+
+Data type: `Hash[String[1], Scalar]`
+
+Extra `ipmi_watchdog` modprobe options, for example `{ 'action' => 'power_cycle' }`.
+A `timeout` key must not disagree with a non-zero `watchdog_timeout`.
+
+Default value: `{}`
 
 ##### <a name="-ipmi--default_channel"></a>`default_channel`
 

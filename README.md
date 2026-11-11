@@ -167,6 +167,36 @@ When `users`, `networks`, or `snmps` are passed as class parameters, the
 `ipmi_network` and `ipmi_snmp` reject catalogs where two resources target
 the same LAN channel, preventing them from fighting on every run.
 
+#### The IPMI hardware watchdog
+
+When `watchdog => true` the module loads the `ipmi_watchdog` kernel module,
+now and at boot (via `modules-load.d`), and sets `IPMI_WATCHDOG=yes` in the
+OpenIPMI service config, which makes that service load the module too. The
+module provides `/dev/watchdog`. Loading it does not start the BMC timer: the
+timer runs once something opens `/dev/watchdog`, or if the module is given the
+`start_now=1` option.
+
+- `watchdog_timeout` sets the module `timeout` option, in seconds. The default,
+  `0`, writes no option and leaves the driver default (10 seconds).
+- `watchdog_module_options` adds any other modprobe option. Setting `timeout`
+  here as well as a non-zero `watchdog_timeout` is an error unless the two
+  values match.
+- `watchdog_manage_module => false` skips the module load and its options, for
+  hosts where `/dev/watchdog` already exists. `watchdog_timeout` and
+  `watchdog_module_options` then have no effect.
+
+Module options only apply the next time the module is loaded, usually after a
+reboot. Setting `watchdog => false` does not remove module configuration
+written earlier.
+
+```puppet
+  class { 'ipmi':
+    watchdog                => true,
+    watchdog_timeout        => 60,
+    watchdog_module_options => { 'action' => 'power_cycle' },
+  }
+```
+
 For resources declared through `ipmi::users`, `ipmi::networks`, and
 `ipmi::snmps`, `ipmi::default_channel` takes precedence over the node's
 `ipmi.default.channel` fact; an invalid or missing fact falls back to 1.
