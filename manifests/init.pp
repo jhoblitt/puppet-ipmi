@@ -132,18 +132,19 @@ class ipmi (
   }
 
   if $networks {
-    $networks.each |$title, $params| {
+    $networks.each |$key, $params| {
+      $network_title = String($key)
       # An integer title is already a channel unless the caller explicitly
       # requested an override via default_channel.
-      if $default_channel == undef and $title =~ /^[0-9]+$/ {
-        $network_defaults = { 'lan_channel' => Integer($title) }
+      if $default_channel == undef and $network_title =~ /\A[0-9]+\z/ {
+        $network_defaults = { 'lan_channel' => Integer($network_title, 10) }
       } else {
         $network_defaults = $lan_defaults
       }
-      ipmi_network { $title:
+      ipmi_network { $network_title:
         * => $network_defaults + $params,
       }
-      Class['ipmi::install'] -> Ipmi_network[$title]
+      Class['ipmi::install'] -> Ipmi_network[$network_title]
     }
   }
 
