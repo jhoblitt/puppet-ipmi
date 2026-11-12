@@ -36,6 +36,10 @@ module PuppetX::Ipmi::LanChannel
     param.munge(&:to_i)
   end
 
+  # Declares the shared `lan_channel` parameter on the including type.
+  #
+  # @param base [Class] the native type that includes this module
+  # @return [void]
   def self.included(base)
     base.newparam(:lan_channel) do
       desc <<-DESC

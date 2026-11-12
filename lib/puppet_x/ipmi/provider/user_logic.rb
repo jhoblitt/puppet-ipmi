@@ -41,6 +41,7 @@ require 'puppet_x/ipmi/user_catalog'
 #   privilege, channel and SOL access on each of `channels`, then disable
 #   the account, through `disable_failing_closed`.
 module PuppetX::Ipmi::Provider::UserLogic
+  # The IPMI privilege limit that denies every session (NO ACCESS).
   NO_ACCESS_PRIV = 15
 
   # Privilege limits under which no session can be established: NO ACCESS,
@@ -407,6 +408,11 @@ module PuppetX::Ipmi::Provider::UserLogic
     end
   end
 
+  # Adds the class level methods (instances, prefetch and so on) to the
+  # including provider.
+  #
+  # @param base [Class] the provider that includes this module
+  # @return [void]
   def self.included(base)
     base.extend(ClassMethods)
   end
@@ -430,6 +436,8 @@ module PuppetX::Ipmi::Provider::UserLogic
     @resource[:username] || @resource[:name]
   end
 
+  # @return [String, nil] the resource's password with any Sensitive wrapper
+  #   removed, or nil when none is set
   def real_password
     pw = PuppetX::Ipmi.unwrap(@resource[:password])
     return nil if pw.nil?
