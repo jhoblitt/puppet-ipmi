@@ -36,17 +36,25 @@ class ipmi::watchdog {
   $load_module = $use_systemd and $ipmi::watchdog and $ipmi::watchdog_manage_module
   $options_used = $load_module or (!$use_systemd and $ipmi::watchdog)
 
-  if $options_used and $timeout > 0 and 'timeout' in $module_options and String($module_options['timeout']) != String($timeout) {
-    fail("ipmi::watchdog_module_options timeout (${module_options['timeout']}) conflicts with ipmi::watchdog_timeout (${timeout}); set only one")
-  }
-
   if $timeout > 0 {
-    $timeout_options = { 'timeout' => $timeout }
+    $option_timeout = $module_options['timeout']
+    $timeouts_agree = $option_timeout ? {
+      undef                            => true,
+      Numeric                          => $option_timeout == $timeout,
+      Pattern[/\A[0-9]+(\.[0-9]+)?\z/] => Numeric($option_timeout) == $timeout,
+      default                          => false,
+    }
+
+    if $options_used and !$timeouts_agree {
+      fail("ipmi::watchdog_module_options timeout (${option_timeout}) conflicts with ipmi::watchdog_timeout (${timeout}); set only one")
+    }
+
+    $module_settings = { 'timeout' => $timeout } + ($module_options - 'timeout')
   } else {
-    $timeout_options = {}
+    $module_settings = $module_options
   }
 
-  $option_words = ($timeout_options + $module_options).map |$option, $value| { "${option}=${value}" }
+  $option_words = $module_settings.map |$option, $value| { "${option}=${value}" }
   $options = $option_words.empty ? {
     true    => undef,
     default => $option_words.join(' '),

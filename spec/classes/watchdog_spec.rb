@@ -241,12 +241,28 @@ describe 'ipmi', type: :class do
           it { is_expected.to compile.and_raise_error(%r{conflicts with ipmi::watchdog_timeout}) }
         end
 
-        context 'with a matching timeout in watchdog_module_options' do
-          let(:params) do
-            { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'timeout' => 30 } }
-          end
+        [30, 30.0, '30', '30.0'].each do |value|
+          context "with a matching timeout #{value.inspect} in watchdog_module_options" do
+            let(:params) do
+              {
+                watchdog: true,
+                watchdog_timeout: 30,
+                watchdog_module_options: { 'action' => 'reset', 'timeout' => value },
+              }
+            end
 
-          it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=30$}) }
+            it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=30 action=reset$}) }
+          end
+        end
+
+        [30.5, '30.5', '45', 'thirty'].each do |value|
+          context "with a mismatching timeout #{value.inspect} in watchdog_module_options" do
+            let(:params) do
+              { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'timeout' => value } }
+            end
+
+            it { is_expected.to compile.and_raise_error(%r{conflicts with ipmi::watchdog_timeout}) }
+          end
         end
 
         context 'with timeout only in watchdog_module_options' do
