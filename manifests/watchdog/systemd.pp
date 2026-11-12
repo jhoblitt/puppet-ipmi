@@ -10,10 +10,10 @@
 # `0` would override a RuntimeWatchdogSec set in system.conf or an earlier
 # drop-in. Without any setting to write, the drop-in is removed.
 #
-# WatchdogDevice is not written unless set in `options`. systemd tries
-# /dev/watchdog0 first and, from 252, falls back to /dev/watchdog. On a host
-# with another watchdog driver loaded, such as iTCO_wdt, /dev/watchdog0 may
-# not be the BMC, so set `WatchdogDevice` in `options`.
+# WatchdogDevice is left unset. ipmi_watchdog registers only the legacy
+# /dev/watchdog node, and while it holds that node the kernel gives no other
+# watchdog driver /dev/watchdog0, so PID 1 opens /dev/watchdog: directly up to
+# 249, and from 252 after finding no /dev/watchdog0.
 #
 # The drop-in is declared even when systemd is not the owner, so that
 # switching the owner or turning the watchdog off removes it.

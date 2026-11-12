@@ -539,14 +539,14 @@ describe 'ipmi', type: :class do
           {
             watchdog: true,
             watchdog_timeout: 30,
-            watchdog_systemd_options: { 'RuntimeWatchdogSec' => '45', 'WatchdogDevice' => '/dev/watchdog0' },
+            watchdog_systemd_options: { 'RuntimeWatchdogSec' => '45', 'KExecWatchdogSec' => '5min' },
           }
         end
 
         it do
           is_expected.to contain_file(dropin)
             .with_content(%r{^RuntimeWatchdogSec=45$})
-            .with_content(%r{^WatchdogDevice=/dev/watchdog0$})
+            .with_content(%r{^KExecWatchdogSec=5min$})
         end
       end
 

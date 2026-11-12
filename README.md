@@ -214,9 +214,8 @@ Options:
   Set a non-zero value to have systemd arm the BMC watchdog.
 - `watchdog_systemd_options` adds other `system.conf` [Manager] settings. A
   `RuntimeWatchdogSec` here replaces `watchdog_timeout`; `0` keeps systemd off
-  the device on hardware with a buggy BMC watchdog. On a host with another
-  watchdog driver, such as `iTCO_wdt`, `/dev/watchdog0` may not be the BMC, so
-  set `WatchdogDevice`.
+  the device on hardware with a buggy BMC watchdog. Leave `WatchdogDevice`
+  unset (see below).
 - `watchdog_module_options` adds any other module option. Names are module
   parameter names, and values may not contain spaces, quotes or other
   characters a shell would interpret, because `IPMI_WATCHDOG_OPTIONS` is
@@ -240,13 +239,34 @@ next boot or a manual `modprobe -r ipmi_watchdog`.
 
 ```puppet
   class { 'ipmi':
-    watchdog                 => true,
-    watchdog_supervisor      => 'auto',
-    watchdog_timeout         => 60,
-    watchdog_module_options  => { 'action' => 'power_cycle' },
-    watchdog_systemd_options => { 'WatchdogDevice' => '/dev/watchdog' },
+    watchdog                => true,
+    watchdog_supervisor     => 'auto',
+    watchdog_timeout        => 60,
+    watchdog_module_options => { 'action' => 'power_cycle' },
   }
 ```
+
+Which device PID 1 opens: `ipmi_watchdog` provides only the legacy
+`/dev/watchdog` node. Unlike drivers built on the kernel's watchdog core, such
+as `iTCO_wdt`, it has no `/dev/watchdogN` node and no `/sys/class/watchdog`
+entry, so there is no other name to point `WatchdogDevice` at.
+
+- While `ipmi_watchdog` holds `/dev/watchdog`, the kernel numbers other
+  watchdog drivers from `/dev/watchdog1`, so `/dev/watchdog0` does not exist.
+  With `WatchdogDevice` unset, systemd up to 249 opens `/dev/watchdog`, and
+  252 and later fall back to it, so PID 1 opens the BMC's watchdog.
+- `WatchdogDevice=/dev/watchdog0`, or any other `/dev/watchdogN`, names
+  another driver, never the BMC. systemd 252 and later treat
+  `/dev/watchdog` like an unset value, and 250 and 251 replace it with
+  `/dev/watchdog0`.
+- If another watchdog driver registers before `ipmi_watchdog`, it takes
+  `/dev/watchdog` as well as `/dev/watchdog0`, and `ipmi_watchdog` gets no
+  device at all (the kernel logs `Unable to register misc device`). No
+  `WatchdogDevice` value reaches the BMC then; keep the other driver from
+  loading, for example by blacklisting it.
+
+PID 1 logs `Using hardware watchdog 'IPMI'` (`Hardware watchdog 'IPMI'` in
+older releases such as 239) once it has opened the BMC's watchdog.
 
 For resources declared through `ipmi::users`, `ipmi::networks`, and
 `ipmi::snmps`, `ipmi::default_channel` takes precedence over the node's
