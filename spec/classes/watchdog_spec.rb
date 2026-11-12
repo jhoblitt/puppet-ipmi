@@ -108,8 +108,8 @@ describe 'ipmi', type: :class do
       end
 
       context 'with supervisor auto' do
-        context 'and systemd_version 252' do
-          let(:facts) { super().merge(systemd_version: '252') }
+        context 'and ipmi_systemd_version 252' do
+          let(:facts) { super().merge(ipmi_systemd_version: '252') }
           let(:params) { { watchdog: true } }
 
           it { is_expected.to compile.with_all_deps }
@@ -136,29 +136,36 @@ describe 'ipmi', type: :class do
           it { is_expected.to contain_class('ipmi::watchdog::kmod').that_comes_before('Class[ipmi::watchdog::systemd]') }
         end
 
-        context 'and systemd_version 1000 (numeric compare)' do
-          let(:facts) { super().merge(systemd_version: '1000') }
+        context 'and ipmi_systemd_version 1000 (numeric compare)' do
+          let(:facts) { super().merge(ipmi_systemd_version: '1000') }
           let(:params) { { watchdog: true } }
 
           it { is_expected.to contain_class('ipmi::watchdog::systemd') }
         end
 
-        context 'and systemd_version 251' do
-          let(:facts) { super().merge(systemd_version: '251') }
+        context 'and ipmi_systemd_version 251' do
+          let(:facts) { super().merge(ipmi_systemd_version: '251') }
           let(:params) { { watchdog: true } }
 
           it { is_expected.not_to contain_class('ipmi::watchdog::systemd') }
           it { is_expected.to contain_augeas('ipmi_watchdog').with(changes: ['set IPMI_WATCHDOG yes']) }
         end
 
-        context 'and no systemd_version fact' do
+        context 'and no ipmi_systemd_version fact' do
+          let(:params) { { watchdog: true } }
+
+          it { is_expected.not_to contain_class('ipmi::watchdog::systemd') }
+        end
+
+        context "and only puppet/systemd's systemd_version fact" do
+          let(:facts) { super().merge(systemd_version: '257') }
           let(:params) { { watchdog: true } }
 
           it { is_expected.not_to contain_class('ipmi::watchdog::systemd') }
         end
 
         context 'and watchdog => false removes the drop-in' do
-          let(:facts) { super().merge(systemd_version: '257') }
+          let(:facts) { super().merge(ipmi_systemd_version: '257') }
 
           it { is_expected.to contain_systemd__system__dropin_file('50-ipmi-watchdog.conf').with(ensure: 'absent') }
           it { is_expected.not_to contain_class('ipmi::watchdog::kmod') }
@@ -166,7 +173,7 @@ describe 'ipmi', type: :class do
       end
 
       context 'with supervisor systemd on an old systemd' do
-        let(:facts) { super().merge(systemd_version: '219') }
+        let(:facts) { super().merge(ipmi_systemd_version: '219') }
         let(:params) { { watchdog: true, watchdog_supervisor: 'systemd' } }
 
         it { is_expected.to contain_class('ipmi::watchdog::systemd') }
@@ -174,7 +181,7 @@ describe 'ipmi', type: :class do
       end
 
       context 'with supervisor openipmi on a new systemd' do
-        let(:facts) { super().merge(systemd_version: '257') }
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
         let(:params) { { watchdog: true, watchdog_supervisor: 'openipmi' } }
 
         it { is_expected.not_to contain_class('ipmi::watchdog::systemd') }
@@ -182,7 +189,7 @@ describe 'ipmi', type: :class do
       end
 
       context 'with watchdog_timeout under systemd' do
-        let(:facts) { super().merge(systemd_version: '257') }
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
         let(:params) { { watchdog: true, watchdog_timeout: 30 } }
 
         it { is_expected.to contain_kmod__option('ipmi_watchdog_timeout').with(value: 30) }
@@ -194,7 +201,7 @@ describe 'ipmi', type: :class do
       end
 
       context 'with watchdog_systemd_options forcing RuntimeWatchdogSec off' do
-        let(:facts) { super().merge(systemd_version: '257') }
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
         let(:params) do
           {
             watchdog: true,
@@ -212,7 +219,7 @@ describe 'ipmi', type: :class do
       end
 
       context 'with watchdog_systemd_options overriding the timeout' do
-        let(:facts) { super().merge(systemd_version: '257') }
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
         let(:params) do
           {
             watchdog: true,
@@ -229,7 +236,7 @@ describe 'ipmi', type: :class do
       end
 
       context 'with watchdog_manage_module => false under systemd' do
-        let(:facts) { super().merge(systemd_version: '257') }
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
         let(:params) { { watchdog: true, watchdog_manage_module: false } }
 
         it { is_expected.to compile.with_all_deps }

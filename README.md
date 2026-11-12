@@ -186,9 +186,9 @@ The device can only be opened once, so one component owns it, chosen by
   the OpenIPMI service load the module. Nothing in this module opens the
   device, so the timer is started by whatever else does, such as the
   `watchdog` daemon.
-- `auto`: `systemd` when the `systemd_version` fact is 252 or newer (the first
-  release that falls back to `/dev/watchdog`, the only node `ipmi_watchdog`
-  creates), otherwise `openipmi`.
+- `auto`: `systemd` when the `ipmi_systemd_version` fact is 252 or newer (the
+  first release that falls back to `/dev/watchdog`, the only node
+  `ipmi_watchdog` creates), otherwise `openipmi`.
 
 Options:
 
@@ -539,6 +539,13 @@ ipmi_ipaddress_source => Static Address
 ipmi_macaddress => 00:30:48:c9:64:2a
 ipmi_subnet_mask => 255.255.255.0
 ```
+
+### `ipmi_systemd_version`
+
+The major version of systemd, as a string such as `252`, from
+`systemctl --version`. It is reported only when systemd is the init system
+(`/run/systemd/system` exists) and is what `watchdog_supervisor => 'auto'`
+decides on.
 
 ## Limitations
 

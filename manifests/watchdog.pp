@@ -23,7 +23,7 @@ class ipmi::watchdog {
   # systemd 252 is the first release that falls back to /dev/watchdog when
   # /dev/watchdog0 is missing. ipmi_watchdog only creates /dev/watchdog.
   $systemd_min_version = '252'
-  $systemd_version = pick($facts['systemd_version'], '0')
+  $systemd_version = pick($facts['ipmi_systemd_version'], '0')
 
   case $ipmi::watchdog_supervisor {
     'systemd':  { $use_systemd = true }
