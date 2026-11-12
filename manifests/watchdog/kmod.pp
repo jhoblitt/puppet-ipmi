@@ -1,6 +1,9 @@
 #
 # @summary Load the ipmi_watchdog kernel module, now and at boot
 #
+# Declared by ipmi::watchdog with `manage => true` only when systemd owns the
+# device; under OpenIPMI the OpenIPMI service loads the module.
+#
 # Writes the module's options to modprobe.d, lists it in modules-load.d and
 # loads it now. Loading the module creates /dev/watchdog but does not start
 # the BMC timer. Options only take effect the next time the module is loaded,
@@ -14,36 +17,19 @@
 #
 # @param manage
 #   Whether the files are present and the module is loaded.
-# @param timeout
-#   Watchdog timeout in seconds, passed as the `timeout` module option.
-#   `0` writes no option, leaving the driver default (10 seconds).
 # @param options
-#   Extra module options. A `timeout` key here must not disagree with
-#   `timeout` above; a mismatch fails the catalog.
+#   Module options as `name=value` words separated by spaces. Without any, no
+#   modprobe.d file is written.
 #
 # @api private
 #
 class ipmi::watchdog::kmod (
   Boolean $manage = false,
-  Integer[0] $timeout = 0,
-  Hash[String[1], Scalar] $options = {},
+  Optional[String[1]] $options = undef,
 ) {
   assert_private()
 
-  if $manage and $timeout > 0 and 'timeout' in $options and String($options['timeout']) != String($timeout) {
-    fail("ipmi::watchdog_module_options timeout (${options['timeout']}) conflicts with ipmi::watchdog_timeout (${timeout}); set only one")
-  }
-
-  if $timeout > 0 {
-    $timeout_options = { 'timeout' => $timeout }
-  } else {
-    $timeout_options = {}
-  }
-
-  $settings = $timeout_options + $options
-  $option_words = $settings.map |$option, $value| { "${option}=${value}" }
-
-  $modprobe_ensure = ($manage and !$settings.empty) ? {
+  $modprobe_ensure = ($manage and $options =~ NotUndef) ? {
     true    => 'file',
     default => 'absent',
   }
@@ -57,7 +43,7 @@ class ipmi::watchdog::kmod (
     owner   => 'root',
     group   => 'root',
     mode    => '0644',
-    content => "# Managed by Puppet (ipmi::watchdog)\noptions ipmi_watchdog ${option_words.join(' ')}\n",
+    content => "# Managed by Puppet (ipmi::watchdog)\noptions ipmi_watchdog ${options}\n",
   }
 
   file { '/etc/modules-load.d/50-ipmi-watchdog.conf':

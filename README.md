@@ -169,26 +169,31 @@ the same LAN channel, preventing them from fighting on every run.
 
 #### The IPMI hardware watchdog
 
-When `watchdog => true` the module loads the `ipmi_watchdog` kernel module,
-now and at boot. Its options go to `/etc/modprobe.d/50-ipmi-watchdog.conf`
-and the boot-time load to `/etc/modules-load.d/50-ipmi-watchdog.conf`; files
-of other names, such as the `ipmi_watchdog.conf` that puppet/kmod writes, are
-left alone. The module provides `/dev/watchdog`.
-Loading it does not start the BMC timer: the timer runs once something opens
-`/dev/watchdog`, or if the module is given the `start_now=1` option.
+When `watchdog => true` the `ipmi_watchdog` kernel module is loaded, which
+provides `/dev/watchdog`. Loading it does not start the BMC timer: the timer
+runs once something opens `/dev/watchdog`, or if the module is given the
+`start_now=1` option.
 
 The device can only be opened once, so one component owns it, chosen by
 `watchdog_supervisor` (`auto` by default):
 
-- `systemd`: a `system.conf` drop-in
-  (`/etc/systemd/system.conf.d/50-ipmi-watchdog.conf`) makes PID 1 open and
-  ping `/dev/watchdog`. systemd reads it only when PID 1 starts, so Puppet runs
-  `systemctl daemon-reexec` whenever the drop-in changes or is removed. If the
-  OpenIPMI config file exists, `IPMI_WATCHDOG` in
-  it is forced to `no` (the file is never created for this), so the OpenIPMI
-  service does not also manage the module.
+- `systemd`: Puppet loads the module, now and at boot. Its options go to
+  `/etc/modprobe.d/50-ipmi-watchdog.conf` and the boot-time load to
+  `/etc/modules-load.d/50-ipmi-watchdog.conf`; files of other names, such as
+  the `ipmi_watchdog.conf` that puppet/kmod writes, are left alone. A
+  `system.conf` drop-in (`/etc/systemd/system.conf.d/50-ipmi-watchdog.conf`)
+  makes PID 1 open and ping `/dev/watchdog`. systemd reads it only when PID 1
+  starts, so Puppet runs `systemctl daemon-reexec` whenever the drop-in
+  changes or is removed. If the OpenIPMI config file exists, `IPMI_WATCHDOG`
+  in it is forced to `no` (the file is never created for this), so the
+  OpenIPMI service does not also manage the module.
 - `openipmi`: `IPMI_WATCHDOG=yes` is set in the OpenIPMI config, which makes
-  the OpenIPMI service load the module. Nothing in this module opens the
+  the OpenIPMI service load the module with the options in
+  `IPMI_WATCHDOG_OPTIONS`. `watchdog_timeout` and `watchdog_module_options`
+  are written there; when neither is set it keeps its value, such as the
+  package's `timeout=60`. Puppet neither loads the module nor writes the
+  modprobe.d and modules-load.d files, and removes them if they exist, so
+  `watchdog_manage_module` has no effect. Nothing in this module opens the
   device, so the timer is started by whatever else does, such as the
   `watchdog` daemon. A drop-in written while systemd was the owner is
   removed.
@@ -209,12 +214,15 @@ Options:
   the device on hardware with a buggy BMC watchdog. On a host with another
   watchdog driver, such as `iTCO_wdt`, `/dev/watchdog0` may not be the BMC, so
   set `WatchdogDevice`.
-- `watchdog_module_options` adds any other modprobe option. Setting `timeout`
-  here as well as a non-zero `watchdog_timeout` is an error unless the two
-  values match.
-- `watchdog_manage_module => false` skips the module load and its options, for
-  hosts where `/dev/watchdog` already exists. `watchdog_timeout` and
-  `watchdog_module_options` then have no effect on the module.
+- `watchdog_module_options` adds any other module option. Names are module
+  parameter names, and values may not contain spaces, quotes or other
+  characters a shell would interpret, because `IPMI_WATCHDOG_OPTIONS` is
+  expanded unquoted by the OpenIPMI service. Setting `timeout` here as well as
+  a non-zero `watchdog_timeout` is an error unless the two values match.
+- `watchdog_manage_module => false` under `systemd` skips the module load and
+  its options, for hosts where `/dev/watchdog` already exists.
+  `watchdog_timeout` and `watchdog_module_options` then have no effect on the
+  module.
 
 Installing or upgrading the packages neither re-executes PID 1 nor restarts
 a service, and changes to the module files or the drop-in do not restart the

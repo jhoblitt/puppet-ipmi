@@ -31,10 +31,30 @@ class ipmi::watchdog {
     default:    { $use_systemd = versioncmp($systemd_version, $systemd_min_version) >= 0 }
   }
 
+  $timeout = $ipmi::watchdog_timeout
+  $module_options = $ipmi::watchdog_module_options
+  $load_module = $use_systemd and $ipmi::watchdog and $ipmi::watchdog_manage_module
+  $options_used = $load_module or (!$use_systemd and $ipmi::watchdog)
+
+  if $options_used and $timeout > 0 and 'timeout' in $module_options and String($module_options['timeout']) != String($timeout) {
+    fail("ipmi::watchdog_module_options timeout (${module_options['timeout']}) conflicts with ipmi::watchdog_timeout (${timeout}); set only one")
+  }
+
+  if $timeout > 0 {
+    $timeout_options = { 'timeout' => $timeout }
+  } else {
+    $timeout_options = {}
+  }
+
+  $option_words = ($timeout_options + $module_options).map |$option, $value| { "${option}=${value}" }
+  $options = $option_words.empty ? {
+    true    => undef,
+    default => $option_words.join(' '),
+  }
+
   class { 'ipmi::watchdog::kmod':
-    manage  => $ipmi::watchdog and $ipmi::watchdog_manage_module,
-    timeout => $ipmi::watchdog_timeout,
-    options => $ipmi::watchdog_module_options,
+    manage  => $load_module,
+    options => $options,
   }
 
   contain ipmi::watchdog::kmod
@@ -50,11 +70,11 @@ class ipmi::watchdog {
   Class['ipmi::watchdog::kmod'] -> Class['ipmi::watchdog::systemd']
 
   if $use_systemd {
-    # systemd owns /dev/watchdog. IPMI_WATCHDOG=yes would make the OpenIPMI
-    # service also load and unload ipmi_watchdog itself (per upstream
-    # ipmi.init), so force it to "no" if the config file exists. The file is
-    # not created, and the rest of ipmi::watchdog::openipmi is deliberately not
-    # declared.
+    # systemd owns /dev/watchdog and Puppet loads the module. IPMI_WATCHDOG=yes
+    # would make the OpenIPMI service also load and unload ipmi_watchdog itself
+    # (per upstream ipmi.init), so force it to "no" if the config file exists.
+    # The file is not created, and the rest of ipmi::watchdog::openipmi is
+    # deliberately not declared.
     class { 'ipmi::watchdog::openipmi::watchdog_param':
       enable         => false,
       only_if_exists => true,
@@ -63,9 +83,10 @@ class ipmi::watchdog {
     contain ipmi::watchdog::openipmi::watchdog_param
   } else {
     # OpenIPMI is the owner: IPMI_WATCHDOG=yes makes its service load the
-    # module.
+    # module, with IPMI_WATCHDOG_OPTIONS.
     class { 'ipmi::watchdog::openipmi':
-      enable => $ipmi::watchdog,
+      enable  => $ipmi::watchdog,
+      options => $options,
     }
 
     contain ipmi::watchdog::openipmi

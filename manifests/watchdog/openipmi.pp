@@ -14,16 +14,21 @@
 #
 # @param enable
 #   `true` sets IPMI_WATCHDOG to `yes`, `false` sets it to `no`.
+# @param options
+#   Module options for IPMI_WATCHDOG_OPTIONS, as `name=value` words separated
+#   by spaces. Without any, IPMI_WATCHDOG_OPTIONS is left as it is.
 #
 # @api private
 #
 class ipmi::watchdog::openipmi (
   Boolean $enable,
+  Optional[String[1]] $options = undef,
 ) {
   assert_private()
 
   class { 'ipmi::watchdog::openipmi::watchdog_param':
-    enable => $enable,
+    enable  => $enable,
+    options => $options,
   }
 
   contain ipmi::watchdog::openipmi::watchdog_param

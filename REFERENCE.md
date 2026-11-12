@@ -30,6 +30,7 @@
 
 ### Data types
 
+* [`Ipmi::Watchdog::ModuleOptions`](#Ipmi--Watchdog--ModuleOptions): ipmi_watchdog module parameters
 * [`Ipmi::Watchdog::SystemdOptions`](#Ipmi--Watchdog--SystemdOptions): systemd-system.conf(5) [Manager] settings for the watchdog drop-in
 
 ## Classes
@@ -112,14 +113,15 @@ Default value: `'stopped'`
 
 Data type: `Boolean`
 
-Controls whether the IPMI watchdog is enabled. When `true`, the
-`ipmi_watchdog` kernel module is loaded (see `watchdog_manage_module`) and
-the owner chosen by `watchdog_supervisor` is configured: under `openipmi`
-`IPMI_WATCHDOG` is set to `yes`, under `systemd` a system.conf drop-in is
-written. When `false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`), and
-the drop-in and the module's modprobe.d and modules-load.d files are
-removed. A loaded module is never unloaded: it stays loaded until the next
-boot or a manual unload.
+Controls whether the IPMI watchdog is enabled. When `true`, the owner
+chosen by `watchdog_supervisor` is configured: under `openipmi`
+`IPMI_WATCHDOG` is set to `yes`, so the OpenIPMI service loads the
+`ipmi_watchdog` kernel module; under `systemd` Puppet loads the module (see
+`watchdog_manage_module`) and a system.conf drop-in is written. When
+`false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`), and the drop-in and
+the module's modprobe.d and modules-load.d files are removed. A loaded
+module is never unloaded: it stays loaded until the next boot or a manual
+unload.
 
 Default value: `false`
 
@@ -161,12 +163,13 @@ Default value: `true`
 
 Data type: `Boolean`
 
-Whether to load the `ipmi_watchdog` kernel module, and write its modprobe
-options, when `watchdog` is `true`. Set `false` when `/dev/watchdog`
-already exists, for example because the module is built in or loaded by
-other tooling; this module's modprobe.d and modules-load.d files are then
-removed. `watchdog_timeout` and `watchdog_module_options` have no effect on
-the module when this is `false`.
+Whether Puppet loads the `ipmi_watchdog` kernel module, and writes its
+modprobe options, when `watchdog` is `true` under `systemd`. Set `false`
+when `/dev/watchdog` already exists, for example because the module is
+built in or loaded by other tooling; this module's modprobe.d and
+modules-load.d files are then removed, and `watchdog_timeout` and
+`watchdog_module_options` have no effect on the module. Has no effect
+under `openipmi`, where the OpenIPMI service loads the module.
 
 Default value: `true`
 
@@ -190,10 +193,11 @@ Default value: `'auto'`
 Data type: `Integer[0]`
 
 Watchdog timeout in seconds. Passed to the `ipmi_watchdog` module as its
-`timeout` option and, under `systemd`, written as RuntimeWatchdogSec. `0`,
-the default, writes neither: the driver default of 10 seconds applies, and
-systemd keeps whatever RuntimeWatchdogSec the rest of its configuration
-sets, which is off unless something sets it.
+`timeout` option (in modprobe.d under `systemd`, in
+`IPMI_WATCHDOG_OPTIONS` under `openipmi`) and, under `systemd`, written as
+RuntimeWatchdogSec. `0`, the default, writes neither: the driver default
+of 10 seconds applies, and systemd keeps whatever RuntimeWatchdogSec the
+rest of its configuration sets, which is off unless something sets it.
 
 Default value: `0`
 
@@ -209,10 +213,14 @@ Default value: `{}`
 
 ##### <a name="-ipmi--watchdog_module_options"></a>`watchdog_module_options`
 
-Data type: `Hash[String[1], Scalar]`
+Data type: `Ipmi::Watchdog::ModuleOptions`
 
-Extra `ipmi_watchdog` modprobe options, for example `{ 'action' => 'power_cycle' }`.
-A `timeout` key must not disagree with a non-zero `watchdog_timeout`.
+Extra `ipmi_watchdog` module options, for example
+`{ 'action' => 'power_cycle' }`, written with `watchdog_timeout` to
+modprobe.d under `systemd` or to `IPMI_WATCHDOG_OPTIONS` under `openipmi`.
+When neither is set, `IPMI_WATCHDOG_OPTIONS` keeps the value it has, such
+as the package's `timeout=60`. A `timeout` key must not disagree with a
+non-zero `watchdog_timeout`.
 
 Default value: `{}`
 
@@ -618,6 +626,15 @@ name goes on ipmitool's command line, where its option parser would
 take it as an option.
 
 ## Data types
+
+### <a name="Ipmi--Watchdog--ModuleOptions"></a>`Ipmi::Watchdog::ModuleOptions`
+
+They are written to modprobe.d or to the OpenIPMI service's
+IPMI_WATCHDOG_OPTIONS, which its helper script sources and expands unquoted
+on the modprobe command line, so values are limited to characters that need
+no quoting.
+
+Alias of `Hash[Pattern[/\A[a-z][a-z0-9_]*\z/], Variant[Integer, Float, Boolean, Pattern[/\A[\w.,:+-]+\z/]]]`
 
 ### <a name="Ipmi--Watchdog--SystemdOptions"></a>`Ipmi::Watchdog::SystemdOptions`
 

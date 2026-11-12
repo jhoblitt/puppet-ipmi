@@ -85,96 +85,192 @@ describe 'ipmi', type: :class do
           )
         end
 
-        it { is_expected.to contain_class('ipmi::watchdog::kmod') }
-
-        it do
-          is_expected.to contain_file(modules_load_conf).with(
-            ensure: 'file',
-            owner: 'root',
-            group: 'root',
-            mode: '0644',
-            content: %r{^ipmi_watchdog$},
-          )
-        end
-
-        it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
-
-        it do
-          is_expected.to contain_exec(modprobe_exec).with(
-            command: 'modprobe ipmi_watchdog',
-            unless: "grep -q '^ipmi_watchdog ' /proc/modules",
-          ).that_requires("File[#{modprobe_conf}]")
-        end
-
         it { is_expected.not_to contain_class('kmod') }
         it { is_expected.not_to contain_class('systemd') }
       end
 
-      context 'with watchdog_timeout => 0' do
-        let(:params) { { watchdog: true, watchdog_timeout: 0 } }
+      context 'when OpenIPMI owns the device' do
+        context 'with watchdog => true' do
+          let(:params) { { watchdog: true, watchdog_supervisor: 'openipmi' } }
 
-        it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
-      end
+          it 'leaves loading the module to the OpenIPMI service' do
+            is_expected.to contain_file(modprobe_conf).with_ensure('absent')
+            is_expected.to contain_file(modules_load_conf).with_ensure('absent')
+            is_expected.not_to contain_exec(modprobe_exec)
+          end
 
-      context 'with watchdog_timeout' do
-        let(:params) { { watchdog: true, watchdog_timeout: 30 } }
+          it 'keeps the package IPMI_WATCHDOG_OPTIONS when nothing is configured' do
+            is_expected.to contain_augeas('ipmi_watchdog').with_changes(['set IPMI_WATCHDOG yes'])
+          end
+        end
 
-        it do
-          is_expected.to contain_file(modprobe_conf).with(
-            ensure: 'file',
-            owner: 'root',
-            group: 'root',
-            mode: '0644',
-            content: %r{^options ipmi_watchdog timeout=30$},
-          )
+        context 'with watchdog_timeout and watchdog_module_options' do
+          let(:params) do
+            {
+              watchdog: true,
+              watchdog_supervisor: 'openipmi',
+              watchdog_timeout: 30,
+              watchdog_module_options: { 'action' => 'power_cycle' },
+            }
+          end
+
+          it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
+
+          it 'passes them as IPMI_WATCHDOG_OPTIONS' do
+            is_expected.to contain_augeas('ipmi_watchdog').with(
+              context: "/files#{config_file}",
+              changes: [
+                'set IPMI_WATCHDOG yes',
+                %(set IPMI_WATCHDOG_OPTIONS '"timeout=30 action=power_cycle"'),
+              ],
+            )
+          end
+        end
+
+        context 'with watchdog_manage_module => false' do
+          let(:params) do
+            { watchdog: true, watchdog_supervisor: 'openipmi', watchdog_manage_module: false, watchdog_timeout: 30 }
+          end
+
+          it do
+            is_expected.to contain_augeas('ipmi_watchdog').with_changes(
+              ['set IPMI_WATCHDOG yes', %(set IPMI_WATCHDOG_OPTIONS '"timeout=30"')],
+            )
+          end
+        end
+
+        context 'with watchdog => false and module options set' do
+          let(:params) { { watchdog: false, watchdog_supervisor: 'openipmi', watchdog_timeout: 30 } }
+
+          it { is_expected.to contain_augeas('ipmi_watchdog').with_changes(['set IPMI_WATCHDOG no']) }
+        end
+
+        context 'with a conflicting timeout in watchdog_module_options' do
+          let(:params) do
+            {
+              watchdog: true,
+              watchdog_supervisor: 'openipmi',
+              watchdog_timeout: 30,
+              watchdog_module_options: { 'timeout' => 45 },
+            }
+          end
+
+          it { is_expected.to compile.and_raise_error(%r{conflicts with ipmi::watchdog_timeout}) }
         end
       end
 
-      context 'with extra watchdog_module_options' do
-        let(:params) do
-          { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'action' => 'power_cycle' } }
+      context 'with a watchdog_module_options value a shell would split' do
+        let(:params) { { watchdog: true, watchdog_module_options: { 'action' => 'power_cycle $(reboot)' } } }
+
+        it { is_expected.to compile.and_raise_error(%r{watchdog_module_options}) }
+      end
+
+      context 'with a watchdog_module_options key that is not a parameter name' do
+        let(:params) { { watchdog: true, watchdog_module_options: { 'Action Now' => 'reset' } } }
+
+        it { is_expected.to compile.and_raise_error(%r{watchdog_module_options}) }
+      end
+
+      context 'when systemd owns the device' do
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
+
+        context 'with watchdog => true' do
+          let(:params) { { watchdog: true } }
+
+          it { is_expected.to contain_class('ipmi::watchdog::kmod') }
+
+          it do
+            is_expected.to contain_file(modules_load_conf).with(
+              ensure: 'file',
+              owner: 'root',
+              group: 'root',
+              mode: '0644',
+              content: %r{^ipmi_watchdog$},
+            )
+          end
+
+          it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
+
+          it do
+            is_expected.to contain_exec(modprobe_exec).with(
+              command: 'modprobe ipmi_watchdog',
+              unless: "grep -q '^ipmi_watchdog ' /proc/modules",
+            ).that_requires("File[#{modprobe_conf}]")
+          end
+
+          it 'leaves IPMI_WATCHDOG_OPTIONS alone' do
+            is_expected.to contain_augeas('ipmi_watchdog').with_changes(['set IPMI_WATCHDOG no'])
+          end
         end
 
-        it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=30 action=power_cycle$}) }
-      end
+        context 'with watchdog_timeout => 0' do
+          let(:params) { { watchdog: true, watchdog_timeout: 0 } }
 
-      context 'with a conflicting timeout in watchdog_module_options' do
-        let(:params) do
-          { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'timeout' => 45 } }
+          it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
         end
 
-        it { is_expected.to compile.and_raise_error(%r{conflicts with ipmi::watchdog_timeout}) }
-      end
+        context 'with watchdog_timeout' do
+          let(:params) { { watchdog: true, watchdog_timeout: 30 } }
 
-      context 'with a matching timeout in watchdog_module_options' do
-        let(:params) do
-          { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'timeout' => 30 } }
+          it do
+            is_expected.to contain_file(modprobe_conf).with(
+              ensure: 'file',
+              owner: 'root',
+              group: 'root',
+              mode: '0644',
+              content: %r{^options ipmi_watchdog timeout=30$},
+            )
+          end
+
+          it { is_expected.to contain_augeas('ipmi_watchdog').with_changes(['set IPMI_WATCHDOG no']) }
         end
 
-        it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=30$}) }
-      end
+        context 'with extra watchdog_module_options' do
+          let(:params) do
+            { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'action' => 'power_cycle' } }
+          end
 
-      context 'with timeout only in watchdog_module_options' do
-        let(:params) { { watchdog: true, watchdog_module_options: { 'timeout' => 45 } } }
+          it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=30 action=power_cycle$}) }
+        end
 
-        it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=45$}) }
-      end
+        context 'with a conflicting timeout in watchdog_module_options' do
+          let(:params) do
+            { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'timeout' => 45 } }
+          end
 
-      context 'with watchdog_manage_module => false' do
-        let(:params) { { watchdog: true, watchdog_manage_module: false, watchdog_timeout: 30 } }
+          it { is_expected.to compile.and_raise_error(%r{conflicts with ipmi::watchdog_timeout}) }
+        end
 
-        it { is_expected.to compile.with_all_deps }
-        it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
-        it { is_expected.to contain_file(modules_load_conf).with_ensure('absent') }
-        it { is_expected.not_to contain_exec(modprobe_exec) }
-      end
+        context 'with a matching timeout in watchdog_module_options' do
+          let(:params) do
+            { watchdog: true, watchdog_timeout: 30, watchdog_module_options: { 'timeout' => 30 } }
+          end
 
-      context 'with watchdog => false and module options set' do
-        let(:params) { { watchdog: false, watchdog_timeout: 30 } }
+          it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=30$}) }
+        end
 
-        it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
-        it { is_expected.to contain_file(modules_load_conf).with_ensure('absent') }
-        it { is_expected.not_to contain_exec(modprobe_exec) }
+        context 'with timeout only in watchdog_module_options' do
+          let(:params) { { watchdog: true, watchdog_module_options: { 'timeout' => 45 } } }
+
+          it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog timeout=45$}) }
+        end
+
+        context 'with watchdog_manage_module => false' do
+          let(:params) { { watchdog: true, watchdog_manage_module: false, watchdog_timeout: 30 } }
+
+          it { is_expected.to compile.with_all_deps }
+          it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
+          it { is_expected.to contain_file(modules_load_conf).with_ensure('absent') }
+          it { is_expected.not_to contain_exec(modprobe_exec) }
+        end
+
+        context 'with watchdog => false and module options set' do
+          let(:params) { { watchdog: false, watchdog_timeout: 30 } }
+
+          it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
+          it { is_expected.to contain_file(modules_load_conf).with_ensure('absent') }
+          it { is_expected.not_to contain_exec(modprobe_exec) }
+        end
       end
 
       context 'when the site loads ipmi_watchdog itself, as puppet/kmod does' do

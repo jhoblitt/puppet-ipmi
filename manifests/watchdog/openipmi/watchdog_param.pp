@@ -16,12 +16,17 @@
 # @param only_if_exists
 #   Only apply the change if the config file already exists and is non-empty
 #   (augments `onlyif` matches `size > 0`), rather than creating the file.
+# @param options
+#   Module options for IPMI_WATCHDOG_OPTIONS, written only with `enable`, as
+#   the service reads them only then. Without any, the package's value, such
+#   as `timeout=60`, stays in place.
 #
 # @api private
 #
 class ipmi::watchdog::openipmi::watchdog_param (
   Boolean $enable,
   Boolean $only_if_exists = false,
+  Optional[String[1]] $options = undef,
 ) {
   assert_private()
 
@@ -37,11 +42,15 @@ class ipmi::watchdog::openipmi::watchdog_param (
     $onlyif = undef
   }
 
+  if $enable and $options =~ NotUndef {
+    $options_changes = ["set IPMI_WATCHDOG_OPTIONS '\"${options}\"'"]
+  } else {
+    $options_changes = []
+  }
+
   augeas { 'ipmi_watchdog':
     context => "/files${ipmi::config_file}",
-    changes => [
-      "set IPMI_WATCHDOG ${ipmi_watchdog}",
-    ],
+    changes => ["set IPMI_WATCHDOG ${ipmi_watchdog}"] + $options_changes,
     onlyif  => $onlyif,
   }
 }
