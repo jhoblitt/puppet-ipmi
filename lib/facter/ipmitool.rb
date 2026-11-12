@@ -11,14 +11,14 @@ Facter.add(:ipmitool, type: :aggregate) do
   # ipmitool: {"fru"=>{}, "mc_info"=>{"IPMI_Puppet_Service_Recommend"=>"stopped"}}
   # ipmitool_mc_info: {"IPMI_Puppet_Service_Recommend"=>"stopped"}
   # confine do
-  #   Facter::Util::Resolution.which('ipmitool')
+  #   Facter::Core::Execution.which('ipmitool')
   # end
 
-  ipmitool_present = Facter::Util::Resolution.which('ipmitool')
+  ipmitool_present = Facter::Core::Execution.which('ipmitool')
   chunk(:fru) do
     retval = { fru: {} }
     if ipmitool_present
-      ipmitool_output = Facter::Util::Resolution.exec('ipmitool fru print 0 2>/dev/null')
+      ipmitool_output = Facter::Core::Execution.execute('ipmitool fru print 0 2>/dev/null', on_fail: '')
       ipmitool_output.each_line do |line|
         next unless line.include?(':')
 
@@ -35,7 +35,7 @@ Facter.add(:ipmitool, type: :aggregate) do
   chunk(:mc_info) do
     retval = { mc_info: { 'IPMI_Puppet_Service_Recommend' => 'stopped' } }
     if ipmitool_present
-      ipmitool_output = Facter::Util::Resolution.exec('ipmitool mc info 2>/dev/null')
+      ipmitool_output = Facter::Core::Execution.execute('ipmitool mc info 2>/dev/null', on_fail: '')
 
       ipmitool_output.each_line do |line|
         info = line.split(':')

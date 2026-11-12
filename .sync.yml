@@ -1,6 +1,9 @@
 ---
 Rakefile:
   config.user: jhoblitt
+".gitignore":
+  paths:
+  - "/doc/"
 ".puppet-lint.rc":
   enabled_lint_checks:
   - parameter_documentation

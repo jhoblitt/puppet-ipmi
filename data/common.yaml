@@ -4,6 +4,7 @@ ipmi::packages:
 ipmi::config_file: /etc/default/openipmi
 ipmi::service_name: openipmi
 ipmi::service_ensure: "%{facts.ipmitool.mc_info.IPMI_Puppet_Service_Recommend}"
+ipmi::service_manage: true
 ipmi::ipmievd_service_name: ipmievd
 ipmi::ipmievd_service_ensure: stopped
 ipmi::watchdog: false

@@ -19,6 +19,15 @@ shared_examples 'installs packages' do |facts|
   packages.each do |p|
     it { is_expected.to contain_package(p) }
   end
+
+  it { is_expected.to contain_class('ipmi::install') }
+end
+
+shared_examples 'contains ipmi::service' do
+  it { is_expected.to contain_class('ipmi::service') }
+  it { is_expected.to contain_class('ipmi::service::ipmi') }
+  it { is_expected.to contain_class('ipmi::service::ipmievd') }
+  it { is_expected.to contain_class('ipmi::config').that_notifies('Class[ipmi::service]') }
 end
 
 describe 'ipmi', type: :class do
@@ -46,6 +55,7 @@ describe 'ipmi', type: :class do
 
       context 'with no params' do
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it { is_expected.to contain_class('ipmi::install') }
         it { is_expected.to contain_class('ipmi::config') }
@@ -80,6 +90,7 @@ describe 'ipmi', type: :class do
         let(:params) { { service_ensure: 'running' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -109,6 +120,7 @@ describe 'ipmi', type: :class do
         let(:params) { { service_ensure: 'stopped' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -138,6 +150,7 @@ describe 'ipmi', type: :class do
         let(:params) { { ipmievd_service_ensure: 'running' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -167,6 +180,7 @@ describe 'ipmi', type: :class do
         let(:params) { { ipmievd_service_ensure: 'stopped' } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -196,6 +210,7 @@ describe 'ipmi', type: :class do
         let(:params) { { watchdog: true } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -225,6 +240,7 @@ describe 'ipmi', type: :class do
         let(:params) { { watchdog: false } }
 
         it_behaves_like 'installs packages', facts
+        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -263,6 +279,8 @@ describe 'ipmi', type: :class do
         it { is_expected.to contain_ipmi_user('newuser') }
         it { is_expected.to contain_ipmi_network('dhcp') }
         it { is_expected.to contain_ipmi_snmp('snmp1') }
+
+        it_behaves_like 'contains ipmi::service'
       end
 
       context 'with default_channel set' do
@@ -342,6 +360,55 @@ describe 'ipmi', type: :class do
         it { is_expected.to contain_ipmi_user('newuser').with_channel(3) }
         it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(2) }
         it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(1) }
+      end
+
+      context 'with ipmievd_service_name' do
+        let(:params) { { ipmievd_service_name: 'custom_ipmievd' } }
+
+        it { is_expected.to compile.with_all_deps }
+
+        it do
+          is_expected.to contain_service('custom_ipmievd').with(
+            ensure: 'stopped',
+            enable: false,
+          )
+        end
+
+        it { is_expected.not_to contain_service('ipmievd') }
+      end
+
+      context 'with service_manage => false' do
+        let(:params) { { service_manage: false } }
+
+        it { is_expected.to compile.with_all_deps }
+
+        # the ipmi service is left unmanaged
+        it { is_expected.not_to contain_service(service_name) }
+
+        # config/install are still managed
+        it_behaves_like 'installs packages', facts
+
+        # the companion ipmievd daemon is still managed
+        it do
+          is_expected.to contain_service('ipmievd').with(
+            ensure: 'stopped',
+            enable: false,
+          )
+        end
+      end
+
+      context 'with the ipmi.default.channel fact set to 2' do
+        let(:facts) { super().merge(ipmi: { default: { channel: 2 } }) }
+        let(:params) { { networks: { dhcp: {} } } }
+
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(2) }
+      end
+
+      context 'without the ipmi fact' do
+        let(:facts) { super().except(:ipmi) }
+        let(:params) { { networks: { dhcp: {} } } }
+
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(1) }
       end
     end
   end

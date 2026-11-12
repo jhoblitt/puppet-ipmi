@@ -32,6 +32,9 @@ provides IPMI facts in a format compatible with
 and enables the `ipmi` service. The latter loads the kernel drivers
 needed for communicating with the BMC from user space.
 
+It also manages the companion `ipmievd` daemon, whose name can be
+customized with the `ipmievd_service_name` parameter.
+
 ## Usage
 
 ### Reference
@@ -94,7 +97,6 @@ it was still enabled):
   }
 ```
 
-
 Configure a static ip on IPMI lan channel 1:
 
 ```puppet
@@ -150,8 +152,14 @@ NOTE: the `freeipmi` backend is **EXPERIMENTAL** and may not work in all cases!
     service_ensure         => 'running', # default is 'running'
     ipmievd_service_ensure => 'running', # default is 'stopped'
     watchdog               => true,      # default is false
+    service_manage         => false,     # default is true
   }
 ```
+
+When `service_manage` is set to `false`, the `ipmi` service is not managed
+by the module; it is left to the administrator or an external tooling
+system to start and stop. The companion `ipmievd` daemon and the rest of
+the module continue to behave normally.
 
 When `users`, `networks`, or `snmps` are passed as class parameters, the
 `ipmi` class declares the corresponding native resources and injects the

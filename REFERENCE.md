@@ -14,6 +14,7 @@
 
 * `ipmi::config`
 * `ipmi::install`
+* `ipmi::service`
 * `ipmi::service::ipmi`
 * `ipmi::service::ipmievd`
 
@@ -43,6 +44,7 @@ The following parameters are available in the `ipmi` class:
 * [`snmps`](#-ipmi--snmps)
 * [`users`](#-ipmi--users)
 * [`networks`](#-ipmi--networks)
+* [`service_manage`](#-ipmi--service_manage)
 * [`default_channel`](#-ipmi--default_channel)
 
 ##### <a name="-ipmi--packages"></a>`packages`
@@ -124,6 +126,16 @@ Data type: `Optional[Hash]`
 `ipmi_network` resources to create.
 
 Default value: `undef`
+
+##### <a name="-ipmi--service_manage"></a>`service_manage`
+
+Data type: `Boolean`
+
+Controls whether the `ipmi` service is managed. When `false`, the
+`service` resource is not declared and the service is left unmanaged
+(handled by the administrator or an external tooling system).
+
+Default value: `true`
 
 ##### <a name="-ipmi--default_channel"></a>`default_channel`
 
