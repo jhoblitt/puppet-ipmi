@@ -40,7 +40,10 @@ module PuppetX::Ipmi::Provider::NetworkLogic
     # value.
     %i[ip netmask gateway].each do |field|
       wanted = resource[field]
-      lan_set(field, wanted.to_s) if wanted && lan_get(field) != wanted
+      next unless wanted
+
+      lan_set(field, wanted.to_s) if lan_get(field) != wanted
+      settled_by_type[field] = wanted.to_s
     end
   end
 
@@ -52,7 +55,7 @@ module PuppetX::Ipmi::Provider::NetworkLogic
   # @param val [String] IP address to set
   # @return [void]
   def ip=(val)
-    lan_set(:ip, val.to_s)
+    lan_set_unless_settled(:ip, val)
   end
 
   # @return [String, nil] current subnet mask
@@ -63,7 +66,7 @@ module PuppetX::Ipmi::Provider::NetworkLogic
   # @param val [String] subnet mask to set
   # @return [void]
   def netmask=(val)
-    lan_set(:netmask, val.to_s)
+    lan_set_unless_settled(:netmask, val)
   end
 
   # @return [String, nil] current default gateway
@@ -74,6 +77,23 @@ module PuppetX::Ipmi::Provider::NetworkLogic
   # @param val [String] default gateway to set
   # @return [void]
   def gateway=(val)
-    lan_set(:gateway, val.to_s)
+    lan_set_unless_settled(:gateway, val)
+  end
+
+  private
+
+  # @return [Hash<Symbol, String>] field => value `type=` left on the BMC
+  def settled_by_type
+    @settled_by_type ||= {}
+  end
+
+  # Puppet still calls the ip/netmask/gateway setters after `type=`, because
+  # it compares them with the values read before the switch.
+  #
+  # @param field [Symbol] :ip, :netmask or :gateway
+  # @param val [String] value to set
+  # @return [void]
+  def lan_set_unless_settled(field, val)
+    lan_set(field, val.to_s) unless settled_by_type[field] == val.to_s
   end
 end

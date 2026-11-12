@@ -100,5 +100,27 @@ describe PuppetX::Ipmi::Provider::NetworkLogic do
 
       expect(provider.writes).to eq([%i[source static], [:ip, '10.0.0.1']])
     end
+
+    it 'leaves nothing for the setters to write again' do
+      provider.values.merge!(ip: 'stale', netmask: '255.255.255.0', gateway: 'stale')
+
+      provider.type = :static
+      provider.ip = '10.0.0.1'
+      provider.netmask = '255.255.255.0'
+      provider.gateway = '10.0.0.254'
+
+      expect(provider.writes).to eq(
+        [%i[source static], [:ip, '10.0.0.1'], [:gateway, '10.0.0.254']],
+      )
+    end
+
+    it 'does not stop the setters writing a different value' do
+      provider.values.merge!(ip: 'stale', netmask: '255.255.255.0', gateway: '10.0.0.254')
+
+      provider.type = :static
+      provider.ip = '10.0.0.2'
+
+      expect(provider.writes).to eq([%i[source static], [:ip, '10.0.0.1'], [:ip, '10.0.0.2']])
+    end
   end
 end
