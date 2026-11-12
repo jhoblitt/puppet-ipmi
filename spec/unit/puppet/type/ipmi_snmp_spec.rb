@@ -45,6 +45,38 @@ describe Puppet::Type.type(:ipmi_snmp) do
       resource = described_class.new(name: 'test', community: 'secret')
       expect(resource[:community]).to eq('secret')
     end
+
+    it 'accepts a community of 18 bytes' do
+      expect(described_class.new(name: 'test', community: "#{'é' * 8}ab")[:community]).to eq("#{'é' * 8}ab")
+    end
+
+    it 'rejects a community over 18 bytes even when it is shorter in characters, without echoing it' do
+      expect { described_class.new(name: 'test', community: 'é' * 10) }
+        .to raise_error(Puppet::Error, %r{18 bytes or fewer}) { |e| expect(e.message).not_to include('é') }
+    end
+
+    # Both backends read the community back with surrounding whitespace
+    # stripped, so such a community would never be in sync.
+    [' lead', 'trail ', "tab\t", "\nline"].each do |community|
+      it "rejects the community #{community.inspect}, which starts or ends with whitespace, without echoing it" do
+        expect { described_class.new(name: 'test', community: community) }
+          .to raise_error(Puppet::Error, %r{community must not start or end with whitespace}) { |e| expect(e.message).not_to include(community.strip) }
+      end
+    end
+
+    it 'accepts a community with a space inside it' do
+      expect(described_class.new(name: 'test', community: 'my community')[:community]).to eq('my community')
+    end
+
+    it 'treats the community as sensitive even when it is not wrapped' do
+      resource = described_class.new(name: 'test', community: 'secret')
+      expect(resource.parameter(:community).sensitive).to be(true)
+    end
+
+    it 'treats the default community as sensitive' do
+      resource = described_class.new(name: 'test')
+      expect(resource.parameter(:community).sensitive).to be(true)
+    end
   end
 
   describe 'pre-run duplicate channel check' do

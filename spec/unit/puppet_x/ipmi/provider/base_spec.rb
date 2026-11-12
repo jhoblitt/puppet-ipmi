@@ -32,6 +32,38 @@ describe PuppetX::Ipmi::Provider::Base do
     end
   end
 
+  describe '.with_secret_file' do
+    it 'yields a mode 0600 file holding the content' do
+      described_class.with_secret_file('secret') do |path|
+        expect(File.stat(path).mode & 0o777).to eq(0o600)
+        expect(File.read(path)).to eq('secret')
+      end
+    end
+
+    it 'returns the block result and removes the file' do
+      path = nil
+      result = described_class.with_secret_file('secret') do |p|
+        path = p
+        :done
+      end
+
+      expect(result).to eq(:done)
+      expect(File.exist?(path)).to be(false)
+    end
+
+    it 'removes the file when the block raises' do
+      path = nil
+      expect do
+        described_class.with_secret_file('secret') do |p|
+          path = p
+          raise Puppet::Error, 'boom'
+        end
+      end.to raise_error(Puppet::Error, 'boom')
+
+      expect(File.exist?(path)).to be(false)
+    end
+  end
+
   describe 'channel helpers' do
     let(:provider) { described_class.allocate }
 

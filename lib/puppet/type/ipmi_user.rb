@@ -60,10 +60,23 @@ Puppet::Type.newtype(:ipmi_user) do
   ensurable do
     desc <<-DESC
       Whether the user exists.  IPMI cannot delete a user slot, so `absent`
-      first removes channel and SOL access (only while the account is still
-      enabled, because BMCs do not allow permission changes on a disabled
-      account) and then renames the slot to `DISABLED_<id>`; the slot is then
-      treated as free.
+      first removes privilege, channel and SOL access on every LAN channel
+      and disables the account, unless the BMC reports it disabled and no
+      LAN channel grants it a privilege, and then renames the slot to
+      `DISABLED_<id>`; the slot is then treated as free.  BMCs do not allow
+      permission changes on a disabled account, so unless the BMC reports
+      the account enabled, a refused change is tolerated, but disabling it
+      must succeed.
+
+      User slots are shared by every channel.  An absent resource for the
+      same username as a present one, on any channel, must name a
+      different, explicit `user_id`; one that is `auto` or names the present
+      resource's slot is rejected before the run.  An `auto` user does not
+      keep a slot that such an absent resource names: it moves to another
+      slot holding its username, or a free one.  An absent resource whose
+      slot a present resource is given once the BMC's user table is read
+      (such as a slot an explicit `user_id` takes over from its username)
+      fails instead of removing it.
     DESC
     defaultto :present
 
@@ -79,20 +92,33 @@ Puppet::Type.newtype(:ipmi_user) do
     desc <<-DESC
       The numeric IPMI user slot ID (2-63), or 'auto' to let the provider select one.
 
-      An explicit ID may be occupied: declaring an enabled user with a different
-      username at that ID replaces/renames the account and configures its password
-      and access. Check the target slot and retain alternate BMC access before
+      An explicit ID may be occupied: declaring a user with a different
+      username at that ID replaces/renames the account. The old account's
+      access is revoked on every LAN channel and it is disabled before the
+      slot is renamed, unless the BMC reports it disabled with no privilege
+      on any LAN channel, and a username or password the backend cannot
+      write is refused before anything is written. An enabled user then gets its password and
+      access; a disabled one stays disabled, which reserves the new name in
+      that slot. Check the target slot and retain alternate BMC access before
       applying. When moving the same username to a different slot, use
       `purge_duplicates => true` to revoke and rename its old slot; otherwise
       the old slot can remain enabled. `auto` never allocates a slot occupied
-      by another username.
+      by another username.  Two present resources with different usernames
+      may not name the same ID, and two present resources with the same
+      username may not name different IDs, even on different channels.
 
       With 'auto' the slot is chosen from the BMC's current user table and
-      the whole catalog, so it does not depend on resource evaluation order:
-      explicit `user_id` values are reserved first, a user that already holds
-      a slot keeps it (lowest id if several), and remaining 'auto' resources
-      take the lowest free slots in title order.  A slot is free when its id
-      is 2 or more and its name is empty or `DISABLED_*`.  ID 1 is the
+      the whole catalog, so it does not depend on resource evaluation order.
+      Slots and names are BMC-wide, so resources on every channel, and of
+      every provider, are allocated together, and one username gets one
+      slot on all of them:
+      explicit `user_id` values are reserved first, an 'auto' username that
+      an explicit resource also declares takes that slot, a user that
+      already holds a slot keeps it (the lowest id if several that no
+      explicit `user_id`, present or absent, names), and remaining 'auto'
+      resources take the lowest free slots in title order.  A slot is free when its id is 2 or
+      more, its name is empty or `DISABLED_*`, the BMC does not report it
+      enabled, and no LAN channel grants it a privilege.  ID 1 is the
       anonymous slot and is never allocated.  A resource that finds no free
       slot fails on its own; the others still apply.
 
@@ -117,18 +143,29 @@ Puppet::Type.newtype(:ipmi_user) do
 
       Defaults to 1 when declared directly. The ipmi class can inject the
       node's ipmi.default.channel fact (or ipmi::default_channel).
+
+      A user slot's name, password and enabled state are shared by every
+      channel; only its privilege and access are per channel.  So the BMC's
+      user table is read across all of its LAN channels, and every channel a
+      resource names.  Resources for one username on several channels are
+      one account: they must agree on `enable` and `password` (one may leave
+      the password out), and only `priv` may differ; a catalog where they
+      disagree is rejected.
     DESC
     defaultto do
       PuppetX::Ipmi::LanChannel.default_channel(nil)
     end
-    validate do |value|
-      raise Puppet::Error, 'channel must be an integer between 1 and 15' unless value.to_s =~ %r{^[1-9]$|^1[0-5]$}
-    end
-    munge(&:to_i)
+    PuppetX::Ipmi::LanChannel.channel_number(self, 'channel')
   end
 
   newparam(:username) do
-    desc 'The IPMI username.  Defaults to the resource title.'
+    desc <<-DESC
+      The IPMI username.  Defaults to the resource title.
+
+      At most 16 bytes, without whitespace, and not starting with `-`: the
+      name goes on ipmitool's command line, where its option parser would
+      take it as an option.
+    DESC
     defaultto do
       @resource[:name]
     end
@@ -137,16 +174,29 @@ Puppet::Type.newtype(:ipmi_user) do
       raise Puppet::Error, 'username must be a non-empty string' if str.empty?
       raise Puppet::Error, 'username must be 16 bytes or fewer' if str.bytesize > 16
       raise Puppet::Error, 'username must not contain whitespace' if str =~ %r{\s}
+      raise Puppet::Error, 'username must not start with -, which ipmitool would take as an option' if str.start_with?('-')
     end
   end
 
   newproperty(:password) do
-    desc 'Password for the IPMI user. A String or Sensitive[String], at most 20 bytes. Required when enable is true.'
+    desc <<-DESC
+      Password for the IPMI user. A String or Sensitive[String], at most 20 bytes. Required when enable is true.
+
+      The password is never put on a command line.  It must not contain a
+      newline or a NUL byte.  With ipmitool, a password of 17 to 20 bytes
+      also must not contain `#`, a tab, both kinds of quote, or `~` together
+      with a space or quote.  With freeipmi it also must not contain
+      whitespace.
+
+      A password of 17 to 20 bytes is stored in the IPMI 2.0 20-byte form,
+      which the BMC must support.  freeipmi writes it, like a shorter one,
+      through bmc-config's `Password` key.
+    DESC
 
     sensitive true
 
     validate do |value|
-      real = value.respond_to?(:unwrap) ? value.unwrap : value
+      real = PuppetX::Ipmi.unwrap(value)
       raise Puppet::Error, 'password must be a String or Sensitive[String]' unless real.is_a?(String)
       raise Puppet::Error, 'IPMI v2 restricts passwords to 20 or fewer bytes' if real.bytesize > 20
     end
@@ -179,7 +229,13 @@ Puppet::Type.newtype(:ipmi_user) do
   end
 
   newproperty(:enable) do
-    desc 'Whether this user account should be enabled or disabled.'
+    desc <<-DESC
+      Whether this user account should be enabled or disabled.  `false`
+      revokes privilege, channel and SOL access on every LAN channel, then
+      disables the account.  It is in sync once the BMC reports the account
+      disabled, or, when the BMC does not report it, once no LAN channel
+      grants it a privilege.
+    DESC
     newvalues(:true, :false)
     defaultto :true
 
@@ -205,6 +261,10 @@ Puppet::Type.newtype(:ipmi_user) do
 
       Slots managed by other resources in the catalog, and the anonymous
       slot 1, are never purged.
+
+      Duplicates are looked up before Puppet applies anything.  When no
+      IPMI tool is installed yet, or the BMC cannot be read, the purge is
+      skipped with a notice or warning and happens on a later run.
     DESC
     defaultto false
   end
@@ -223,7 +283,7 @@ Puppet::Type.newtype(:ipmi_user) do
 
     return unless self[:enable] == :true
 
-    real_pw = self[:password].respond_to?(:unwrap) ? self[:password].unwrap : self[:password]
+    real_pw = PuppetX::Ipmi.unwrap(self[:password])
     raise Puppet::Error, "You must supply a password to enable #{self[:username]} with ipmi_user" if real_pw.nil? || real_pw == ''
   end
 
@@ -238,7 +298,8 @@ Puppet::Type.newtype(:ipmi_user) do
     PuppetX::Ipmi::UserCatalog.duplicate_resources(self)
   end
 
-  # Reject catalogs where two live resources claim the same username or slot.
+  # Reject catalogs where two live resources claim the same username or slot,
+  # or an absent resource would remove a live one's slot.
   def pre_run_check
     PuppetX::Ipmi::UserCatalog.check_unique!(self)
   end

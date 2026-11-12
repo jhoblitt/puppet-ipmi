@@ -37,12 +37,31 @@ Puppet::Type.newtype(:ipmi_snmp) do
   end
 
   newproperty(:community) do
-    desc 'SNMP community string. Defaults to public and actively replaces any existing BMC community.'
+    desc <<-DESC
+      SNMP community string. Defaults to public and actively replaces any existing BMC community.
+
+      At most 18 bytes, the size of the BMC's community field; a multibyte
+      character counts as each of its bytes.  It must not start or end with
+      whitespace: both backends read the community back with that stripped,
+      so it would never be in sync.
+
+      Always sensitive: Puppet reports a change as
+      `changed [redacted] to [redacted]`.  `Sensitive()` is accepted but not
+      required.
+
+      The community is never put on a command line.  With ipmitool it must
+      not contain `#`, whitespace other than a space, a NUL byte, both kinds
+      of quote, or `~` together with a space or quote, and must not start
+      with `help`, which ipmitool takes as a request for help.  With freeipmi
+      it must not contain whitespace or a NUL byte.
+    DESC
     defaultto 'public'
+    sensitive true
     validate do |value|
       str = value.to_s
       raise Puppet::Error, 'community must be a non-empty string' if str.empty?
-      raise Puppet::Error, 'community must be 18 characters or fewer' if str.length > 18
+      raise Puppet::Error, 'community must be 18 bytes or fewer' if str.bytesize > 18
+      raise Puppet::Error, 'community must not start or end with whitespace, which is lost when it is read back' if str.match?(%r{\A\s|\s\z})
     end
   end
 end

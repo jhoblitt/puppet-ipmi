@@ -7,7 +7,7 @@ describe PuppetX::Ipmi::Provider::UserLogic do
   let(:table) do
     FakeUserBmc.table_with(
       { id: 1 },
-      { id: 2, name: 'ADMIN', priv: 4, enabled: true },
+      { id: 2, name: 'ADMIN', priv: 4, status: :enabled },
       { id: 3 },
       { id: 4, name: 'DISABLED_4' },
     )
@@ -17,7 +17,7 @@ describe PuppetX::Ipmi::Provider::UserLogic do
   let(:params) do
     { name: 'bob', username: 'bob', password: 'secret', priv: 4, enable: :true, channel: 1, user_id: 3, purge_duplicates: false }
   end
-  let(:provider) { provider_class.provider_for(params, provider_class.read_users(1)) }
+  let(:provider) { provider_class.provider_for(params, provider_class.read_table([1])) }
 
   describe '.free_name?' do
     it 'treats an empty name as free' do
@@ -46,7 +46,7 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     end
 
     it 'reports an enabled, privileged user as present and enabled' do
-      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 4, enabled: true }, 1)
+      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', status: :enabled, privs: { 1 => 4 } }, 1)
 
       expect(hash).to eq(
         ensure: :present, name: 'ADMIN', user_id: 2, priv: 4, enable: :true, channel: 1,
@@ -54,13 +54,13 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     end
 
     it 'reports a named slot with NO ACCESS as disabled' do
-      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 15, enabled: true }, 1)
+      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', status: :enabled, privs: { 1 => 15 } }, 1)
 
       expect(hash[:enable]).to eq(:false)
     end
 
     it 'reports a named slot with no enabled flag as disabled' do
-      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 4, enabled: false }, 1)
+      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', status: :disabled, privs: { 1 => 4 } }, 1)
 
       expect(hash[:enable]).to eq(:false)
     end
@@ -75,6 +75,11 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     it 'matches the lowest id holding the username for :auto' do
       table[2][:name] = 'ADMIN'
       expect(described_class.existing_slot(table, 'ADMIN', :auto)[:id]).to eq(2)
+    end
+
+    it 'skips the given ids for :auto' do
+      table[2][:name] = 'ADMIN'
+      expect(described_class.existing_slot(table, 'ADMIN', :auto, skip: [2])[:id]).to eq(3)
     end
 
     it 'never matches the anonymous slot for :auto' do
@@ -95,9 +100,84 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     end
   end
 
+  describe 'the table cache' do
+    after { described_class::TableCache.clear }
+
+    # Read a table through the cache, recording in `reads` each channel
+    # read from the BMC.
+    def read(reads, catalog, channel = 1)
+      described_class::TableCache.read(catalog, [provider_class, channel]) do
+        reads << channel
+        []
+      end
+    end
+
+    it 'reads once per catalog, provider and channel' do
+      reads = []
+      catalog = Puppet::Resource::Catalog.new
+      2.times { read(reads, catalog) }
+      read(reads, catalog, 2)
+
+      expect(reads).to eq([1, 2])
+    end
+
+    it 'reads again for another catalog' do
+      reads = []
+      read(reads, Puppet::Resource::Catalog.new)
+      read(reads, Puppet::Resource::Catalog.new)
+
+      expect(reads).to eq([1, 1])
+    end
+
+    it 'reads every time without a catalog' do
+      reads = []
+      2.times { read(reads, nil) }
+
+      expect(reads).to eq([1, 1])
+    end
+
+    it 'reads again after a write' do
+      reads = []
+      catalog = Puppet::Resource::Catalog.new
+      read(reads, catalog)
+      provider.refresh_slots!
+      read(reads, catalog)
+
+      expect(reads).to eq([1, 1])
+    end
+
+    it 'reads again after the transaction' do
+      reads = []
+      catalog = Puppet::Resource::Catalog.new
+      read(reads, catalog)
+      provider_class.post_resource_eval
+      read(reads, catalog)
+
+      expect(reads).to eq([1, 1])
+    end
+
+    it 'probes the LAN channels once per transaction, even across writes' do
+      probes = []
+      catalog = Puppet::Resource::Catalog.new
+      probe = lambda do
+        described_class::TableCache.lan_channels(catalog, provider_class) do
+          probes << :probe
+          [1]
+        end
+      end
+      probe.call
+      provider.refresh_slots!
+      probe.call
+      provider_class.post_resource_eval
+      probe.call
+
+      expect(probes).to eq(%i[probe probe])
+    end
+  end
+
   describe '.prefetch' do
     it 'reads each channel once and binds a provider to every resource' do
-      provider_class.expects(:read_users).with(1).once.returns(table)
+      provider_class.expects(:read_table).with([1]).once.returns(table)
       a = Struct.new(:data, :provider) do
         def [](key)
           data[key]
@@ -131,6 +211,16 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       expect(provider).to be_exists
     end
 
+    it 'does not exist for :auto when the slot holding the username is allocated elsewhere' do
+      table[2][:name] = 'bob'
+      params[:user_id] = :auto
+      allocation = { id: 4 }
+      p = provider_class.provider_for(params, provider_class.read_table([1]), allocation)
+
+      expect(p).not_to be_exists
+      expect(p.resolved_user_id).to eq(4)
+    end
+
     it 'does not allocate a slot for an absent :auto user' do
       params[:user_id] = :auto
       params[:ensure] = :absent
@@ -143,23 +233,55 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       params[:username] = 'ADMIN'
       provider.destroy
 
-      expect(log).to eq([[:access, 2, false, 15], [:name, 2, 'DISABLED_2']])
+      expect(log).to eq([[:revoke, 2, [1]], [:name, 2, 'DISABLED_2']])
     end
 
-    it 'destroy never adjusts permissions on an already disabled account' do
-      table[1].merge!(enabled: false, priv: 4)
+    it 'destroy lets the backend tolerate refusals on an account the BMC reports disabled, but does not retire it while a channel grants it a privilege' do
+      FakeUserBmc.update(table[1], status: :disabled, priv: 15, privs: { 2 => 4 })
+      provider_class.fake_lan_channels = [1, 2]
       params[:user_id] = 2
       params[:username] = 'ADMIN'
+      provider_class.expects(:revoke_access).with([1, 2], 2, already_disabled: true)
+      p = provider_class.provider_for(params, provider_class.read_table([1, 2]))
+
+      expect { p.destroy }.to raise_error(Puppet::Error, 'Refusing to rename slot 2: the BMC did not revoke its access, it still has priv 4 on channel 2')
+      expect(log).to be_empty
+    end
+
+    it 'destroy does not retire a slot when the read confirming its revoke misses a channel it revoked' do
+      FakeUserBmc.update(table[1], status: :unknown, priv: 15)
+      params[:user_id] = 2
+      params[:username] = 'ADMIN'
+      p = provider_class.provider_for(params, provider_class.read_table([1, 2]))
+
+      expect { p.destroy }.to raise_error(Puppet::Error, %r{Refusing to rename slot 2: .*priv unread on channel 2})
+      expect(log).to eq([[:revoke, 2, [1, 2]]])
+    end
+
+    it 'destroy leaves a reserved, disabled user with no access untouched apart from the name' do
+      FakeUserBmc.update(table[2], name: 'bob', priv: 15, status: :disabled)
+      provider.destroy
+
+      expect(log).to eq([[:name, 3, 'DISABLED_3']])
+    end
+
+    it 'destroy revokes an account it cannot verify is disabled, letting the backend tolerate refused permission changes' do
+      FakeUserBmc.update(table[1], status: :unknown, priv: 15)
+      params[:user_id] = 2
+      params[:username] = 'ADMIN'
+      provider_class.expects(:revoke_access).with([1], 2, already_disabled: true)
       provider.destroy
 
       expect(log).to eq([[:name, 2, 'DISABLED_2']])
     end
 
-    it 'destroy leaves a reserved, disabled user with no access untouched apart from the name' do
-      table[2].merge!(name: 'bob', priv: 15, enabled: false)
+    it 'destroy revokes an enabled account that has NO ACCESS on this channel' do
+      FakeUserBmc.update(table[1], status: :enabled, priv: 15)
+      params[:user_id] = 2
+      params[:username] = 'ADMIN'
       provider.destroy
 
-      expect(log).to eq([[:name, 3, 'DISABLED_3']])
+      expect(log).to eq([[:revoke, 2, [1]], [:name, 2, 'DISABLED_2']])
     end
 
     it 'destroy leaves the slot free for reallocation' do
@@ -186,15 +308,34 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       expect(provider).to be_access_revoked
     end
 
-    it 'reports a named, privileged slot whose enabled flag is off as disabled and not revoked' do
-      table[2].merge!(name: 'bob', priv: 4)
+    it 'does not report access revoked for an enabled account with NO ACCESS on this channel' do
+      params[:enable] = :false
+      FakeUserBmc.update(table[2], name: 'bob', priv: 15, status: :enabled)
+
       expect(provider.enable).to eq(:false)
       expect(provider).not_to be_access_revoked
     end
 
+    it 'does not report access revoked for a slot of unknown status that has a privilege on another channel' do
+      params[:enable] = :false
+      FakeUserBmc.update(table[2], name: 'bob', status: :unknown, privs: { 2 => 4 })
+      p = provider_class.provider_for(params, provider_class.read_table([1, 2]))
+
+      expect(p.enable).to eq(:false)
+      expect(p).not_to be_access_revoked
+    end
+
+    it 'reports access revoked for a slot of unknown status that no channel grants a privilege' do
+      params[:enable] = :false
+      FakeUserBmc.update(table[2], name: 'bob', status: :unknown)
+      p = provider_class.provider_for(params, provider_class.read_table([1, 2]))
+
+      expect(p).to be_access_revoked
+    end
+
     it 'treats unfixable drift on an already disabled slot as converged, with a note' do
       params[:enable] = :false
-      table[2].merge!(name: 'bob', priv: 4)
+      FakeUserBmc.update(table[2], name: 'bob', priv: 4)
       Puppet.expects(:info).with(regexp_matches(%r{disabled with priv 4}))
 
       expect(provider.enable).to eq(:false)
@@ -202,8 +343,8 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     end
 
     it 'reads the table once per run' do
-      provider_class.expects(:read_users).once.returns(table)
-      p = provider_class.provider_for(params, provider_class.read_users(1))
+      provider_class.expects(:read_table).once.returns(table)
+      p = provider_class.provider_for(params, provider_class.read_table([1]))
       p.priv
       p.enable
       p.exists?
@@ -214,21 +355,21 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     it 'names the slot, sets the password and grants access in order' do
       provider.create
 
-      expect(log).to eq([[:name, 3, 'bob'], [:password, 3, 'secret'], [:access, 3, true, 4]])
+      expect(log).to eq([[:name, 3, 'bob'], [:password, 3, 'secret'], [:grant, 3, 4]])
     end
 
     it 'skips the name write when the slot already holds the username' do
       table[2][:name] = 'bob'
       provider.create
 
-      expect(log).to eq([[:password, 3, 'secret'], [:access, 3, true, 4]])
+      expect(log).to eq([[:password, 3, 'secret'], [:grant, 3, 4]])
     end
 
     it 'skips the password when none is given' do
       params[:password] = nil
       provider.create
 
-      expect(log.map(&:first)).to eq(%i[name access])
+      expect(log.map(&:first)).to eq(%i[name grant])
     end
 
     it 'unwraps Sensitive passwords' do
@@ -238,11 +379,89 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       expect(log).to include([:password, 3, 'wrapped'])
     end
 
-    it 'reserves the name and revokes access when the resource is disabled' do
+    it 'reserves the name of a slot the BMC reports disabled with no privilege, writing nothing else' do
       params[:enable] = :false
       provider.create
 
-      expect(log).to eq([[:name, 3, 'bob'], [:access, 3, false, 15]])
+      expect(log).to eq([[:name, 3, 'bob']])
+    end
+
+    it 'revokes a slot of unknown status before reserving its name when the resource is disabled' do
+      params[:enable] = :false
+      FakeUserBmc.update(table[2], status: :unknown)
+      provider.create
+
+      expect(log).to eq([[:revoke, 3, [1]], [:name, 3, 'bob']])
+    end
+
+    it 'takes over an explicit slot held by another user when the resource is disabled, revoking before renaming' do
+      params.merge!(enable: :false, user_id: 2)
+      provider.create
+
+      expect(log).to eq([[:revoke, 2, [1]], [:name, 2, 'bob']])
+    end
+
+    it 'lets the backend tolerate refused permission changes on an account not reported enabled, but does not rename it while it has a privilege' do
+      params[:enable] = :false
+      FakeUserBmc.update(table[2], status: :unknown, priv: 4)
+      provider_class.expects(:revoke_access).with([1], 3, already_disabled: true)
+
+      expect { provider.create }.to raise_error(Puppet::Error, %r{Refusing to rename slot 3: .*priv 4 on channel 1})
+      expect(log).to be_empty
+    end
+
+    it 'renames an account not reported enabled once a fresh read finds that no channel grants it a privilege' do
+      params[:enable] = :false
+      FakeUserBmc.update(table[2], status: :unknown, priv: 4)
+      provider.create
+
+      expect(log).to eq([[:revoke, 3, [1]], [:name, 3, 'bob']])
+    end
+
+    it 'does not let the backend tolerate refused permission changes when revoking an enabled account' do
+      params.merge!(enable: :false, user_id: 2)
+      provider_class.expects(:revoke_access).with([1], 2, already_disabled: false)
+      provider.create
+    end
+
+    describe 'taking over a slot that holds another, enabled account' do
+      before { params[:user_id] = 2 }
+
+      it 'revokes and disables it, then renames the slot, sets the password and enables it' do
+        provider.create
+
+        expect(log).to eq([[:revoke, 2, [1]], [:name, 2, 'bob'], [:password, 2, 'secret'], [:grant, 2, 4]])
+      end
+
+      it 'writes nothing when the backend cannot carry the password' do
+        provider_class.stubs(:check_password).with(1, 2, 'secret').raises(Puppet::Error, 'cannot carry it')
+
+        expect { provider.create }.to raise_error(Puppet::Error, 'cannot carry it')
+        expect(log).to be_empty
+      end
+
+      it 'writes nothing when the backend cannot carry the username' do
+        provider_class.stubs(:check_name).with(1, 2, 'bob').raises(Puppet::Error, 'cannot carry it')
+
+        expect { provider.create }.to raise_error(Puppet::Error, 'cannot carry it')
+        expect(log).to be_empty
+      end
+
+      it 'does not rename the slot when revoking the old account fails' do
+        provider_class.stubs(:revoke_access).raises(Puppet::ExecutionFailure, 'revoke failed')
+
+        expect { provider.create }.to raise_error(Puppet::ExecutionFailure, 'revoke failed')
+        expect(log).to be_empty
+        expect(table[1][:name]).to eq('ADMIN')
+      end
+
+      it 'leaves the renamed slot disabled when the password write fails' do
+        provider_class.stubs(:write_password).raises(Puppet::ExecutionFailure, 'password failed')
+
+        expect { provider.create }.to raise_error(Puppet::ExecutionFailure, 'password failed')
+        expect(log).to eq([[:revoke, 2, [1]], [:name, 2, 'bob']])
+        expect(FakeUserBmc.view(table[1])).to include(name: 'bob', status: :disabled, priv: 15)
+      end
     end
   end
 
@@ -252,30 +471,28 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       params[:username] = 'ADMIN'
       provider.enable = :false
 
-      expect(log).to eq([[:access, 2, false, 15]])
+      expect(log).to eq([[:revoke, 2, [1]]])
     end
 
-    it 'never adjusts permissions on an already disabled slot when disabling' do
-      table[2].merge!(name: 'bob', priv: 4, enabled: false)
-      Puppet.expects(:info).with(regexp_matches(%r{already disabled}))
+    it 'revokes a slot the BMC reports disabled that still has a privilege, letting the backend tolerate refusals' do
+      FakeUserBmc.update(table[2], name: 'bob', priv: 4, status: :disabled)
+      provider_class.expects(:revoke_access).with([1], 3, already_disabled: true)
 
       provider.enable = :false
-
-      expect(log).to be_empty
     end
 
     it 'still writes access when the slot is enabled' do
-      table[2].merge!(name: 'bob', priv: 4, enabled: true)
+      FakeUserBmc.update(table[2], name: 'bob', priv: 4, status: :enabled)
       provider.enable = :false
 
-      expect(log).to eq([[:access, 3, false, 15]])
+      expect(log).to eq([[:revoke, 3, [1]]])
     end
 
     it 'grants access when enabling' do
       table[2][:name] = 'bob'
       provider.enable = :true
 
-      expect(log.last).to eq([:access, 3, true, 4])
+      expect(log.last).to eq([:grant, 3, 4])
     end
   end
 
@@ -334,11 +551,18 @@ describe PuppetX::Ipmi::Provider::UserLogic do
   end
 
   describe 'priv=' do
-    it 'writes the privilege of an owned slot' do
-      table[2][:name] = 'bob'
+    it 'writes the privilege of an owned, enabled slot' do
+      FakeUserBmc.update(table[2], name: 'bob', priv: 4, status: :enabled)
       provider.priv = 3
 
       expect(log).to eq([[:priv, 3, 3]])
+    end
+
+    it 'leaves the privilege to enable= when the run enables a disabled slot' do
+      FakeUserBmc.update(table[2], name: 'bob', priv: 15, status: :disabled)
+      provider.priv = 4
+
+      expect(log).to be_empty
     end
 
     it 'refuses to change the privilege of a slot owned by another user' do
@@ -450,6 +674,21 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       provider_class.prefetch('bob' => bob, 'amy' => amy)
 
       expect([amy.provider.resolved_user_id, bob.provider.resolved_user_id]).to eq([3, 4])
+    end
+
+    it 'allocates once across channels, reading each channel once' do
+      holder = Struct.new(:data, :provider) do
+        def [](key)
+          data[key]
+        end
+      end
+      provider_class.expects(:read_table).with([1, 2]).once.returns(table)
+      alice = holder.new(params.merge(name: 'alice', username: 'alice', channel: 2))
+      bob = holder.new(params)
+
+      provider_class.prefetch('alice' => alice, 'bob' => bob)
+
+      expect([alice.provider.resolved_user_id, bob.provider.resolved_user_id]).to eq([3, 4])
     end
 
     it 'fails only the resource that finds no free slot' do

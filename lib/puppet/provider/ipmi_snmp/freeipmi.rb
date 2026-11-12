@@ -26,9 +26,13 @@ Puppet::Type.type(:ipmi_snmp).provide(
     bmc_config_get('Community_String', 'Community_String', channel: lan_channel)
   end
 
+  # The community goes through a mode 0600 config file, never the command
+  # line.
+  #
   # @param val [String] community string to set
   # @return [void]
   def community=(val)
-    bmc_config_set('Community_String', 'Community_String', val.to_s, channel: lan_channel)
+    self.class.bmc_config_secret('--commit', 'Community_String', 'Community_String', val.to_s,
+                                 extra_argv: ['--lan-channel-number', lan_channel.to_s])
   end
 end

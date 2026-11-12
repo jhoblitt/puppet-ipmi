@@ -23,6 +23,19 @@ module PuppetX::Ipmi::LanChannel
     1
   end
 
+  # Validate and munge a channel number parameter: an integer from 1 to 15.
+  # Shared by `lan_channel` and `ipmi_user`'s `channel`.
+  #
+  # @param param [Class] the parameter class, from inside `newparam`
+  # @param name [String] the parameter's name, for the error message
+  # @return [void]
+  def self.channel_number(param, name)
+    param.validate do |value|
+      raise Puppet::Error, "#{name} must be an integer between 1 and 15" unless value.to_s =~ %r{^[1-9]$|^1[0-5]$}
+    end
+    param.munge(&:to_i)
+  end
+
   def self.included(base)
     base.newparam(:lan_channel) do
       desc <<-DESC
@@ -37,11 +50,7 @@ module PuppetX::Ipmi::LanChannel
         PuppetX::Ipmi::LanChannel.default_channel(resource[:name])
       end
 
-      validate do |value|
-        raise Puppet::Error, 'lan_channel must be an integer between 1 and 15' unless value.to_s =~ %r{^[1-9]$|^1[0-5]$}
-      end
-
-      munge(&:to_i)
+      PuppetX::Ipmi::LanChannel.channel_number(self, 'lan_channel')
     end
   end
 

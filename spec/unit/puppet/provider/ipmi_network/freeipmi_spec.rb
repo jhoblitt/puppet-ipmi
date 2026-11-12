@@ -20,7 +20,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:freeipmi) do
 
     before do
       provider.expects(:bmcconfig_exec)
-              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1])
+              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1], scrub: true)
               .returns(lan_conf)
     end
 
@@ -47,7 +47,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:freeipmi) do
     it 'returns :dhcp when IP_Address_Source is Use_DHCP' do
       dhcp_conf = lan_conf.gsub('Static', 'Use_DHCP')
       provider.expects(:bmcconfig_exec)
-              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1])
+              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1], scrub: true)
               .returns(dhcp_conf)
 
       expect(provider.type).to eq(:dhcp)
@@ -82,7 +82,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:freeipmi) do
       provider.expects(:bmcconfig_exec)
               .with(%w[--commit --key-pair Lan_Conf:IP_Address_Source=Static --lan-channel-number 1], sensitive: false)
       provider.expects(:bmcconfig_exec)
-              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1])
+              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1], scrub: true)
               .returns(lan_conf)
               .at_least_once
       provider.expects(:bmcconfig_exec)
@@ -122,7 +122,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:freeipmi) do
 
     it 'reads a key from a checked-out section' do
       provider.expects(:bmcconfig_exec)
-              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1])
+              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1], scrub: true)
               .returns(lan_conf)
 
       expect(provider.bmc_config_get('Lan_Conf', 'IP_Address', channel: 1)).to eq('192.168.57.34')
@@ -130,7 +130,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:freeipmi) do
 
     it 'returns nil for a missing key' do
       provider.expects(:bmcconfig_exec)
-              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1])
+              .with(%w[--checkout --section Lan_Conf --lan-channel-number 1], scrub: true)
               .returns(lan_conf)
 
       expect(provider.bmc_config_get('Lan_Conf', 'No_Such_Key', channel: 1)).to be_nil
@@ -156,7 +156,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:freeipmi) do
 
     it 'checks out Lan_Conf only once per provider instance' do
       provider.expects(:bmcconfig_exec)
-              .with(['--checkout', '--section', 'Lan_Conf', '--lan-channel-number', '1'])
+              .with(['--checkout', '--section', 'Lan_Conf', '--lan-channel-number', '1'], scrub: true)
               .returns(lan_conf)
               .once
 
@@ -168,7 +168,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:freeipmi) do
 
     it 'invalidates the section cache after a write' do
       provider.expects(:bmcconfig_exec)
-              .with(['--checkout', '--section', 'Lan_Conf', '--lan-channel-number', '1'])
+              .with(['--checkout', '--section', 'Lan_Conf', '--lan-channel-number', '1'], scrub: true)
               .returns(lan_conf)
               .twice
       provider.expects(:bmcconfig_exec)

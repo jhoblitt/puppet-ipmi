@@ -48,6 +48,17 @@ describe Puppet::Type.type(:ipmi_user) do
       expect(resource[:channel]).to eq(3)
     end
 
+    it 'munges a channel given as a string to an Integer' do
+      expect(described_class.new(name: 'test', enable: :false, channel: '15')[:channel]).to eq(15)
+    end
+
+    [0, 16, 'one', ''].each do |bad|
+      it "rejects channel #{bad.inspect}" do
+        expect { described_class.new(name: 'test', enable: :false, channel: bad) }
+          .to raise_error(Puppet::Error, %r{channel must be an integer between 1 and 15})
+      end
+    end
+
     it 'defaults enable to true' do
       # enable defaults to true but requires password
       resource = described_class.new(name: 'test', password: 'secret')
@@ -113,6 +124,26 @@ describe Puppet::Type.type(:ipmi_user) do
       end.to raise_error(Puppet::Error, %r{16 bytes})
     end
 
+    # ipmitool's getopt would take such a name, on its command line, as an
+    # option of its own.
+    ['-v', '-Hhost'].each do |name|
+      it "rejects the username #{name}, which starts with -" do
+        expect do
+          described_class.new(name: 'test', username: name, enable: :false)
+        end.to raise_error(Puppet::Error, %r{username must not start with -})
+      end
+
+      it "rejects the title #{name} as the username" do
+        expect do
+          described_class.new(name: name, enable: :false)
+        end.to raise_error(Puppet::Error, %r{username must not start with -})
+      end
+    end
+
+    it 'accepts a username with - after its first character' do
+      expect(described_class.new(name: 'test', username: 'a-v', enable: :false)[:username]).to eq('a-v')
+    end
+
     it 'still rejects an over-long password when enable is false' do
       expect do
         described_class.new(name: 'test', enable: :false, password: 'a' * 21)
@@ -162,7 +193,7 @@ describe Puppet::Type.type(:ipmi_user) do
     end
 
     it 'treats a disabled user as in sync only once access is revoked' do
-      resource = described_class.new(name: 'test', enable: :false)
+      resource = described_class.new(name: 'test', enable: :false, provider: :ipmitool)
       provider = resource.provider
       provider.stubs(:access_revoked?).returns(false, true)
 
@@ -214,8 +245,12 @@ describe Puppet::Type.type(:ipmi_user) do
   describe '#generate' do
     let(:strays) { [{ id: 2, name: 'bob' }, { id: 5, name: 'bob' }] }
 
+    # A named provider, usable whether or not ipmitool is installed here, so
+    # generate reaches stray_slots instead of deferring the purge.
+    before { described_class.provider(:ipmitool).stubs(:suitable?).returns(true) }
+
     def build(**params)
-      described_class.new({ name: 'bob', password: 'secret', channel: 1, user_id: 3 }.merge(params))
+      described_class.new({ name: 'bob', password: 'secret', channel: 1, user_id: 3, provider: :ipmitool }.merge(params))
     end
 
     it 'does not purge by default' do
@@ -241,13 +276,13 @@ describe Puppet::Type.type(:ipmi_user) do
       expect(resource.generate).to eq([])
     end
 
-    it 'passes every ipmi_user on the channel as peers' do
+    it 'passes every ipmi_user in the catalog as peers, since user slots are BMC-wide' do
       resource = build(purge_duplicates: true)
       other = build(name: 'amy', user_id: 4)
-      elsewhere = build(name: 'zed', user_id: 4, channel: 2)
+      elsewhere = build(name: 'zed', user_id: 5, channel: 2)
       catalog = Puppet::Resource::Catalog.new
       [resource, other, elsewhere].each { |r| catalog.add_resource(r) }
-      resource.provider.class.expects(:stray_slots).with(resource, [resource, other]).returns([])
+      resource.provider.class.expects(:stray_slots).with(resource, [resource, other, elsewhere]).returns([])
 
       resource.generate
     end
@@ -283,16 +318,28 @@ describe Puppet::Type.type(:ipmi_user) do
       expect { first.pre_run_check }.not_to raise_error
     end
 
+    it 'rejects different usernames claiming one explicit slot on different channels' do
+      first, = catalog_with({ name: 'a', user_id: 4 }, { name: 'b', user_id: 4, channel: 2 })
+
+      expect { first.pre_run_check }.to raise_error(Puppet::Error, %r{claim user_id 4 for different usernames: a, b})
+    end
+
     it 'allows several auto resources with different usernames' do
       first, = catalog_with({ name: 'a' }, { name: 'b' })
 
       expect { first.pre_run_check }.not_to raise_error
     end
 
-    it 'exempts resources that are ensure => absent' do
-      first, = catalog_with({ name: 'a', username: 'bob' }, { name: 'b', username: 'bob', ensure: :absent })
+    it 'exempts an absent resource for the same username in another explicit slot' do
+      first, = catalog_with({ name: 'a', username: 'bob', user_id: 3 }, { name: 'b', username: 'bob', user_id: 4, ensure: :absent })
 
       expect { first.pre_run_check }.not_to raise_error
+    end
+
+    it 'rejects an absent resource that would remove the slot a live one manages' do
+      first, = catalog_with({ name: 'a', username: 'bob' }, { name: 'b', username: 'bob', ensure: :absent })
+
+      expect { first.pre_run_check }.to raise_error(Puppet::Error, %r{b \(ensure => absent\) would remove the slot that a manages})
     end
   end
 
@@ -321,10 +368,15 @@ describe Puppet::Type.type(:ipmi_user) do
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource(resource)
 
-      resource.provider.class.stubs(:suitable?).returns(true)
-      resource.provider.class.stubs(:read_users).returns([{ id: 4, name: 'NEWUSER', priv: 4, enabled: true }])
-      resource.provider.stubs(:password_insync?).returns(false)
-      resource.provider.stubs(:password=)
+      # Prefetch gives the resource a new provider instance, so stub the
+      # class: an ipmitool installed on this host must never run.
+      Puppet::Util::Execution.expects(:execute).never
+      provider_class = resource.provider.class
+      provider_class.stubs(:suitable?).returns(true)
+      provider_class.stubs(:lan_channels).returns([])
+      provider_class.stubs(:read_table).returns([{ id: 4, name: 'NEWUSER', status: :enabled, privs: { 1 => 4 } }])
+      provider_class.stubs(:password_matches?).returns(false)
+      provider_class.expects(:write_password).with(1, 4, 'supersecret')
 
       transaction = catalog.apply
 

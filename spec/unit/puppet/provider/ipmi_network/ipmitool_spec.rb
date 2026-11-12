@@ -19,7 +19,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:ipmitool) do
     let(:provider) { resource_for(lan_channel: 1).provider }
 
     before do
-      provider.expects(:ipmitool_exec).with(%w[lan print 1]).returns(lan_print)
+      provider.expects(:ipmitool_exec).with(%w[lan print 1], scrub: true).returns(lan_print)
     end
 
     it 'returns type :static' do
@@ -44,7 +44,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:ipmitool) do
 
     it 'returns :dhcp when IP Address Source is DHCP' do
       dhcp_print = lan_print.gsub('Static Address', 'DHCP Address')
-      provider.expects(:ipmitool_exec).with(%w[lan print 1]).returns(dhcp_print)
+      provider.expects(:ipmitool_exec).with(%w[lan print 1], scrub: true).returns(dhcp_print)
 
       expect(provider.type).to eq(:dhcp)
     end
@@ -74,7 +74,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:ipmitool) do
         gateway: '192.168.1.1',
       ).provider
       provider.expects(:ipmitool_exec).with(%w[lan set 1 ipsrc static])
-      provider.expects(:ipmitool_exec).with(%w[lan print 1]).returns(lan_print).at_least_once
+      provider.expects(:ipmitool_exec).with(%w[lan print 1], scrub: true).returns(lan_print).at_least_once
       provider.expects(:ipmitool_exec).with(%w[lan set 1 ipaddr 192.168.1.100])
       provider.expects(:ipmitool_exec).with(%w[lan set 1 netmask 255.255.255.0])
       provider.expects(:ipmitool_exec).with(%w[lan set 1 defgw ipaddr 192.168.1.1])
@@ -105,7 +105,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:ipmitool) do
     let(:provider) { resource_for(lan_channel: 1).provider }
 
     it 'calls ipmitool lan print only once per provider instance' do
-      provider.expects(:ipmitool_exec).with(%w[lan print 1]).returns(lan_print).once
+      provider.expects(:ipmitool_exec).with(%w[lan print 1], scrub: true).returns(lan_print).once
 
       provider.type
       provider.ip
@@ -114,7 +114,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:ipmitool) do
     end
 
     it 'invalidates the cache after a write' do
-      provider.expects(:ipmitool_exec).with(%w[lan print 1]).returns(lan_print).twice
+      provider.expects(:ipmitool_exec).with(%w[lan print 1], scrub: true).returns(lan_print).twice
       provider.expects(:ipmitool_exec).with(%w[lan set 1 ipaddr 192.168.1.100])
 
       provider.ip

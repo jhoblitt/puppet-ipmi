@@ -39,9 +39,48 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
     end
 
     it 'marks the call sensitive only when asked' do
-      Puppet::Util::Execution.expects(:execute).with(anything, has_entry(sensitive: true))
+      Puppet::Util::Execution.expects(:execute).with(anything, has_entry(sensitive: true)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
       klass.bmcconfig_exec(['x'], sensitive: true)
+    end
+
+    describe 'when the output may hold a secret' do
+      def error_for(output, **opts)
+        result = Puppet::Util::Execution::ProcessOutput.new(output, 1)
+        Puppet::Util::Execution.expects(:execute).with(anything, has_entry(failonfail: false)).returns(result)
+        klass.bmcconfig_exec(%w[--commit --filename /run/f], **opts)
+      rescue Puppet::ExecutionFailure => e
+        e.message
+      end
+
+      it 'replaces each secret key a checkout prints, commented out or not' do
+        output = "Section User4\n\tPassword    s3cret\n\t## Password20   other\n\tUsername  bob\nEndSection\n" \
+                 "Section Community_String\n\tCommunity_String   publ1c\nEndSection\n"
+
+        expect(error_for(output, scrub: true)).to eq(
+          "Execution of '/usr/sbin/bmcconfig --commit --filename /run/f' returned 1: Section User4\n\tPassword [redacted]\n" \
+          "\t## Password20 [redacted]\n\tUsername  bob\nEndSection\nSection Community_String\n\tCommunity_String [redacted]\nEndSection",
+        )
+      end
+
+      it 'replaces the value ipmi-config validation names for a secret key, however it was quoted' do
+        output = "Invalid value 'it's' for key 'Password' in section 'User4'\n" \
+                 "Value 'x' for key 'K_g' in section 'Lan_Conf_Security_Keys' cannot be encoded accurately, try another value\n" \
+                 "Invalid value 'bogus' for key 'Enable_User' in section 'User4'\n"
+
+        expect(error_for(output, sensitive: true)).to eq(
+          "Execution of '[redacted]' returned 1: Invalid value '[redacted]' for key 'Password' in section 'User4'\n" \
+          "Value '[redacted]' for key 'K_g' in section 'Lan_Conf_Security_Keys' cannot be encoded accurately, try another value\n" \
+          "Invalid value 'bogus' for key 'Enable_User' in section 'User4'",
+        )
+      end
+
+      it 'redacts each value given, and the lengths it may be cut to' do
+        value = 'abcdefghijklmnopqrstuvwxy'
+
+        expect(error_for("#{value}\n#{value[0, 18]}!\n", sensitive: true, redact: [value]))
+          .to eq("Execution of '[redacted]' returned 1: [redacted]\n[redacted]!")
+      end
     end
   end
 
@@ -62,6 +101,63 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
     end
   end
 
+  describe '.bmc_config_secret' do
+    before { Puppet::Util::Execution.expects(:execute).never }
+
+    # Stub bmcconfig_exec, recording each call with the --filename it reads.
+    def capture_calls(raises: nil)
+      calls = []
+      stub = klass.stubs(:bmcconfig_exec).with do |argv, _opts = {}|
+        calls << SecretFileCapture.call(argv, argv[argv.index('--filename') + 1])
+        true
+      end
+      raises ? stub.raises(raises) : stub.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      calls
+    end
+
+    it 'passes the value in a 0600 file that bmc-config reads back unchanged' do
+      calls = capture_calls
+      klass.bmc_config_secret('--commit', 'User4', 'Password', 'secret', extra_argv: %w[--lan-channel-number 1])
+
+      expect(calls.map(&:argv)).to eq([['--commit', '--filename', calls.first.file, '--lan-channel-number', '1']])
+      expect(calls.first.mode).to eq(0o600)
+      expect(FreeipmiConfigFile.parse(calls.first.content)).to eq('User4' => { 'Password' => 'secret' })
+      expect(File.exist?(calls.first.file)).to be(false)
+    end
+
+    it 'removes the file when the command fails' do
+      calls = capture_calls(raises: Puppet::ExecutionFailure.new('commit failed'))
+
+      expect { klass.bmc_config_secret('--commit', 'User4', 'Password', 'secret') }.to raise_error(Puppet::ExecutionFailure)
+      expect(calls.first.mode).to eq(0o600)
+      expect(File.exist?(calls.first.file)).to be(false)
+    end
+
+    # A `#` starts a comment only as the first word of a line, and the value
+    # always follows its key, so it is carried like any other character.
+    ['#leading', 'in#side', 'trailing#', %q(q'u"o\\te), '~;=:$`'].each do |value|
+      it "carries #{value.inspect} unchanged" do
+        calls = capture_calls
+        klass.bmc_config_secret('--diff', 'Community_String', 'Community_String', value)
+
+        expect(FreeipmiConfigFile.parse(calls.first.content)).to eq('Community_String' => { 'Community_String' => value })
+      end
+    end
+
+    {
+      'a space' => 'a b', 'a tab' => "a\tb", 'a newline' => "a\nb", 'a carriage return' => "a\rb",
+      'a NUL byte' => "a\0b", 'only a NUL byte' => "\0",
+    }.each do |what, value|
+      it "refuses a value containing #{what} before running anything, without echoing it" do
+        calls = capture_calls
+
+        expect { klass.bmc_config_secret('--commit', 'User4', 'Password', value) }
+          .to raise_error(Puppet::Error, %r{\AUser4:Password: freeipmi cannot store a value containing whitespace or a NUL byte\z})
+        expect(calls).to be_empty
+      end
+    end
+  end
+
   describe 'instance helpers' do
     let(:provider) { klass.allocate }
     let(:section) do
@@ -76,13 +172,13 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
     end
 
     it 'reads a key from a checked-out section' do
-      provider.expects(:bmcconfig_exec).with(['--checkout', '--section', 'Lan_Conf', '--lan-channel-number', '1']).returns(section)
+      provider.expects(:bmcconfig_exec).with(['--checkout', '--section', 'Lan_Conf', '--lan-channel-number', '1'], scrub: true).returns(section)
 
       expect(provider.bmc_config_get('Lan_Conf', 'IP_Address', channel: 1)).to eq('10.0.0.1')
     end
 
     it 'omits the channel flag when none is given' do
-      provider.expects(:bmcconfig_exec).with(['--checkout', '--section', 'Lan_Conf']).returns(section)
+      provider.expects(:bmcconfig_exec).with(['--checkout', '--section', 'Lan_Conf'], scrub: true).returns(section)
 
       expect(provider.bmc_config_get('Lan_Conf', 'IP_Address')).to eq('10.0.0.1')
     end
