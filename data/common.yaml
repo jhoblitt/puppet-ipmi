@@ -8,6 +8,6 @@ ipmi::service_manage: true
 ipmi::ipmievd_service_name: ipmievd
 ipmi::ipmievd_service_ensure: stopped
 ipmi::watchdog: false
-ipmi::snmps: ~
-ipmi::users: ~
-ipmi::networks: ~
+ipmi::snmps: {}
+ipmi::users: {}
+ipmi::networks: {}
