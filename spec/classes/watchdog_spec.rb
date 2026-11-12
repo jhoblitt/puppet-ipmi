@@ -259,7 +259,7 @@ describe 'ipmi', type: :class do
       context 'with supervisor auto' do
         context 'and ipmi_systemd_version 252' do
           let(:facts) { super().merge(ipmi_systemd_version: '252') }
-          let(:params) { { watchdog: true } }
+          let(:params) { { watchdog: true, watchdog_timeout: 30 } }
 
           it { is_expected.to compile.with_all_deps }
           it { is_expected.to contain_class('ipmi::watchdog::systemd') }
@@ -290,7 +290,7 @@ describe 'ipmi', type: :class do
               owner: 'root',
               group: 'root',
               mode: '0644',
-              content: %r{\A#[^\n]*\n\[Manager\]\nRuntimeWatchdogSec=0\n\z},
+              content: %r{\A#[^\n]*\n\[Manager\]\nRuntimeWatchdogSec=30\n\z},
             )
           end
 
@@ -306,7 +306,7 @@ describe 'ipmi', type: :class do
 
         context 'and ipmi_systemd_version 1000 (numeric compare)' do
           let(:facts) { super().merge(ipmi_systemd_version: '1000') }
-          let(:params) { { watchdog: true } }
+          let(:params) { { watchdog: true, watchdog_timeout: 30 } }
 
           it { is_expected.to contain_file(dropin).with_ensure('file') }
         end
@@ -344,7 +344,7 @@ describe 'ipmi', type: :class do
 
       context 'with supervisor systemd on an old systemd' do
         let(:facts) { super().merge(ipmi_systemd_version: '219') }
-        let(:params) { { watchdog: true, watchdog_supervisor: 'systemd' } }
+        let(:params) { { watchdog: true, watchdog_supervisor: 'systemd', watchdog_timeout: 30 } }
 
         it { is_expected.to contain_file(dropin).with_ensure('file') }
         it { is_expected.to contain_augeas('ipmi_watchdog').with(changes: ['set IPMI_WATCHDOG no']) }
@@ -360,6 +360,33 @@ describe 'ipmi', type: :class do
 
         it { is_expected.to contain_exec(reexec).that_subscribes_to("File[#{dropin}]") }
         it { is_expected.to contain_augeas('ipmi_watchdog').with(changes: ['set IPMI_WATCHDOG yes']) }
+      end
+
+      context 'with the default watchdog_timeout under systemd' do
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
+        let(:params) { { watchdog: true } }
+
+        it 'leaves RuntimeWatchdogSec to the rest of the systemd configuration' do
+          is_expected.to contain_file(dropin).with_ensure('absent')
+        end
+
+        it { is_expected.not_to contain_file('/etc/systemd/system.conf.d') }
+        it { is_expected.to contain_exec(reexec).that_subscribes_to("File[#{dropin}]") }
+        it { is_expected.to contain_file(modules_load_conf).with_ensure('file') }
+      end
+
+      context 'with RuntimeWatchdogSec => 0 in watchdog_systemd_options' do
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
+        let(:params) { { watchdog: true, watchdog_systemd_options: { 'RuntimeWatchdogSec' => 0 } } }
+
+        it { is_expected.to contain_file(dropin).with_content(%r{\A#[^\n]*\n\[Manager\]\nRuntimeWatchdogSec=0\n\z}) }
+      end
+
+      context 'with only other watchdog_systemd_options under systemd' do
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
+        let(:params) { { watchdog: true, watchdog_systemd_options: { 'RebootWatchdogSec' => '10min' } } }
+
+        it { is_expected.to contain_file(dropin).with_content(%r{\A#[^\n]*\n\[Manager\]\nRebootWatchdogSec=10min\n\z}) }
       end
 
       context 'with watchdog_timeout under systemd' do
@@ -412,7 +439,7 @@ describe 'ipmi', type: :class do
 
       context 'with watchdog_manage_module => false under systemd' do
         let(:facts) { super().merge(ipmi_systemd_version: '257') }
-        let(:params) { { watchdog: true, watchdog_manage_module: false } }
+        let(:params) { { watchdog: true, watchdog_manage_module: false, watchdog_timeout: 30 } }
 
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_file(dropin).with_ensure('file') }

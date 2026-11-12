@@ -190,10 +190,10 @@ Default value: `'auto'`
 Data type: `Integer[0]`
 
 Watchdog timeout in seconds. Passed to the `ipmi_watchdog` module as its
-`timeout` option and, under `systemd`, written as RuntimeWatchdogSec. `0`
-(the default, matching systemd's default of off) writes no module option,
-leaving the driver default of 10 seconds, and writes `RuntimeWatchdogSec=0`
-so systemd does not touch the device.
+`timeout` option and, under `systemd`, written as RuntimeWatchdogSec. `0`,
+the default, writes neither: the driver default of 10 seconds applies, and
+systemd keeps whatever RuntimeWatchdogSec the rest of its configuration
+sets, which is off unless something sets it.
 
 Default value: `0`
 

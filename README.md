@@ -199,9 +199,10 @@ The device can only be opened once, so one component owns it, chosen by
 Options:
 
 - `watchdog_timeout` sets the module `timeout` option, in seconds, and under
-  `systemd` also `RuntimeWatchdogSec`. The default, `0`, writes no module
-  option (the driver default is 10 seconds) and writes `RuntimeWatchdogSec=0`,
-  which matches systemd's default of off: systemd does not touch the device.
+  `systemd` also `RuntimeWatchdogSec`. The default, `0`, writes neither: the
+  driver default of 10 seconds applies, and systemd keeps whatever
+  `RuntimeWatchdogSec` the rest of its configuration sets, which is off unless
+  something sets it. With no setting to write, the drop-in is not created.
   Set a non-zero value to have systemd arm the BMC watchdog.
 - `watchdog_systemd_options` adds other `system.conf` [Manager] settings. A
   `RuntimeWatchdogSec` here replaces `watchdog_timeout`; `0` keeps systemd off

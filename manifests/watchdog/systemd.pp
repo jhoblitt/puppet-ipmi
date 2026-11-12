@@ -6,9 +6,9 @@
 #
 # Writes a system.conf [Manager] drop-in and re-executes PID 1 when it
 # changes, which is when systemd re-reads system.conf. RuntimeWatchdogSec is
-# always written, and `0` means off: no watchdog device is opened, configured
-# or pinged. This lets a host with a buggy BMC watchdog keep
-# `watchdog => true` (module loaded) while systemd leaves the device alone.
+# written only for a non-zero `timeout` or when set in `options`: an explicit
+# `0` would override a RuntimeWatchdogSec set in system.conf or an earlier
+# drop-in. Without any setting to write, the drop-in is removed.
 #
 # WatchdogDevice is not written unless set in `options`. systemd tries
 # /dev/watchdog0 first and, from 252, falls back to /dev/watchdog. On a host
@@ -19,11 +19,12 @@
 # switching the owner or turning the watchdog off removes it.
 #
 # @param enable
-#   Whether the drop-in is present. When `false` it is removed.
+#   Whether the drop-in may be present. When `false` it is removed.
 # @param timeout
-#   Seconds, written as RuntimeWatchdogSec. `0` is off.
+#   Seconds, written as RuntimeWatchdogSec. `0` writes nothing.
 # @param options
-#   Extra [Manager] settings. A `RuntimeWatchdogSec` here replaces `timeout`.
+#   Extra [Manager] settings. A `RuntimeWatchdogSec` here replaces `timeout`;
+#   `0` turns systemd's runtime watchdog off.
 #
 # @api private
 #
@@ -35,10 +36,17 @@ class ipmi::watchdog::systemd (
   assert_private()
 
   $dropin = '/etc/systemd/system.conf.d/50-ipmi-watchdog.conf'
-  $settings = { 'RuntimeWatchdogSec' => $timeout } + $options
+
+  if $timeout > 0 {
+    $timeout_settings = { 'RuntimeWatchdogSec' => $timeout }
+  } else {
+    $timeout_settings = {}
+  }
+
+  $settings = $timeout_settings + $options
   $lines = $settings.map |$key, $value| { "${key}=${value}\n" }
 
-  if $enable {
+  if $enable and !$settings.empty {
     $ensure = 'file'
 
     # The parameters puppet/systemd's systemd::system::dropin_file uses by
