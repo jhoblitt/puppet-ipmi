@@ -5,7 +5,7 @@ require 'puppet_x/ipmi/provider/ipmitool'
 
 Puppet::Type.type(:ipmi_snmp).provide(
   :ipmitool,
-  parent: PuppetX::Ipmi::Provider::Ipmitool
+  parent: PuppetX::Ipmi::Provider::Ipmitool,
 ) do
   desc 'Manage BMC SNMP community string via ipmitool'
 

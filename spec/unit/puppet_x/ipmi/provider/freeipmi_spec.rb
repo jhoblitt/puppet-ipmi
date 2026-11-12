@@ -31,9 +31,9 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
 
   describe '.bmcconfig_exec' do
     it 'runs the command with failonfail and combined output' do
-      Puppet::Util::Execution.expects(:execute).
-        with(['/usr/sbin/bmcconfig', '--checkout'], { failonfail: true, combine: true }).
-        returns('out')
+      Puppet::Util::Execution.expects(:execute)
+                             .with(['/usr/sbin/bmcconfig', '--checkout'], { failonfail: true, combine: true })
+                             .returns('out')
 
       expect(klass.bmcconfig_exec(['--checkout'])).to eq('out')
     end
@@ -47,18 +47,18 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
 
   describe '.bmc_config_set_argv' do
     it 'builds a commit with a key pair' do
-      expect(described_class.bmc_config_set_argv('Lan_Conf', 'IP_Address', '10.0.0.1')).
-        to eq(['--commit', '--key-pair', 'Lan_Conf:IP_Address=10.0.0.1'])
+      expect(described_class.bmc_config_set_argv('Lan_Conf', 'IP_Address', '10.0.0.1'))
+        .to eq(['--commit', '--key-pair', 'Lan_Conf:IP_Address=10.0.0.1'])
     end
 
     it 'appends the lan channel when given' do
-      expect(described_class.bmc_config_set_argv('Lan_Conf', 'IP_Address', '10.0.0.1', channel: 2)).
-        to eq(['--commit', '--key-pair', 'Lan_Conf:IP_Address=10.0.0.1', '--lan-channel-number', '2'])
+      expect(described_class.bmc_config_set_argv('Lan_Conf', 'IP_Address', '10.0.0.1', channel: 2))
+        .to eq(['--commit', '--key-pair', 'Lan_Conf:IP_Address=10.0.0.1', '--lan-channel-number', '2'])
     end
 
     it 'refuses a value containing whitespace without echoing it' do
-      expect { described_class.bmc_config_set_argv('S', 'K', 'has space') }.
-        to raise_error(Puppet::Error, %r{S:K: freeipmi cannot store}) { |e| expect(e.message).not_to include('has space') }
+      expect { described_class.bmc_config_set_argv('S', 'K', 'has space') }
+        .to raise_error(Puppet::Error, %r{S:K: freeipmi cannot store}) { |e| expect(e.message).not_to include('has space') }
     end
   end
 
@@ -96,8 +96,8 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
     it 'ignores comments and section markers' do
       provider.stubs(:bmcconfig_exec).returns(section)
 
-      expect(provider.send(:section_cache, 'Lan_Conf', channel: 1).keys).
-        to contain_exactly('IP_Address_Source', 'IP_Address', 'Default_Gateway_IP_Address')
+      expect(provider.send(:section_cache, 'Lan_Conf', channel: 1).keys)
+        .to contain_exactly('IP_Address_Source', 'IP_Address', 'Default_Gateway_IP_Address')
     end
 
     it 'caches per section and channel' do
@@ -125,8 +125,8 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
     end
 
     it 'writes through the class helper, forwarding sensitive' do
-      provider.expects(:bmcconfig_exec).
-        with(['--commit', '--key-pair', 'U:Password=pw', '--lan-channel-number', '1'], sensitive: true)
+      provider.expects(:bmcconfig_exec)
+              .with(['--commit', '--key-pair', 'U:Password=pw', '--lan-channel-number', '1'], sensitive: true)
 
       provider.bmc_config_set('U', 'Password', 'pw', channel: 1, sensitive: true)
     end

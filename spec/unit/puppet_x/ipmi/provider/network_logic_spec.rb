@@ -80,7 +80,7 @@ describe PuppetX::Ipmi::Provider::NetworkLogic do
       provider.type = :static
 
       expect(provider.writes).to eq(
-        [%i[source static], [:ip, '10.0.0.1'], [:netmask, '255.255.255.0'], [:gateway, '10.0.0.254']]
+        [%i[source static], [:ip, '10.0.0.1'], [:netmask, '255.255.255.0'], [:gateway, '10.0.0.254']],
       )
     end
 

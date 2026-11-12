@@ -182,7 +182,7 @@ module PuppetX::Ipmi::Provider::UserLogic
   end
 
   def real_password
-    pw = @resource[:password].unwrap rescue @resource[:password]
+    pw = @resource[:password].respond_to?(:unwrap) ? @resource[:password].unwrap : @resource[:password]
     return nil if pw.nil?
 
     pw.to_s

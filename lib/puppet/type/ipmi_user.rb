@@ -146,7 +146,7 @@ Puppet::Type.newtype(:ipmi_user) do
     sensitive true
 
     validate do |value|
-      real = value.unwrap rescue value
+      real = value.respond_to?(:unwrap) ? value.unwrap : value
       raise Puppet::Error, 'password must be a String or Sensitive[String]' unless real.is_a?(String)
       raise Puppet::Error, 'IPMI v2 restricts passwords to 20 or fewer bytes' if real.bytesize > 20
     end
@@ -223,7 +223,7 @@ Puppet::Type.newtype(:ipmi_user) do
 
     return unless self[:enable] == :true
 
-    real_pw = self[:password].unwrap rescue self[:password]
+    real_pw = self[:password].respond_to?(:unwrap) ? self[:password].unwrap : self[:password]
     raise Puppet::Error, "You must supply a password to enable #{self[:username]} with ipmi_user" if real_pw.nil? || real_pw == ''
   end
 

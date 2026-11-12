@@ -58,8 +58,8 @@ describe PuppetX::Ipmi::LanChannel do
 
     [0, 16, 'abc', -1].each do |bad|
       it "rejects lan_channel #{bad.inspect}" do
-        expect { type.new(name: 'probe', lan_channel: bad) }.
-          to raise_error(Puppet::Error, %r{lan_channel must be an integer between 1 and 15})
+        expect { type.new(name: 'probe', lan_channel: bad) }
+          .to raise_error(Puppet::Error, %r{lan_channel must be an integer between 1 and 15})
       end
     end
 
@@ -84,8 +84,8 @@ describe PuppetX::Ipmi::LanChannel do
       it 'rejects two resources on one channel, naming both' do
         first, = catalog_with({ name: 'b' }, { name: 'a', lan_channel: 1 })
 
-        expect { first.pre_run_check }.
-          to raise_error(Puppet::Error, %r{Multiple lan_channel_probe resources target channel 1: a, b})
+        expect { first.pre_run_check }
+          .to raise_error(Puppet::Error, %r{Multiple lan_channel_probe resources target channel 1: a, b})
       end
 
       it 'allows resources on different channels' do

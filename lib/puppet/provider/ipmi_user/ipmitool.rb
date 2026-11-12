@@ -6,7 +6,7 @@ require 'puppet_x/ipmi/provider/user_logic'
 
 Puppet::Type.type(:ipmi_user).provide(
   :ipmitool,
-  parent: PuppetX::Ipmi::Provider::Ipmitool
+  parent: PuppetX::Ipmi::Provider::Ipmitool,
 ) do
   desc 'Manage BMC user accounts via ipmitool'
 

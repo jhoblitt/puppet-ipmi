@@ -19,23 +19,23 @@ describe Puppet::Type.type(:ipmi_snmp).provider(:freeipmi) do
     let(:provider) { resource_for(lan_channel: 1).provider }
 
     it 'returns the current community string' do
-      provider.expects(:bmcconfig_exec).
-        with(['--checkout', '--section', 'Community_String', '--lan-channel-number', '1']).
-        returns(pef_conf)
+      provider.expects(:bmcconfig_exec)
+              .with(['--checkout', '--section', 'Community_String', '--lan-channel-number', '1'])
+              .returns(pef_conf)
 
       expect(provider.community).to eq('secret')
     end
 
     it 'sets the community string' do
-      provider.expects(:bmcconfig_exec).
-        with(['--commit', '--key-pair', 'Community_String:Community_String=private', '--lan-channel-number', '1'], sensitive: false)
+      provider.expects(:bmcconfig_exec)
+              .with(['--commit', '--key-pair', 'Community_String:Community_String=private', '--lan-channel-number', '1'], sensitive: false)
 
       provider.community = 'private'
     end
 
     it 'raises when the community string contains whitespace' do
-      expect { provider.community = 'my community' }.
-        to raise_error(Puppet::Error, %r{freeipmi cannot store a value containing whitespace})
+      expect { provider.community = 'my community' }
+        .to raise_error(Puppet::Error, %r{freeipmi cannot store a value containing whitespace})
     end
   end
 end

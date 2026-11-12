@@ -71,7 +71,7 @@ describe Puppet::Type.type(:ipmi_network).provider(:ipmitool) do
         type: :static,
         ip: '192.168.1.100',
         netmask: '255.255.255.0',
-        gateway: '192.168.1.1'
+        gateway: '192.168.1.1',
       ).provider
       provider.expects(:ipmitool_exec).with(%w[lan set 1 ipsrc static])
       provider.expects(:ipmitool_exec).with(%w[lan print 1]).returns(lan_print).at_least_once

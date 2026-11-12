@@ -10,7 +10,7 @@ describe PuppetX::Ipmi::Provider::UserAllocator do
       { id: 2, name: 'ADMIN', priv: 4, enabled: true },
       { id: 3 },
       { id: 4, name: 'DISABLED_4' },
-      { id: 5 }
+      { id: 5 },
     )
   end
 

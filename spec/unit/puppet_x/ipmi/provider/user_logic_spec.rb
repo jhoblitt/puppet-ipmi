@@ -9,7 +9,7 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       { id: 1 },
       { id: 2, name: 'ADMIN', priv: 4, enabled: true },
       { id: 3 },
-      { id: 4, name: 'DISABLED_4' }
+      { id: 4, name: 'DISABLED_4' },
     )
   end
   let(:log) { [] }
@@ -41,28 +41,26 @@ describe PuppetX::Ipmi::Provider::UserLogic do
   end
 
   describe '.property_hash_for' do
-    let(:channel) { 1 }
-
     it 'reports an absent user' do
-      expect(described_class.property_hash_for(nil, channel)).to eq(ensure: :absent)
+      expect(described_class.property_hash_for(nil, 1)).to eq(ensure: :absent)
     end
 
     it 'reports an enabled, privileged user as present and enabled' do
-      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 4, enabled: true }, channel)
+      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 4, enabled: true }, 1)
 
       expect(hash).to eq(
-        ensure: :present, name: 'ADMIN', user_id: 2, priv: 4, enable: :true, channel: 1
+        ensure: :present, name: 'ADMIN', user_id: 2, priv: 4, enable: :true, channel: 1,
       )
     end
 
     it 'reports a named slot with NO ACCESS as disabled' do
-      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 15, enabled: true }, channel)
+      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 15, enabled: true }, 1)
 
       expect(hash[:enable]).to eq(:false)
     end
 
     it 'reports a named slot with no enabled flag as disabled' do
-      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 4, enabled: false }, channel)
+      hash = described_class.property_hash_for({ id: 2, name: 'ADMIN', priv: 4, enabled: false }, 1)
 
       expect(hash[:enable]).to eq(:false)
     end
@@ -375,7 +373,7 @@ describe PuppetX::Ipmi::Provider::UserLogic do
   end
 
   describe '.stray_slots on the provider class' do
-    let(:holder) do
+    def holder
       Struct.new(:data) do
         def [](key)
           data[key]

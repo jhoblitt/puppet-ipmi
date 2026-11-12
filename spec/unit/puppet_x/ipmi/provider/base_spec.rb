@@ -6,13 +6,13 @@ require 'puppet_x/ipmi/provider/base'
 describe PuppetX::Ipmi::Provider::Base do
   describe '.parse_colon_kv' do
     it 'parses "Key : Value" lines and strips whitespace' do
-      expect(described_class.parse_colon_kv("IP Address   : 10.0.0.1\nSubnet Mask  : 255.0.0.0\n")).
-        to eq('IP Address' => '10.0.0.1', 'Subnet Mask' => '255.0.0.0')
+      expect(described_class.parse_colon_kv("IP Address   : 10.0.0.1\nSubnet Mask  : 255.0.0.0\n"))
+        .to eq('IP Address' => '10.0.0.1', 'Subnet Mask' => '255.0.0.0')
     end
 
     it 'splits only on the first colon' do
-      expect(described_class.parse_colon_kv("MAC Address : 00:11:22:33:44:55\n")).
-        to eq('MAC Address' => '00:11:22:33:44:55')
+      expect(described_class.parse_colon_kv("MAC Address : 00:11:22:33:44:55\n"))
+        .to eq('MAC Address' => '00:11:22:33:44:55')
     end
 
     it 'skips lines without a colon and empty keys' do

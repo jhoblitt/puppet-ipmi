@@ -34,7 +34,7 @@ module PuppetX::Ipmi::UserCatalog
         username: resource[:username],
         user_id: entry[:id],
         channel: resource[:channel],
-        provider: resource[:provider]
+        provider: resource[:provider],
       )
     end
   end

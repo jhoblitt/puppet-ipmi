@@ -39,6 +39,10 @@ describe 'ipmi_user catalog application' do
     report.resource_statuses.values.count(&:changed)
   end
 
+  def slot(id)
+    table.find { |u| u[:id] == id }
+  end
+
   it 'creates a user on the first run and is idempotent on the second' do
     expect(changed_count(apply(user_id: 3))).to eq(1)
     expect(table.find { |u| u[:id] == 3 }).to include(name: 'bob', priv: 4, enabled: true)
@@ -154,20 +158,18 @@ describe 'ipmi_user catalog application' do
   end
 
   describe 'purge_duplicates' do
-    let(:slot) { ->(id) { table.find { |u| u[:id] == id } } }
-
     before do
-      slot.call(3).merge!(name: 'bob', priv: 4, enabled: true)
-      slot.call(4).merge!(name: 'bob', priv: 4, enabled: true)
-      slot.call(1)[:name] = 'bob'
+      slot(3).merge!(name: 'bob', priv: 4, enabled: true)
+      slot(4).merge!(name: 'bob', priv: 4, enabled: true)
+      slot(1)[:name] = 'bob'
     end
 
     it 'blanks the duplicate, leaves the managed and anonymous slots alone, then stays quiet' do
       report = apply(user_id: 3, purge_duplicates: true)
 
-      expect(slot.call(4)).to include(name: 'DISABLED_4', enabled: false, priv: 15)
-      expect(slot.call(1)[:name]).to eq('bob')
-      expect(slot.call(3)).to include(name: 'bob', enabled: true)
+      expect(slot(4)).to include(name: 'DISABLED_4', enabled: false, priv: 15)
+      expect(slot(1)[:name]).to eq('bob')
+      expect(slot(3)).to include(name: 'bob', enabled: true)
       expect(report.resource_statuses.keys).to include('Ipmi_user[bob (duplicate in slot 4)]')
 
       log.clear
@@ -176,7 +178,7 @@ describe 'ipmi_user catalog application' do
     end
 
     it 'purges the duplicate before the managed slot is named' do
-      slot.call(3).merge!(name: '', priv: 15, enabled: false)
+      slot(3).merge!(name: '', priv: 15, enabled: false)
       apply(user_id: 3, purge_duplicates: true)
 
       expect(log.index([:name, 4, 'DISABLED_4'])).to be < log.index([:name, 3, 'bob'])
@@ -195,14 +197,14 @@ describe 'ipmi_user catalog application' do
     it 'leaves duplicates alone unless asked' do
       apply(user_id: 3)
 
-      expect(slot.call(4)[:name]).to eq('bob')
+      expect(slot(4)[:name]).to eq('bob')
     end
 
     it 'keeps the lowest existing slot for user_id auto and purges the others' do
       apply(purge_duplicates: true)
 
-      expect(slot.call(3)[:name]).to eq('bob')
-      expect(slot.call(4)[:name]).to eq('DISABLED_4')
+      expect(slot(3)[:name]).to eq('bob')
+      expect(slot(4)[:name]).to eq('DISABLED_4')
     end
   end
 end

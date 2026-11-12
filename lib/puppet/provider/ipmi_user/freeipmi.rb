@@ -6,7 +6,7 @@ require 'puppet_x/ipmi/provider/user_logic'
 
 Puppet::Type.type(:ipmi_user).provide(
   :freeipmi,
-  parent: PuppetX::Ipmi::Provider::Freeipmi
+  parent: PuppetX::Ipmi::Provider::Freeipmi,
 ) do
   desc 'Manage BMC user accounts via freeipmi (bmc-config)'
 
@@ -89,7 +89,7 @@ Puppet::Type.type(:ipmi_user).provide(
     result = bmcconfig_exec(
       ['--diff', '--key-pair', "#{section}:Password=#{password}"],
       failonfail: false,
-      sensitive: true
+      sensitive: true,
     )
     result.exitstatus.zero? && result !~ %r{^#{section}:Password\b}
   end

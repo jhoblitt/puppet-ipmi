@@ -73,16 +73,16 @@ describe PuppetX::Ipmi::UserCatalog do
       a = build(name: 'b', username: 'bob', user_id: 3)
       catalog_with(a, build(name: 'a', username: 'bob', user_id: 4))
 
-      expect { described_class.check_unique!(a) }.
-        to raise_error(Puppet::Error, %r{manage username bob on channel 1: a, b})
+      expect { described_class.check_unique!(a) }
+        .to raise_error(Puppet::Error, %r{manage username bob on channel 1: a, b})
     end
 
     it 'rejects a duplicate explicit slot' do
       a = build(name: 'a', user_id: 4)
       catalog_with(a, build(name: 'b', user_id: 4))
 
-      expect { described_class.check_unique!(a) }.
-        to raise_error(Puppet::Error, %r{claim user_id 4 on channel 1: a, b})
+      expect { described_class.check_unique!(a) }
+        .to raise_error(Puppet::Error, %r{claim user_id 4 on channel 1: a, b})
     end
 
     it 'allows several auto resources' do

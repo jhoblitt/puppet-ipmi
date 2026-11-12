@@ -14,22 +14,22 @@ describe PuppetX::Ipmi::Provider::Ipmitool do
 
   describe '.ipmitool_exec' do
     it 'runs the command with failonfail and combined output' do
-      Puppet::Util::Execution.expects(:execute).
-        with(['/usr/bin/ipmitool', 'lan', 'print', '1'], { failonfail: true, combine: true }).
-        returns('out')
+      Puppet::Util::Execution.expects(:execute)
+                             .with(['/usr/bin/ipmitool', 'lan', 'print', '1'], { failonfail: true, combine: true })
+                             .returns('out')
 
       expect(klass.ipmitool_exec(%w[lan print 1])).to eq('out')
     end
 
     it 'marks the call sensitive only when asked' do
-      Puppet::Util::Execution.expects(:execute).
-        with(anything, has_entry(sensitive: true))
+      Puppet::Util::Execution.expects(:execute)
+                             .with(anything, has_entry(sensitive: true))
       klass.ipmitool_exec(['x'], sensitive: true)
     end
 
     it 'passes stdin and failonfail through' do
-      Puppet::Util::Execution.expects(:execute).
-        with(anything, has_entries(stdin: 'data', failonfail: false))
+      Puppet::Util::Execution.expects(:execute)
+                             .with(anything, has_entries(stdin: 'data', failonfail: false))
       klass.ipmitool_exec(['x'], stdin: 'data', failonfail: false)
     end
 

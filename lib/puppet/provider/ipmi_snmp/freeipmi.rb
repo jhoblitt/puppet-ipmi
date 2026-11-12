@@ -5,7 +5,7 @@ require 'puppet_x/ipmi/provider/freeipmi'
 
 Puppet::Type.type(:ipmi_snmp).provide(
   :freeipmi,
-  parent: PuppetX::Ipmi::Provider::Freeipmi
+  parent: PuppetX::Ipmi::Provider::Freeipmi,
 ) do
   desc 'Manage BMC SNMP community string via freeipmi (ipmi-pef-config)'
 

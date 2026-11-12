@@ -6,7 +6,7 @@ require 'puppet_x/ipmi/provider/network_logic'
 
 Puppet::Type.type(:ipmi_network).provide(
   :freeipmi,
-  parent: PuppetX::Ipmi::Provider::Freeipmi
+  parent: PuppetX::Ipmi::Provider::Freeipmi,
 ) do
   desc 'Manage BMC network configuration via freeipmi (bmc-config)'
 

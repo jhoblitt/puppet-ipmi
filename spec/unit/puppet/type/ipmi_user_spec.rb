@@ -185,8 +185,8 @@ describe Puppet::Type.type(:ipmi_user) do
 
     it 'rejects anonymous slot 1 and slots beyond the IPMI range' do
       [1, 64].each do |id|
-        expect { described_class.new(name: 'test', enable: :false, user_id: id) }.
-          to raise_error(Puppet::Error, %r{between 2 and 63})
+        expect { described_class.new(name: 'test', enable: :false, user_id: id) }
+          .to raise_error(Puppet::Error, %r{between 2 and 63})
       end
     end
 
@@ -316,7 +316,7 @@ describe Puppet::Type.type(:ipmi_user) do
         channel: 1,
         enable: :true,
         priv: 4,
-        provider: 'ipmitool'
+        provider: 'ipmitool',
       )
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource(resource)

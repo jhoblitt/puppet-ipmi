@@ -108,7 +108,7 @@ describe Puppet::Type.type(:ipmi_user).provider(:freeipmi) do
       seq = sequence('enable')
       [
         %w[Lan_Privilege_Limit Administrator], %w[Enable_User Yes], %w[Lan_Enable_IPMI_Msgs Yes],
-        %w[Lan_Enable_Link_Auth Yes], %w[SOL_Payload_Access Yes]
+        %w[Lan_Enable_Link_Auth Yes], %w[SOL_Payload_Access Yes],
       ].each do |key, value|
         described_class.expects(:bmc_config_set).with('User4', key, value, channel: 1).in_sequence(seq)
       end
@@ -119,7 +119,7 @@ describe Puppet::Type.type(:ipmi_user).provider(:freeipmi) do
       seq = sequence('disable')
       [
         %w[Lan_Privilege_Limit No_Access], %w[Enable_User No], %w[Lan_Enable_IPMI_Msgs No],
-        %w[Lan_Enable_Link_Auth No], %w[SOL_Payload_Access No]
+        %w[Lan_Enable_Link_Auth No], %w[SOL_Payload_Access No],
       ].each do |key, value|
         described_class.expects(:bmc_config_set).with('User4', key, value, channel: 1).in_sequence(seq)
       end
@@ -127,8 +127,8 @@ describe Puppet::Type.type(:ipmi_user).provider(:freeipmi) do
     end
 
     it 'raises when a value contains whitespace, without echoing it' do
-      expect { described_class.bmc_config_set('User4', 'Password', 'has space', channel: 1, sensitive: true) }.
-        to raise_error(Puppet::Error) { |e| expect(e.message).not_to include('has space') }
+      expect { described_class.bmc_config_set('User4', 'Password', 'has space', channel: 1, sensitive: true) }
+        .to raise_error(Puppet::Error) { |e| expect(e.message).not_to include('has space') }
     end
   end
 
