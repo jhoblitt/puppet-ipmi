@@ -16,17 +16,21 @@
 # @param watchdog
 #   Controls whether the IPMI watchdog is enabled.
 # @param snmps
-#   `ipmi::snmp` resources to create.
+#   `ipmi_snmp` resources to create.
 # @param users
-#   `ipmi::user` resources to create.
+#   `ipmi_user` resources to create.
 # @param networks
-#   `ipmi::network` resources to create.
+#   `ipmi_network` resources to create.
 # @param service_manage
 #   Controls whether the `ipmi` service is managed. When `false`, the
 #   `service` resource is not declared and the service is left unmanaged
 #   (handled by the administrator or an external tooling system).
 # @param default_channel
-#   Default channel to use for IPMI commands.
+#   Optional default IPMI channel (1-15) to use for resources that do not
+#   specify one. When unset, class-declared resources use the node's
+#   ipmi.default.channel fact if valid; otherwise the class uses an integer
+#   LAN title or channel 1. Directly declared native resources
+#   do not use facts for their defaults.
 #
 class ipmi (
   Array[String] $packages,
@@ -40,7 +44,7 @@ class ipmi (
   Optional[Hash] $users,
   Optional[Hash] $networks,
   Boolean $service_manage = true,
-  Integer[0] $default_channel = Integer(pick(fact('ipmi.default.channel'), 1)),
+  Optional[Integer[1, 15]] $default_channel = undef,
 ) {
   contain ipmi::install
   contain ipmi::config
@@ -50,15 +54,56 @@ class ipmi (
   ~> Class['ipmi::config']
   ~> Class['ipmi::service']
 
-  if $snmps {
-    create_resources('ipmi::snmp', $snmps)
+  # The class sees the target node's facts on Puppet Server. Native type
+  # defaultto blocks run on the compiler and must not read local Facter data.
+  $fact_channel = $facts.dig('ipmi', 'default', 'channel')
+  if $default_channel != undef {
+    $effective_channel = $default_channel
+  } elsif $fact_channel =~ Integer[1, 15] {
+    $effective_channel = $fact_channel
+  } else {
+    $effective_channel = 1
   }
 
+  $user_defaults = { 'channel' => $effective_channel }
+  $lan_defaults = { 'lan_channel' => $effective_channel }
+
   if $users {
-    create_resources('ipmi::user', $users)
+    $users.each |$title, $params| {
+      ipmi_user { $title:
+        * => $user_defaults + $params,
+      }
+      Class['ipmi::install'] -> Ipmi_user[$title]
+    }
   }
 
   if $networks {
-    create_resources('ipmi::network', $networks)
+    $networks.each |$title, $params| {
+      # An integer title is already a channel unless the caller explicitly
+      # requested an override via default_channel.
+      if $default_channel == undef and $title =~ /^[0-9]+$/ {
+        $network_defaults = { 'lan_channel' => Integer($title) }
+      } else {
+        $network_defaults = $lan_defaults
+      }
+      ipmi_network { $title:
+        * => $network_defaults + $params,
+      }
+      Class['ipmi::install'] -> Ipmi_network[$title]
+    }
+  }
+
+  if $snmps {
+    $snmps.each |$title, $params| {
+      if $default_channel == undef and $title =~ /^[0-9]+$/ {
+        $snmp_defaults = { 'lan_channel' => Integer($title) }
+      } else {
+        $snmp_defaults = $lan_defaults
+      }
+      ipmi_snmp { $title:
+        * => $snmp_defaults + $params,
+      }
+      Class['ipmi::install'] -> Ipmi_snmp[$title]
+    }
   }
 }

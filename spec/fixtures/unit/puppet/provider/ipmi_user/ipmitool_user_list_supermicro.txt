@@ -1,0 +1,11 @@
+ID  Name             Callin  Link Auth  IPMI Msg   Channel Priv Limit
+1                    true    false      false      Unknown (0x00)
+2   ADMIN            true    true       true       ADMINISTRATOR
+3                    true    false      false      Unknown (0x00)
+4   SLAM             true    true       true       ADMINISTRATOR
+5                    true    false      false      Unknown (0x00)
+6                    true    false      false      Unknown (0x00)
+7                    true    false      false      Unknown (0x00)
+8                    true    false      false      Unknown (0x00)
+9                    true    false      false      Unknown (0x00)
+10                   true    false      false      Unknown (0x00)
