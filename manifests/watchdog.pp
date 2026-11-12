@@ -7,8 +7,8 @@
 # given `start_now=1`).
 #
 # The device can only be opened once, and whoever holds it controls the BMC
-# timer, so exactly one component should own it. Each owner is declared only
-# when it is the chosen one, so the others stay unmanaged:
+# timer, so exactly one component should own it. The chosen owner is
+# configured and the other one's configuration is removed or switched off:
 #
 # * systemd opens and pings /dev/watchdog itself (RuntimeWatchdogSec).
 # * OpenIPMI only loads the module (IPMI_WATCHDOG=yes). Nothing in this
@@ -31,14 +31,23 @@ class ipmi::watchdog {
     default:    { $use_systemd = versioncmp($systemd_version, $systemd_min_version) >= 0 }
   }
 
-  if $ipmi::watchdog and $ipmi::watchdog_manage_module {
-    class { 'ipmi::watchdog::kmod':
-      timeout => $ipmi::watchdog_timeout,
-      options => $ipmi::watchdog_module_options,
-    }
-
-    contain ipmi::watchdog::kmod
+  class { 'ipmi::watchdog::kmod':
+    manage  => $ipmi::watchdog and $ipmi::watchdog_manage_module,
+    timeout => $ipmi::watchdog_timeout,
+    options => $ipmi::watchdog_module_options,
   }
+
+  contain ipmi::watchdog::kmod
+
+  class { 'ipmi::watchdog::systemd':
+    enable  => $use_systemd and $ipmi::watchdog,
+    timeout => $ipmi::watchdog_timeout,
+    options => $ipmi::watchdog_systemd_options,
+  }
+
+  contain ipmi::watchdog::systemd
+
+  Class['ipmi::watchdog::kmod'] -> Class['ipmi::watchdog::systemd']
 
   if $use_systemd {
     # systemd owns /dev/watchdog. IPMI_WATCHDOG=yes would make the OpenIPMI
@@ -52,22 +61,9 @@ class ipmi::watchdog {
     }
 
     contain ipmi::watchdog::openipmi::watchdog_param
-
-    class { 'ipmi::watchdog::systemd':
-      enable  => $ipmi::watchdog,
-      timeout => $ipmi::watchdog_timeout,
-      options => $ipmi::watchdog_systemd_options,
-    }
-
-    contain ipmi::watchdog::systemd
-
-    if $ipmi::watchdog and $ipmi::watchdog_manage_module {
-      Class['ipmi::watchdog::kmod'] -> Class['ipmi::watchdog::systemd']
-    }
   } else {
     # OpenIPMI is the owner: IPMI_WATCHDOG=yes makes its service load the
-    # module. ipmi::watchdog::systemd is deliberately not declared here, so no
-    # system.conf drop-in asks PID 1 to open /dev/watchdog as well.
+    # module.
     class { 'ipmi::watchdog::openipmi':
       enable => $ipmi::watchdog,
     }

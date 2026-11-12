@@ -170,7 +170,10 @@ the same LAN channel, preventing them from fighting on every run.
 #### The IPMI hardware watchdog
 
 When `watchdog => true` the module loads the `ipmi_watchdog` kernel module,
-now and at boot (via `modules-load.d`). The module provides `/dev/watchdog`.
+now and at boot. Its options go to `/etc/modprobe.d/50-ipmi-watchdog.conf`
+and the boot-time load to `/etc/modules-load.d/50-ipmi-watchdog.conf`; files
+of other names, such as the `ipmi_watchdog.conf` that puppet/kmod writes, are
+left alone. The module provides `/dev/watchdog`.
 Loading it does not start the BMC timer: the timer runs once something opens
 `/dev/watchdog`, or if the module is given the `start_now=1` option.
 
@@ -179,13 +182,16 @@ The device can only be opened once, so one component owns it, chosen by
 
 - `systemd`: a `system.conf` drop-in
   (`/etc/systemd/system.conf.d/50-ipmi-watchdog.conf`) makes PID 1 open and
-  ping `/dev/watchdog`. If the OpenIPMI config file exists, `IPMI_WATCHDOG` in
+  ping `/dev/watchdog`. systemd reads it only when PID 1 starts, so Puppet runs
+  `systemctl daemon-reexec` whenever the drop-in changes or is removed. If the
+  OpenIPMI config file exists, `IPMI_WATCHDOG` in
   it is forced to `no` (the file is never created for this), so the OpenIPMI
   service does not also manage the module.
 - `openipmi`: `IPMI_WATCHDOG=yes` is set in the OpenIPMI config, which makes
   the OpenIPMI service load the module. Nothing in this module opens the
   device, so the timer is started by whatever else does, such as the
-  `watchdog` daemon.
+  `watchdog` daemon. A drop-in written while systemd was the owner is
+  removed.
 - `auto`: `systemd` when the `ipmi_systemd_version` fact is 252 or newer (the
   first release that falls back to `/dev/watchdog`, the only node
   `ipmi_watchdog` creates), otherwise `openipmi`.
@@ -210,8 +216,10 @@ Options:
   `watchdog_module_options` then have no effect on the module.
 
 Module options only apply the next time the module is loaded, usually after a
-reboot. Setting `watchdog => false` does not remove module configuration
-written earlier.
+reboot. Setting `watchdog => false` removes the drop-in and both module files,
+but Puppet never unloads the module: unloading it does not stop a running BMC
+timer, which would then reset the host. A loaded module stays loaded until the
+next boot or a manual `modprobe -r ipmi_watchdog`.
 
 ```puppet
   class { 'ipmi':

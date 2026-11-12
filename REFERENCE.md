@@ -18,7 +18,7 @@
 * `ipmi::service::ipmi`
 * `ipmi::service::ipmievd`
 * `ipmi::watchdog`: Coordinates the IPMI watchdog pieces
-* `ipmi::watchdog::kmod`: Load the ipmi_watchdog kernel module at boot
+* `ipmi::watchdog::kmod`: Load the ipmi_watchdog kernel module, now and at boot
 * `ipmi::watchdog::openipmi`: Have the OpenIPMI service load ipmi_watchdog
 * `ipmi::watchdog::openipmi::watchdog_param`: Write IPMI_WATCHDOG in the OpenIPMI daemon config
 * `ipmi::watchdog::systemd`: Let systemd (PID 1) own /dev/watchdog
@@ -28,6 +28,10 @@
 * [`ipmi_network`](#ipmi_network): Manages BMC network configuration via IPMI.
 * [`ipmi_snmp`](#ipmi_snmp): Manages SNMP community string on a BMC LAN channel via IPMI.
 * [`ipmi_user`](#ipmi_user): Manages BMC user accounts via IPMI.
+
+### Data types
+
+* [`Ipmi::Watchdog::SystemdOptions`](#Ipmi--Watchdog--SystemdOptions): systemd-system.conf(5) [Manager] settings for the watchdog drop-in
 
 ## Classes
 
@@ -113,9 +117,10 @@ Controls whether the IPMI watchdog is enabled. When `true`, the
 `ipmi_watchdog` kernel module is loaded (see `watchdog_manage_module`) and
 the owner chosen by `watchdog_supervisor` is configured: under `openipmi`
 `IPMI_WATCHDOG` is set to `yes`, under `systemd` a system.conf drop-in is
-written. When `false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`) or the
-drop-in is removed (`systemd`), and the kernel module is not managed;
-module configuration written while it was `true` is left in place.
+written. When `false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`), and
+the drop-in and the module's modprobe.d and modules-load.d files are
+removed. A loaded module is never unloaded: it stays loaded until the next
+boot or a manual unload.
 
 Default value: `false`
 
@@ -160,8 +165,9 @@ Data type: `Boolean`
 Whether to load the `ipmi_watchdog` kernel module, and write its modprobe
 options, when `watchdog` is `true`. Set `false` when `/dev/watchdog`
 already exists, for example because the module is built in or loaded by
-other tooling. `watchdog_timeout` and `watchdog_module_options` have no
-effect on the module when this is `false`.
+other tooling; this module's modprobe.d and modules-load.d files are then
+removed. `watchdog_timeout` and `watchdog_module_options` have no effect on
+the module when this is `false`.
 
 Default value: `true`
 
@@ -194,7 +200,7 @@ Default value: `0`
 
 ##### <a name="-ipmi--watchdog_systemd_options"></a>`watchdog_systemd_options`
 
-Data type: `Systemd::ServiceManagerSettings`
+Data type: `Ipmi::Watchdog::SystemdOptions`
 
 Extra system.conf [Manager] settings, used only under `systemd`. A
 `RuntimeWatchdogSec` here replaces `watchdog_timeout`, so setting it to `0`
@@ -611,3 +617,11 @@ The IPMI username.  Defaults to the resource title.
 At most 16 bytes, without whitespace, and not starting with `-`: the
 name goes on ipmitool's command line, where its option parser would
 take it as an option.
+
+## Data types
+
+### <a name="Ipmi--Watchdog--SystemdOptions"></a>`Ipmi::Watchdog::SystemdOptions`
+
+Each key is written as one `Key=value` line, so a value may not span lines.
+
+Alias of `Hash[Pattern[/\A[A-Z][A-Za-z]*\z/], Variant[Integer, Pattern[/\A[^\n]*\z/]]]`

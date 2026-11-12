@@ -18,9 +18,10 @@
 #   `ipmi_watchdog` kernel module is loaded (see `watchdog_manage_module`) and
 #   the owner chosen by `watchdog_supervisor` is configured: under `openipmi`
 #   `IPMI_WATCHDOG` is set to `yes`, under `systemd` a system.conf drop-in is
-#   written. When `false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`) or the
-#   drop-in is removed (`systemd`), and the kernel module is not managed;
-#   module configuration written while it was `true` is left in place.
+#   written. When `false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`), and
+#   the drop-in and the module's modprobe.d and modules-load.d files are
+#   removed. A loaded module is never unloaded: it stays loaded until the next
+#   boot or a manual unload.
 # @param snmps
 #   `ipmi_snmp` resources to create.
 # @param users
@@ -35,8 +36,9 @@
 #   Whether to load the `ipmi_watchdog` kernel module, and write its modprobe
 #   options, when `watchdog` is `true`. Set `false` when `/dev/watchdog`
 #   already exists, for example because the module is built in or loaded by
-#   other tooling. `watchdog_timeout` and `watchdog_module_options` have no
-#   effect on the module when this is `false`.
+#   other tooling; this module's modprobe.d and modules-load.d files are then
+#   removed. `watchdog_timeout` and `watchdog_module_options` have no effect on
+#   the module when this is `false`.
 # @param watchdog_supervisor
 #   Which component owns `/dev/watchdog`: `systemd`, `openipmi`, or `auto`.
 #   `systemd` writes a system.conf drop-in so PID 1 opens and pings the device,
@@ -81,7 +83,7 @@ class ipmi (
   Boolean $watchdog_manage_module = true,
   Enum['auto', 'systemd', 'openipmi'] $watchdog_supervisor = 'auto',
   Integer[0] $watchdog_timeout = 0,
-  Systemd::ServiceManagerSettings $watchdog_systemd_options = {},
+  Ipmi::Watchdog::SystemdOptions $watchdog_systemd_options = {},
   Hash[String[1], Scalar] $watchdog_module_options = {},
   Optional[Integer[1, 15]] $default_channel = undef,
 ) {
