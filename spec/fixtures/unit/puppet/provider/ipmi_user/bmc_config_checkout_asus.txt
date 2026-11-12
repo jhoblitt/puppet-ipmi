@@ -1,0 +1,611 @@
+#
+# Section UserX Comments 
+#
+# In the following User sections, users should configure usernames, passwords, 
+# and access rights for IPMI over LAN communication. Usernames can be set to any 
+# string with the exception of User1, which is a fixed to the "anonymous" 
+# username in IPMI. 
+#
+# For IPMI over LAN access for a username, set "Enable_User" to "Yes", 
+# "Lan_Enable_IPMI_Msgs" to "Yes", and "Lan_Privilege_Limit" to a privilege 
+# level. The privilege level is used to limit various IPMI operations for 
+# individual usernames. It is recommended that atleast one username be created 
+# with a privilege limit "Administrator", so all system functions are available 
+# to atleast one username via IPMI over LAN. For security reasons, we recommend 
+# not enabling the "anonymous" User1. For most users, "Lan_Session_Limit" can be 
+# set to 0 (or ignored) to support an unlimited number of simultaneous IPMI over 
+# LAN sessions. 
+#
+# If your system supports IPMI 2.0 and Serial-over-LAN (SOL), 
+# a"SOL_Payload_Access" field may be listed below. Set the "SOL_Payload_Access" 
+# field to "Yes" or "No" to enable or disable this username's ability to access 
+# SOL. 
+#
+# Please do not forget to uncomment those fields, such as "Password", that may 
+# be commented out during the checkout. 
+#
+# Some motherboards may require a "Username" to be configured prior to other 
+# fields being read/written. If this is the case, those fields will be set to 
+# <username-not-set-yet>. 
+#
+Section User1
+        ## Give Username
+        ## Username                                   NULL
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             Yes
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        SOL_Payload_Access                            Yes
+EndSection
+Section User2
+        ## Give Username
+        Username                                      admin
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   Yes
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          Yes
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             Yes
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           Administrator
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        SOL_Payload_Access                            Yes
+EndSection
+Section User3
+        ## Give Username
+        Username                                      ADMIN
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   Yes
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          Yes
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          Yes
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           Administrator
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        SOL_Payload_Access                            Yes
+EndSection
+Section User4
+        ## Give Username
+        Username                                      SLAM
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   Yes
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          Yes
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          Yes
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           Administrator
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        SOL_Payload_Access                            Yes
+EndSection
+Section User5
+        ## Give Username
+        Username                                      Administrator
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   Yes
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          Yes
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          Yes
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           Administrator
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        SOL_Payload_Access                            No
+EndSection
+Section User6
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User7
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User8
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User9
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User10
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User11
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User12
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User13
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User14
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+Section User15
+        ## Give Username
+        ## Username                                   <username-not-set-yet>
+        ## Give password or blank to clear. MAX 16 chars (20 chars if IPMI 2.0 supported).
+        ## Password                                   
+        ## Possible values: Yes/No or blank to not set
+        Enable_User                                   No
+        ## Possible values: Yes/No
+        Lan_Enable_IPMI_Msgs                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Link_Auth                          No
+        ## Possible values: Yes/No
+        Lan_Enable_Restricted_to_Callback             No
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary/No_Access
+        Lan_Privilege_Limit                           No_Access
+        ## Possible values: 0-17, 0 is unlimited; May be reset to 0 if not specified
+        ## Lan_Session_Limit                          
+        ## Possible values: Yes/No
+        ## SOL_Payload_Access                         <username-not-set-yet>
+EndSection
+#
+# Section Lan_Channel Comments 
+#
+# In the Lan_Channel section, general IPMI over LAN can be enabled for disabled. 
+# In the below, "Volatile" configurations are immediately configured onto the 
+# BMC and will have immediate effect on the system. "Non_Volatile" 
+# configurations are only available after the next system reset. Generally, both 
+# the "Volatile" and "Non_Volatile" equivalent fields should be configured 
+# identically. 
+#
+# To enable IPMI over LAN, typically "Access_Mode" should be set to 
+# "Always_Available". "Channel_Privilege_Limit" should be set to the highest 
+# privilege level any username was configured with. Typically, this is set to 
+# "Administrator". 
+#
+# "User_Level_Auth" and "Per_Message_Auth" are typically set to "Yes" for 
+# additional security. 
+#
+Section Lan_Channel
+        ## Possible values: Disabled/Pre_Boot_Only/Always_Available/Shared
+        Volatile_Access_Mode                          Always_Available
+        ## Possible values: Yes/No
+        Volatile_Enable_User_Level_Auth               Yes
+        ## Possible values: Yes/No
+        Volatile_Enable_Per_Message_Auth              No
+        ## Possible values: Yes/No
+        Volatile_Enable_Pef_Alerting                  Yes
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary
+        Volatile_Channel_Privilege_Limit              Administrator
+        ## Possible values: Disabled/Pre_Boot_Only/Always_Available/Shared
+        Non_Volatile_Access_Mode                      Always_Available
+        ## Possible values: Yes/No
+        Non_Volatile_Enable_User_Level_Auth           Yes
+        ## Possible values: Yes/No
+        Non_Volatile_Enable_Per_Message_Auth          No
+        ## Possible values: Yes/No
+        Non_Volatile_Enable_Pef_Alerting              Yes
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary
+        Non_Volatile_Channel_Privilege_Limit          Administrator
+EndSection
+#
+# Section Lan_Conf Comments 
+#
+# In the Lan_Conf section, typical networking configuration is setup. Most users 
+# will choose to set "Static" for the "IP_Address_Source" and set the 
+# appropriate "IP_Address", "MAC_Address", "Subnet_Mask", etc. for the machine. 
+#
+Section Lan_Conf
+        ## Possible values: Unspecified/Static/Use_DHCP/Use_BIOS/Use_Others
+        IP_Address_Source                             Static
+        ## Give valid IP address
+        IP_Address                                    192.168.57.34
+        ## Give valid MAC address
+        MAC_Address                                   04:42:FF:CA:B6:FF
+        ## Give valid Subnet Mask
+        Subnet_Mask                                   255.255.248.0
+        ## Give valid IP address
+        Default_Gateway_IP_Address                    0.0.0.0
+        ## Give valid MAC address
+        Default_Gateway_MAC_Address                   00:00:00:00:00:00
+        ## Give valid IP address
+        Backup_Gateway_IP_Address                     0.0.0.0
+        ## Give valid MAC address
+        Backup_Gateway_MAC_Address                    00:00:00:00:00:00
+EndSection
+#
+# Section Lan6_Conf Comments 
+#
+# In the Lan6_Conf section, typical networking configuration is setup. Most 
+# users will choose to set an address in "IPv6_Static_Address" and set the 
+# appropriate routing for the machine. Note that multiple IPv6 addresses can be 
+# configured, enable verbose output to view them. 
+#
+Section Lan6_Conf
+        ## READ-ONLY
+        ## Supports_IPv6_Only                         Yes
+        ## READ-ONLY
+        ## Supports_IPv6_And_IPv4_Simultaneously      Yes
+        ## Possible values: IPv4-Only/IPv6-Only/IPv4-and-IPv6
+        IPv6_IPv4_Addressing_Enables                  IPv6_and_IPv4
+        ## Possible values: Static
+        IPv6_Static_Address_Source                    Static
+        ## Possible values: Yes/No
+        IPv6_Static_Address_Enable                    No
+        ## Give valid IPv6 address
+        IPv6_Static_Address                           ::
+        ## Give valid prefix length
+        IPv6_Static_Address_Prefix_Length             0
+        ## READ-ONLY
+        ## IPv6_Static_Address_Status                 Active
+        ## READ-ONLY
+        ## IPv6_Dynamic_Address_Source_Type           DHCPv6
+        ## READ-ONLY
+        ## IPv6_Dynamic_Address                       ::
+        ## READ-ONLY
+        ## IPv6_Dynamic_Address_Prefix_Length         0
+        ## READ-ONLY
+        ## IPv6_Dynamic_Address_Status                Active
+        ## Possible values: Yes/No
+        IPv6_Static_Router_Address_Enable             No
+        ## Give valid IPv6 address
+        IPv6_Static_Router_Address_1                  ::
+        ## Give valid IPv6 mac address
+        IPv6_Static_Router_Mac_Address_1              00:00:00:00:00:00
+        ## Give valid IPv6 prefix length
+        IPv6_Static_Router_Prefix_Length_1            0
+        ## Give valid IPv6 prefix value
+        IPv6_Static_Router_Prefix_Value_1             ::
+        ## Give valid IPv6 address
+        IPv6_Static_Router_Address_2                  ::
+        ## Give valid IPv6 mac address
+        IPv6_Static_Router_Mac_Address_2              00:00:00:00:00:00
+        ## Give valid IPv6 prefix length
+        IPv6_Static_Router_Prefix_Length_2            0
+        ## Give valid IPv6 prefix value
+        IPv6_Static_Router_Prefix_Value_2             ::
+EndSection
+#
+# Section Lan_Conf_Auth Comments 
+#
+# In the Lan_Conf_Auth section, allowable authentication mechanisms for IPMI 1.5 
+# is configured. Most users will want to set all "MD5" authentication to "Yes" 
+# and the rest to "No". If you have configured a NULL username and a NULL 
+# password, you will also want to configure some of the "None" fields to "Yes" 
+# to allow "None" authentication to work. Some motherboards do not allow you to 
+# enable OEM authentication, so you may wish to set all OEM related fields to 
+# "No". 
+#
+Section Lan_Conf_Auth
+        ## Possible values: Yes/No
+        Callback_Enable_Auth_Type_MD5                 Yes
+        ## Possible values: Yes/No
+        User_Enable_Auth_Type_MD5                     Yes
+        ## Possible values: Yes/No
+        Operator_Enable_Auth_Type_MD5                 Yes
+        ## Possible values: Yes/No
+        Admin_Enable_Auth_Type_MD5                    Yes
+        ## Possible values: Yes/No
+        OEM_Enable_Auth_Type_MD5                      Yes
+EndSection
+#
+# Section Lan_Conf_Security_Keys Comments 
+#
+# If your system supports IPMI 2.0 and Serial-over-LAN (SOL), a K_g BMC key may 
+# be configurable. The K_g key is an optional key that can be set for two key 
+# authentication in IPMI 2.0. It is optionally configured. Most users will want 
+# to set this to zero (or blank). 
+#
+Section Lan_Conf_Security_Keys
+        ## Give string or blank to clear. Max 20 chars
+        K_R                                           
+        ## Give string or blank to clear. Max 20 bytes, prefix with 0x to enter hex
+        K_G                                           0x0000000000000000000000000000000000000000
+EndSection
+#
+# Section Lan_Conf_User_Security Comments 
+#
+# The following user security configuration options are optionally implemented 
+# by the vendor. They may not be available your system and may not be visible 
+# below. 
+#
+# The following configuration supports the ability for the BMC to disable a user 
+# if a number of bad passwords are entered sequentially. 
+# "Bad_Password_Threshold" determines the number of bad passwords that must be 
+# entered sequentially. "Attempt_Count_Reset_Interval" determines the range of 
+# time the bad passwords must occur in. "User_Lockout_Interval" determines the 
+# time a user will be locked off if the bad password threshold is reached. If 
+# set to "Yes", "Enable_Event_Message_When_User_Disabled" will inform the BMC to 
+# log an event message when a user is disabled. 
+#
+Section Lan_Conf_User_Security
+        ## Possible values: 0-255, 0 indicates no limit
+        Bad_Password_Threshold                        0
+        ## Possible values: 0-65535, in 10 second increments (e.g. 2 = 20 sec)
+        ##                  0 indicates no interval (i.e. don't reset counter)
+        Attempt_Count_Reset_Interval                  0
+        ## Possible values: 0-65535, in 10 second increments (e.g. 2 = 20 sec)
+        ##                  0 indicates no interval (i.e. don't re-enable user)
+        User_Lockout_Interval                         0
+        ## Possible values: Yes/No
+        Enable_Event_Message_When_User_Disabled       No
+EndSection
+#
+# Section Lan_Conf_Misc Comments 
+#
+# The following miscellaneous configuration options are optionally implemented 
+# by the vendor. They may not be available your system and may not be visible 
+# below. 
+#
+# If set to "Yes", "Enable_Gratuitous_ARPs" will inform the BMC to regularly 
+# send out Gratuitous ARPs to allow other machines on a network resolve the 
+# BMC's MAC Address. Many users will want to set this to "Yes" because it offers 
+# the easiest way to support BMC IP Address resolution. However, it will 
+# increase traffic on your network. The "Gratuitous_ARP_Interval" can be used to 
+# set the period a Gratuitous ARP is always sent. 
+#
+# If set to "Yes", "Enable_ARP_Response" will inform the BMC torespond to ARP 
+# requests from other machines. 
+#
+Section Lan_Conf_Misc
+        ## Possible values: Yes/No
+        Enable_Gratuitous_ARPs                        No
+        ## Possible values: Yes/No
+        Enable_ARP_Response                           Yes
+        ## Possible values: 0-255, in 500ms increments (e.g. 2 = 1000ms)
+        Gratuitous_ARP_Interval                       2
+EndSection
+#
+# Section Rmcpplus_Conf_Privilege Comments 
+#
+# If your system supports IPMI 2.0 and Serial-over-LAN (SOL),cipher suite IDs 
+# may be configurable below. In the Rmcpplus_Conf_Privilege section, maximum 
+# user privilege levels allowed for authentication under IPMI 2.0 (including 
+# Serial-over-LAN) are set for each supported cipher suite ID. Each cipher suite 
+# ID supports different sets of authentication, integrity, and encryption 
+# algorithms for IPMI 2.0. Typically, the highest privilege level any username 
+# configured should set for support under a cipher suite ID. This is typically 
+# "Administrator". 
+#
+Section Rmcpplus_Conf_Privilege
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_0           Unused
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_1           Administrator
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_2           Administrator
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_3           Administrator
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_6           Administrator
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_7           Administrator
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_8           Administrator
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_11          Administrator
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_12          Unused
+        ## Possible values: Unused/User/Operator/Administrator/OEM_Proprietary
+        Maximum_Privilege_Cipher_Suite_Id_15          Unused
+EndSection
+#
+# Section SOL_Conf Comments 
+#
+# If your system supports IPMI 2.0 and Serial-over-LAN (SOL), the following 
+# configuration options will allow SOL configuration. 
+#
+# For most users that want to enable SOL, minimally "Enable_SOL" should be set 
+# to "Yes" and "SOL_Privilege_Level" should be set to the highest privilege 
+# level any username configured can authenticate with (typically 
+# "Administrator"). For security purposes, "Force_SOL_Payload_Authentication" 
+# and "Force_SOL_Payload_Encryption" should be set to "Yes", however forced 
+# authentication and/or encryption depends on the cipher suite IDs supported. 
+# The "Non_Volatile_Bit_Rate" and "Volatile_Bit_Rate" should both be set to the 
+# appropriate baud rate for your system. This is typically the same baud rate 
+# configured in the BIOS and/or operating system. 
+#
+Section SOL_Conf
+        ## Possible values: Yes/No
+        Enable_SOL                                    Yes
+        ## Possible values: Callback/User/Operator/Administrator/OEM_Proprietary
+        SOL_Privilege_Level                           User
+        ## Possible values: Yes/No
+        Force_SOL_Payload_Authentication              No
+        ## Possible values: Yes/No
+        Force_SOL_Payload_Encryption                  No
+        ## Give a non-zero valid integer. Each unit is 5ms
+        Character_Accumulate_Interval                 12
+        ## Give a valid number
+        Character_Send_Threshold                      96
+        ## Give a valid integer
+        SOL_Retry_Count                               7
+        ## Give a valid integer. Interval unit is 10ms
+        SOL_Retry_Interval                            50
+        ## Possible values: Serial/9600/19200/38400/57600/115200
+        Non_Volatile_Bit_Rate                         115200
+        ## Possible values: Serial/9600/19200/38400/57600/115200
+        Volatile_Bit_Rate                             115200
+        ## Give a valid port number
+        ## SOL_Payload_Port_Number                    623
+EndSection

@@ -1,0 +1,18 @@
+Section Lan_Conf
+        ## Possible values: Unspecified/Static/Use_DHCP/Use_BIOS/Use_Others
+        IP_Address_Source                             Static
+        ## Give valid IP address
+        IP_Address                                    192.168.57.34
+        ## Give valid MAC address
+        MAC_Address                                   04:42:ff:ca:b6:ff
+        ## Give valid Subnet Mask
+        Subnet_Mask                                   255.255.248.0
+        ## Give valid IP address
+        Default_Gateway_IP_Address                    192.168.56.1
+        ## Give valid MAC address
+        Default_Gateway_MAC_Address                   00:00:00:00:00:00
+        ## Give valid IP address
+        Backup_Gateway_IP_Address                     0.0.0.0
+        ## Give valid MAC address
+        Backup_Gateway_MAC_Address                    00:00:00:00:00:00
+EndSection

@@ -19,15 +19,6 @@ shared_examples 'installs packages' do |facts|
   packages.each do |p|
     it { is_expected.to contain_package(p) }
   end
-
-  it { is_expected.to contain_class('ipmi::install') }
-end
-
-shared_examples 'contains ipmi::service' do
-  it { is_expected.to contain_class('ipmi::service') }
-  it { is_expected.to contain_class('ipmi::service::ipmi') }
-  it { is_expected.to contain_class('ipmi::service::ipmievd') }
-  it { is_expected.to contain_class('ipmi::config').that_notifies('Class[ipmi::service]') }
 end
 
 describe 'ipmi', type: :class do
@@ -55,7 +46,12 @@ describe 'ipmi', type: :class do
 
       context 'with no params' do
         it_behaves_like 'installs packages', facts
-        it_behaves_like 'contains ipmi::service'
+
+        it { is_expected.to contain_class('ipmi::install') }
+        it { is_expected.to contain_class('ipmi::config') }
+        it { is_expected.to contain_class('ipmi::service') }
+        it { is_expected.to contain_class('ipmi::service::ipmi') }
+        it { is_expected.to contain_class('ipmi::service::ipmievd') }
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -85,7 +81,6 @@ describe 'ipmi', type: :class do
         let(:params) { { service_ensure: 'running' } }
 
         it_behaves_like 'installs packages', facts
-        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -115,7 +110,6 @@ describe 'ipmi', type: :class do
         let(:params) { { service_ensure: 'stopped' } }
 
         it_behaves_like 'installs packages', facts
-        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -145,7 +139,6 @@ describe 'ipmi', type: :class do
         let(:params) { { ipmievd_service_ensure: 'running' } }
 
         it_behaves_like 'installs packages', facts
-        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -175,7 +168,6 @@ describe 'ipmi', type: :class do
         let(:params) { { ipmievd_service_ensure: 'stopped' } }
 
         it_behaves_like 'installs packages', facts
-        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -205,7 +197,6 @@ describe 'ipmi', type: :class do
         let(:params) { { watchdog: true } }
 
         it_behaves_like 'installs packages', facts
-        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -235,7 +226,6 @@ describe 'ipmi', type: :class do
         let(:params) { { watchdog: false } }
 
         it_behaves_like 'installs packages', facts
-        it_behaves_like 'contains ipmi::service'
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -261,67 +251,124 @@ describe 'ipmi', type: :class do
         end
       end
 
-      context 'with defines' do
+      context 'with native resources' do
         let(:params) do
           {
-            users: { newuser: { user: 'newuser', password: 'password' } },
+            users: { newuser: { password: 'password' } },
             networks: { dhcp: {} },
-            snmps: { snmp1: { snmp: 'secret', lan_channel: 1 } },
+            snmps: { snmp1: { community: 'secret', lan_channel: 1 } },
           }
         end
 
         it { is_expected.to compile.with_all_deps }
-
-        it_behaves_like 'contains ipmi::service'
+        it { is_expected.to contain_ipmi_user('newuser') }
+        it { is_expected.to contain_ipmi_network('dhcp') }
+        it { is_expected.to contain_ipmi_snmp('snmp1') }
       end
 
-      context 'with ipmievd_service_name' do
-        let(:params) { { ipmievd_service_name: 'custom_ipmievd' } }
-
-        it { is_expected.to compile.with_all_deps }
-
-        it do
-          is_expected.to contain_service('custom_ipmievd').with(
-            ensure: 'stopped',
-            enable: false,
-          )
+      context 'with default_channel set' do
+        let(:params) do
+          {
+            default_channel: 8,
+            users: { newuser: { password: 'password' } },
+            networks: { dhcp: {} },
+            snmps: { snmp1: { community: 'secret' } },
+          }
         end
 
-        it { is_expected.not_to contain_service('ipmievd') }
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(8) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(8) }
+        it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(8) }
       end
 
-      context 'with service_manage => false' do
-        let(:params) { { service_manage: false } }
+      context 'with Integer hiera keys as LAN titles' do
+        let(:params) do
+          {
+            networks: { 4 => { 'type' => 'dhcp' } },
+            snmps: { 5 => { 'community' => 'secret' } },
+          }
+        end
 
         it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_network('4').with_lan_channel(4) }
+        it { is_expected.to contain_ipmi_snmp('5').with_lan_channel(5) }
+      end
 
-        # the ipmi service is left unmanaged
-        it { is_expected.not_to contain_service(service_name) }
-
-        # config/install are still managed
-        it_behaves_like 'installs packages', facts
-
-        # the companion ipmievd daemon is still managed
-        it do
-          is_expected.to contain_service('ipmievd').with(
-            ensure: 'stopped',
-            enable: false,
-          )
+      context 'with zero-padded numeric LAN titles' do
+        let(:params) do
+          {
+            networks: { '08' => { 'type' => 'dhcp' } },
+            snmps: { '010' => { 'community' => 'secret' } },
+          }
         end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_network('08').with_lan_channel(8) }
+        it { is_expected.to contain_ipmi_snmp('010').with_lan_channel(10) }
       end
 
-      context 'with the ipmi.default.channel fact set to 2' do
-        let(:facts) { super().merge(ipmi: { default: { channel: 2 } }) }
-        let(:params) { { networks: { dhcp: {} } } }
+      context 'with a numeric LAN title and an explicit default_channel' do
+        let(:facts) do
+          super().merge(ipmi: { default: { channel: 3 } })
+        end
+        let(:params) do
+          {
+            default_channel: 8,
+            networks: { '4' => {} },
+            snmps: { '5' => { community: 'secret' } },
+          }
+        end
 
-        it { is_expected.to contain_exec('ipmi_set_dhcp_2') }
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_network('4').with_lan_channel(8) }
+        it { is_expected.to contain_ipmi_snmp('5').with_lan_channel(8) }
       end
 
-      context 'without the ipmi fact' do
-        let(:facts) { super().except(:ipmi) }
-        let(:params) { { networks: { dhcp: {} } } }
+      context 'with a node fact channel but no default_channel parameter' do
+        let(:facts) do
+          super().merge(ipmi: { default: { channel: 3 } })
+        end
+        let(:params) do
+          {
+            users: { newuser: { password: 'password' } },
+            networks: { dhcp: {}, '4' => {} },
+            snmps: { snmp1: { community: 'secret' } },
+          }
+        end
 
-        it { is_expected.to contain_exec('ipmi_set_dhcp_1') }
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(3) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(3) }
+        it { is_expected.to contain_ipmi_network('4').with_lan_channel(4) }
+        it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(3) }
+      end
+
+      context 'with a malformed node fact channel' do
+        let(:facts) do
+          super().merge(ipmi: { default: { channel: 'invalid' } })
+        end
+        let(:params) { { users: { newuser: { password: 'password' } }, networks: { dhcp: {} } } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(1) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(1) }
+      end
+
+      context 'with default_channel and explicit channels' do
+        let(:params) do
+          {
+            default_channel: 8,
+            users: { newuser: { username: 'newuser', password: 'password', channel: 3 } },
+            networks: { dhcp: { lan_channel: 2 } },
+            snmps: { snmp1: { community: 'secret', lan_channel: 1 } },
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('newuser').with_channel(3) }
+        it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(2) }
+        it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(1) }
       end
     end
   end
