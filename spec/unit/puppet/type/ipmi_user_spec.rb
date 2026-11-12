@@ -21,7 +21,7 @@ describe Puppet::Type.type(:ipmi_user) do
   end
 
   describe 'when validating values' do
-    ['0', '16', 'x', ''].each do |bad|
+    ['0', '16', 'x', '', "1\nx", "1\n"].each do |bad|
       it "rejects channel #{bad.inspect}" do
         expect { described_class.new(name: 'test', enable: :false, channel: bad) }
           .to raise_error(Puppet::Error, %r{channel must be an integer})
@@ -32,6 +32,11 @@ describe Puppet::Type.type(:ipmi_user) do
       [1, 15].each do |ch|
         expect(described_class.new(name: "t#{ch}", enable: :false, channel: ch)[:channel]).to eq(ch)
       end
+    end
+
+    it 'rejects a user_id with a trailing newline' do
+      expect { described_class.new(name: 'test', enable: :false, user_id: "3\nx") }
+        .to raise_error(Puppet::Error, %r{user_id})
     end
 
     it 'rejects an empty username' do

@@ -123,11 +123,12 @@ class ipmi (
   $lan_defaults = { 'lan_channel' => $effective_channel }
 
   if $users {
-    $users.each |$title, $params| {
-      ipmi_user { $title:
+    $users.each |$key, $params| {
+      $user_title = String($key)
+      ipmi_user { $user_title:
         * => $user_defaults + $params,
       }
-      Class['ipmi::install'] -> Ipmi_user[$title]
+      Class['ipmi::install'] -> Ipmi_user[$user_title]
     }
   }
 

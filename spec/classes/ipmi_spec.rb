@@ -302,12 +302,14 @@ describe 'ipmi', type: :class do
       context 'with Integer hiera keys as LAN titles' do
         let(:params) do
           {
+            users: { 3 => { 'password' => 'password' } },
             networks: { 4 => { 'type' => 'dhcp' } },
             snmps: { 5 => { 'community' => 'secret' } },
           }
         end
 
         it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('3') }
         it { is_expected.to contain_ipmi_network('4').with_lan_channel(4) }
         it { is_expected.to contain_ipmi_snmp('5').with_lan_channel(5) }
       end
