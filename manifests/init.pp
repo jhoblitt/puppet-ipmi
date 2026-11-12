@@ -148,16 +148,17 @@ class ipmi (
   }
 
   if $snmps {
-    $snmps.each |$title, $params| {
-      if $default_channel == undef and $title =~ /^[0-9]+$/ {
-        $snmp_defaults = { 'lan_channel' => Integer($title) }
+    $snmps.each |$key, $params| {
+      $snmp_title = String($key)
+      if $default_channel == undef and $snmp_title =~ /\A[0-9]+\z/ {
+        $snmp_defaults = { 'lan_channel' => Integer($snmp_title, 10) }
       } else {
         $snmp_defaults = $lan_defaults
       }
-      ipmi_snmp { $title:
+      ipmi_snmp { $snmp_title:
         * => $snmp_defaults + $params,
       }
-      Class['ipmi::install'] -> Ipmi_snmp[$title]
+      Class['ipmi::install'] -> Ipmi_snmp[$snmp_title]
     }
   }
 }

@@ -299,6 +299,20 @@ describe 'ipmi', type: :class do
         it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(8) }
       end
 
+      context 'with Integer hiera keys as LAN titles' do
+        let(:params) { { snmps: { 5 => { 'community' => 'secret' } } } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_snmp('5').with_lan_channel(5) }
+      end
+
+      context 'with zero-padded numeric LAN titles' do
+        let(:params) { { snmps: { '010' => { 'community' => 'secret' } } } }
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_snmp('010').with_lan_channel(10) }
+      end
+
       context 'with a numeric LAN title and an explicit default_channel' do
         let(:facts) do
           super().merge(ipmi: { default: { channel: 3 } })

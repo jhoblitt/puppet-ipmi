@@ -37,6 +37,15 @@ describe Puppet::Type.type(:ipmi_snmp) do
       expect(described_class.new(name: 'mysnmp').parameter(:community).is_sensitive).to be(true)
     end
 
+    it 'rejects a lan_channel with a trailing newline' do
+      expect { described_class.new(name: 'mysnmp', lan_channel: "1\nx") }
+        .to raise_error(Puppet::Error, %r{lan_channel})
+    end
+
+    it 'does not derive a channel from a multi-line title' do
+      expect(PuppetX::Ipmi::LanChannel.default_channel("5\nx")).to eq(1)
+    end
+
     it 'defaults lan_channel to 1 for non-integer title' do
       Facter.stubs(:value).with(:kernel).returns('Linux')
       Facter.stubs(:value).with('ipmi.default.channel').returns(nil)
