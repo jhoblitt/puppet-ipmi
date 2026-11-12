@@ -181,10 +181,10 @@ Which component owns `/dev/watchdog`: `systemd`, `openipmi`, or `auto`.
 `systemd` writes a system.conf drop-in so PID 1 opens and pings the device,
 and forces `IPMI_WATCHDOG` to `no` if its file exists. `openipmi` sets
 `IPMI_WATCHDOG`, which only makes the OpenIPMI service load the module;
-nothing in this module opens the device. `auto` selects `systemd` when the
-`ipmi_systemd_version` fact is 252 or newer (the first release that falls
-back to `/dev/watchdog`, the only node `ipmi_watchdog` creates), else
-`openipmi`.
+nothing in this module opens the device. `auto` selects `systemd` when
+the `ipmi_systemd_version` fact is present, unless it is 250 or 251, and
+`openipmi` otherwise. `ipmi_watchdog` creates only `/dev/watchdog`, which
+systemd 250 and 251 replace with `/dev/watchdog0`.
 
 Default value: `'auto'`
 

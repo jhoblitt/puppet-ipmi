@@ -20,15 +20,15 @@
 class ipmi::watchdog {
   assert_private()
 
-  # systemd 252 is the first release that falls back to /dev/watchdog when
-  # /dev/watchdog0 is missing. ipmi_watchdog only creates /dev/watchdog.
-  $systemd_min_version = '252'
-  $systemd_version = pick($facts['ipmi_systemd_version'], '0')
+  # ipmi_watchdog only creates /dev/watchdog. With WatchdogDevice unset,
+  # systemd up to 249 opens /dev/watchdog and 252 onwards falls back to it,
+  # but 250 and 251 open /dev/watchdog0 and nothing else.
+  $systemd_version = $facts['ipmi_systemd_version']
 
   case $ipmi::watchdog_supervisor {
     'systemd':  { $use_systemd = true }
     'openipmi': { $use_systemd = false }
-    default:    { $use_systemd = versioncmp($systemd_version, $systemd_min_version) >= 0 }
+    default:    { $use_systemd = $systemd_version =~ NotUndef and !(String($systemd_version) in ['250', '251']) }
   }
 
   $timeout = $ipmi::watchdog_timeout

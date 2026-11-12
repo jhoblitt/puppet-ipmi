@@ -407,12 +407,38 @@ describe 'ipmi', type: :class do
           it { is_expected.to contain_file(dropin).with_ensure('file') }
         end
 
-        context 'and ipmi_systemd_version 251' do
-          let(:facts) { super().merge(ipmi_systemd_version: '251') }
-          let(:params) { { watchdog: true } }
+        # systemd up to 249 opens /dev/watchdog; 250 and 251 open only
+        # /dev/watchdog0, which ipmi_watchdog never creates; 252 tries
+        # /dev/watchdog0 and then /dev/watchdog.
+        {
+          '219' => 'systemd',
+          '239' => 'systemd',
+          '245' => 'systemd',
+          '249' => 'systemd',
+          '250' => 'openipmi',
+          '251' => 'openipmi',
+          '252' => 'systemd',
+          '257' => 'systemd',
+        }.each do |version, owner|
+          context "and ipmi_systemd_version #{version}" do
+            let(:facts) { super().merge(ipmi_systemd_version: version) }
+            let(:params) { { watchdog: true, watchdog_timeout: 30 } }
+
+            if owner == 'systemd'
+              it { is_expected.to contain_file(dropin).with_ensure('file') }
+              it { is_expected.to contain_augeas('ipmi_watchdog').with_changes(['set IPMI_WATCHDOG no']) }
+            else
+              it { is_expected.to contain_file(dropin).with_ensure('absent') }
+              it { is_expected.to contain_augeas('ipmi_watchdog').with_changes(['set IPMI_WATCHDOG yes', %(set IPMI_WATCHDOG_OPTIONS '"timeout=30"')]) }
+            end
+          end
+        end
+
+        context 'and an Integer ipmi_systemd_version 250' do
+          let(:facts) { super().merge(ipmi_systemd_version: 250) }
+          let(:params) { { watchdog: true, watchdog_timeout: 30 } }
 
           it { is_expected.to contain_file(dropin).with_ensure('absent') }
-          it { is_expected.to contain_augeas('ipmi_watchdog').with(changes: ['set IPMI_WATCHDOG yes']) }
         end
 
         context 'and no ipmi_systemd_version fact' do

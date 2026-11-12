@@ -197,9 +197,12 @@ The device can only be opened once, so one component owns it, chosen by
   device, so the timer is started by whatever else does, such as the
   `watchdog` daemon. A drop-in written while systemd was the owner is
   removed.
-- `auto`: `systemd` when the `ipmi_systemd_version` fact is 252 or newer (the
-  first release that falls back to `/dev/watchdog`, the only node
-  `ipmi_watchdog` creates), otherwise `openipmi`.
+- `auto`: `systemd` when systemd is the init system (the
+  `ipmi_systemd_version` fact is present), unless its version is 250 or 251,
+  and `openipmi` otherwise. `ipmi_watchdog` creates only `/dev/watchdog`.
+  systemd up to 249 opens that path, and 252 onwards falls back to it when
+  `/dev/watchdog0` does not exist, but 250 and 251 open `/dev/watchdog0` and
+  nothing else.
 
 Options:
 
