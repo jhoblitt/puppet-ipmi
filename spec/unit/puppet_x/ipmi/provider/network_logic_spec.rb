@@ -40,7 +40,7 @@ describe PuppetX::Ipmi::Provider::NetworkLogic do
       end
     end
 
-    ['Static Address', 'Static', 'BIOS Assigned Address'].each do |source|
+    ['Static Address', 'Static', 'static', 'BIOS Assigned Address'].each do |source|
       it "is :static for #{source.inspect}" do
         provider.values[:source] = source
 

@@ -122,6 +122,14 @@ describe PuppetX::Ipmi::Provider::Ipmitool do
     end
   end
 
+  describe '#ipmitool_exec' do
+    it 'delegates to the class helper, forwarding its options' do
+      klass.expects(:ipmitool_exec).with(['x'], failonfail: false, sensitive: true, stdinfile: nil, redact: [], scrub: false)
+
+      klass.allocate.ipmitool_exec(['x'], failonfail: false, sensitive: true)
+    end
+  end
+
   describe '#parse_lan_print' do
     let(:provider) { klass.allocate }
 

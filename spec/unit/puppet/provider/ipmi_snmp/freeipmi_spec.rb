@@ -17,6 +17,10 @@ describe Puppet::Type.type(:ipmi_snmp).provider(:freeipmi) do
     type.new({ name: 'test', provider: 'freeipmi' }.merge(params))
   end
 
+  it 'runs ipmi-pef-config rather than bmc-config' do
+    expect(described_class.config_command).to eq(:pefconfig)
+  end
+
   describe 'community property' do
     let(:provider) { resource_for(lan_channel: 1).provider }
 

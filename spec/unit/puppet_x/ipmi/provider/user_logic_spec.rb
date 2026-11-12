@@ -88,6 +88,20 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     end
   end
 
+  describe '.merge' do
+    it 'reports no privilege on a channel whose list lacks the slot' do
+      lists = { 1 => [{ id: 2, name: 'ADMIN', priv: 4 }, { id: 3, name: 'bob', priv: 2 }], 2 => [{ id: 2, name: 'ADMIN', priv: 3 }] }
+      merged = described_class.merge(lists, { 2 => :enabled })
+
+      expect(merged).to eq(
+        [
+          { id: 2, name: 'ADMIN', status: :enabled, privs: { 1 => 4, 2 => 3 } },
+          { id: 3, name: 'bob', status: :unknown, privs: { 1 => 2, 2 => nil } },
+        ],
+      )
+    end
+  end
+
   describe '.instances' do
     it 'returns one provider per named slot, skipping empty and DISABLED_ slots' do
       Facter.stubs(:value).with('ipmi.default.channel').returns(nil)
@@ -258,6 +272,35 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       expect(log).to eq([[:revoke, 2, [1, 2]]])
     end
 
+    it 'destroy does not retire a slot that the BMC no longer lists, since its revoke cannot be confirmed' do
+      params[:user_id] = 2
+      params[:username] = 'ADMIN'
+      target = provider
+      provider_class.fake_table = table.reject { |u| u[:id] == 2 }
+      provider_class.stubs(:revoke_access)
+      target.slots = []
+
+      expect { target.destroy }.to raise_error(Puppet::Error, %r{Refusing to rename slot 2: it is missing from the BMC's user table})
+      expect(log).to be_empty
+    end
+
+    it 'reads its own table when it has no prefetched snapshot' do
+      bare = provider_class.new(ensure: :absent)
+      bare.resource = params
+      bare.refresh_slots!
+
+      expect(bare.slots.map { |u| u[:id] }).to eq([1, 2, 3, 4])
+    end
+
+    it 'records a write without a snapshot as nothing to update' do
+      bare = provider_class.new(ensure: :absent)
+      bare.resource = params
+      yielded = false
+      bare.send(:wrote, 3) { yielded = true }
+
+      expect(yielded).to be(false)
+    end
+
     it 'destroy leaves a reserved, disabled user with no access untouched apart from the name' do
       FakeUserBmc.update(table[2], name: 'bob', priv: 15, status: :disabled)
       provider.destroy
@@ -284,6 +327,14 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       expect(log).to eq([[:revoke, 2, [1]], [:name, 2, 'DISABLED_2']])
     end
 
+    it 'disabling re-reads a cached table that lacks the slot, so an unprivileged slot is only named' do
+      params[:enable] = :false
+      provider.slots = table.reject { |u| u[:id] == 3 }
+      provider.create
+
+      expect(log).to eq([[:name, 3, 'bob']])
+    end
+
     it 'destroy leaves the slot free for reallocation' do
       params[:user_id] = 2
       params[:username] = 'ADMIN'
@@ -306,6 +357,13 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       table[2][:name] = 'bob'
       expect(provider.enable).to eq(:false)
       expect(provider).to be_access_revoked
+    end
+
+    it 'does not report access revoked when the table has no such slot' do
+      params[:enable] = :false
+      provider.slots = []
+
+      expect(provider).not_to be_access_revoked
     end
 
     it 'does not report access revoked for an enabled account with NO ACCESS on this channel' do
@@ -363,6 +421,13 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       provider.create
 
       expect(log).to eq([[:password, 3, 'secret'], [:grant, 3, 4]])
+    end
+
+    it 'names the slot when it is missing from the cached table' do
+      provider.slots = table.reject { |u| u[:id] == 3 }
+      provider.create
+
+      expect(log.first).to eq([:name, 3, 'bob'])
     end
 
     it 'skips the password when none is given' do
@@ -526,6 +591,29 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       params[:enable] = :false
       params[:password] = 'other'
       expect(provider.password_insync?).to be(true)
+    end
+
+    [nil, ''].each do |empty|
+      it "is in sync, without asking the BMC, when the password is #{empty.inspect}" do
+        params[:password] = empty
+        provider_class.expects(:password_matches?).never
+
+        expect(provider.password_insync?).to be(true)
+      end
+
+      it "does not write when the password is #{empty.inspect}" do
+        params[:password] = empty
+        provider.password = :ignored
+
+        expect(log).to be_empty
+      end
+    end
+
+    it 'reports the missing slot when the resolved slot is not in the table' do
+      table[2][:name] = 'bob'
+      provider.slots = table.reject { |u| u[:id] == 3 }
+
+      expect { provider.password = :ignored }.to raise_error(Puppet::Error, %r{slot contains nil})
     end
 
     it 'writes the password once the slot is owned' do
