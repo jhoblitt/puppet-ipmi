@@ -215,6 +215,11 @@ Options:
   hosts where `/dev/watchdog` already exists. `watchdog_timeout` and
   `watchdog_module_options` then have no effect on the module.
 
+Installing or upgrading the packages neither re-executes PID 1 nor restarts
+a service, and changes to the module files or the drop-in do not restart the
+`ipmi` or `ipmievd` services. Under `openipmi`, a change to the OpenIPMI
+config restarts the `ipmi` service, as that service loads the module.
+
 Module options only apply the next time the module is loaded, usually after a
 reboot. Setting `watchdog => false` removes the drop-in and both module files,
 but Puppet never unloads the module: unloading it does not stop a running BMC

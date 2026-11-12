@@ -217,6 +217,45 @@ describe 'ipmi', type: :class do
         end
       end
 
+      context 'refresh relationships' do
+        it { is_expected.to contain_class('ipmi::watchdog').that_requires('Class[ipmi::install]') }
+        it { is_expected.not_to contain_class('ipmi::watchdog').that_subscribes_to('Class[ipmi::install]') }
+        it { is_expected.not_to contain_class('ipmi::config') }
+
+        context 'when systemd owns the device' do
+          let(:facts) { super().merge(ipmi_systemd_version: '257') }
+          let(:params) { { watchdog: true, watchdog_timeout: 30 } }
+
+          it 'does not re-execute PID 1 when a package is installed' do
+            is_expected.to contain_exec(reexec)
+            is_expected.not_to contain_exec(reexec).that_subscribes_to('Class[ipmi::install]')
+          end
+
+          it 'does not restart the services when a watchdog file changes' do
+            [modprobe_conf, modules_load_conf, dropin].each do |path|
+              is_expected.to contain_file(path)
+              is_expected.not_to contain_file(path).that_notifies('Class[ipmi::service]')
+              is_expected.not_to contain_file(path).that_notifies('Class[ipmi::service::ipmi]')
+              is_expected.not_to contain_file(path).that_notifies('Class[ipmi::service::ipmievd]')
+            end
+          end
+
+          it { is_expected.not_to contain_exec(modprobe_exec).that_notifies('Class[ipmi::service]') }
+          it { is_expected.not_to contain_augeas('ipmi_watchdog').that_notifies('Class[ipmi::service::ipmi]') }
+        end
+
+        context 'when OpenIPMI owns the device' do
+          let(:params) { { watchdog: true, watchdog_supervisor: 'openipmi' } }
+
+          it 'restarts the ipmi service, which loads the module, when its config changes' do
+            is_expected.to contain_augeas('ipmi_watchdog').that_notifies('Class[ipmi::service::ipmi]')
+          end
+
+          it { is_expected.not_to contain_augeas('ipmi_watchdog').that_notifies('Class[ipmi::service::ipmievd]') }
+          it { is_expected.not_to contain_file(dropin).that_notifies('Class[ipmi::service]') }
+        end
+      end
+
       context 'with supervisor auto' do
         context 'and ipmi_systemd_version 252' do
           let(:facts) { super().merge(ipmi_systemd_version: '252') }

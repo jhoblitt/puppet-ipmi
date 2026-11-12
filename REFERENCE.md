@@ -12,7 +12,6 @@
 
 #### Private Classes
 
-* `ipmi::config`
 * `ipmi::install`
 * `ipmi::service`
 * `ipmi::service::ipmi`

@@ -88,12 +88,14 @@ class ipmi (
   Optional[Integer[1, 15]] $default_channel = undef,
 ) {
   contain ipmi::install
-  contain ipmi::config
+  contain ipmi::watchdog
   contain ipmi::service
 
-  Class['ipmi::install']
-  ~> Class['ipmi::config']
-  ~> Class['ipmi::service']
+  # Only ordering: a package change must neither re-execute PID 1 nor
+  # restart the services. ipmi::watchdog notifies the ipmi service itself
+  # when it changes what that service loads.
+  Class['ipmi::install'] -> Class['ipmi::watchdog']
+  Class['ipmi::install'] -> Class['ipmi::service']
 
   # The class sees the target node's facts on Puppet Server. Native type
   # defaultto blocks run on the compiler and must not read local Facter data.

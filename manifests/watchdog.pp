@@ -69,5 +69,7 @@ class ipmi::watchdog {
     }
 
     contain ipmi::watchdog::openipmi
+
+    Class['ipmi::watchdog::openipmi'] ~> Class['ipmi::service::ipmi']
   }
 }
