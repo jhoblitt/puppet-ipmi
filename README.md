@@ -418,10 +418,13 @@ usage and sets nothing, so such a community would never be applied.
 
 ## Additional Facts
 
-This module provides additional facts for Facter with the following
-formats:
+This module provides IPMI facts for Facter, compatible with The Foreman's
+BMC features, in two forms:
 
 ### Structured Format
+
+The `ipmi` fact is a nested hash, keyed by IPMI LAN channel number. The
+first channel is also mirrored under the `default` key.
 
 ```text
 ipmi => {
@@ -468,22 +471,10 @@ ipmi => {
 }
 ```
 
-### DEPRECATED Flat Format
+### Flat Format
 
-```text
-ipmi1_gateway => 192.168.10.1
-ipmi1_ipaddress => 192.168.10.201
-ipmi1_ipaddress_source => Static Address
-ipmi1_macaddress => 00:30:48:c9:64:2a
-ipmi1_subnet_mask => 255.255.255.0
-```
-
-where the 1 in `ipmi1` corresponds to the channel according to
-`ipmitool lan print`.
-
-Additionally for compatibility with The Foreman, the first IPMI
-interface (i.e. the one from `ipmi lan print 1`) gets all facts
-repeated as just `ipmi_foo`:
+The address fields are also exposed as individual flat facts (prefixed
+with `ipmi_`), for compatibility with The Foreman:
 
 ```text
 ipmi_gateway => 192.168.10.1

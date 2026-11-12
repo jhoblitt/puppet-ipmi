@@ -207,31 +207,26 @@ describe 'ipmi facts' do
 
         describe 'ipmi2_* facts' do
           it do
-            expect(Facter.value(:ipmi2_gateway)).to eq('192.168.0.2')
             expect(Facter.value('ipmi.default.gateway')).to eq('192.168.0.2')
             expect(Facter.value('ipmi.2.gateway')).to eq('192.168.0.2')
           end
 
           it do
-            expect(Facter.value(:ipmi2_ipaddress)).to eq('192.168.0.22')
             expect(Facter.value('ipmi.default.ipaddress')).to eq('192.168.0.22')
             expect(Facter.value('ipmi.2.ipaddress')).to eq('192.168.0.22')
           end
 
           it do
-            expect(Facter.value(:ipmi2_ipaddress_source)).to eq('DHCP Address')
             expect(Facter.value('ipmi.default.ipaddress_source')).to eq('DHCP Address')
             expect(Facter.value('ipmi.2.ipaddress_source')).to eq('DHCP Address')
           end
 
           it do
-            expect(Facter.value(:ipmi2_subnet_mask)).to eq('255.255.255.0')
             expect(Facter.value('ipmi.default.subnet_mask')).to eq('255.255.255.0')
             expect(Facter.value('ipmi.2.subnet_mask')).to eq('255.255.255.0')
           end
 
           it do
-            expect(Facter.value(:ipmi2_macaddress)).to eq('c6:92:00:22:79:f3')
             expect(Facter.value('ipmi.default.macaddress')).to eq('c6:92:00:22:79:f3')
             expect(Facter.value('ipmi.2.macaddress')).to eq('c6:92:00:22:79:f3')
           end
@@ -239,29 +234,75 @@ describe 'ipmi facts' do
 
         describe 'ipmi3_* facts' do
           it do
-            expect(Facter.value(:ipmi3_gateway)).to eq('192.168.0.3')
             expect(Facter.value('ipmi.3.gateway')).to eq('192.168.0.3')
           end
 
           it do
-            expect(Facter.value(:ipmi3_ipaddress)).to eq('192.168.0.33')
             expect(Facter.value('ipmi.3.ipaddress')).to eq('192.168.0.33')
           end
 
           it do
-            expect(Facter.value(:ipmi3_ipaddress_source)).to eq('DHCP Address')
             expect(Facter.value('ipmi.3.ipaddress_source')).to eq('DHCP Address')
           end
 
           it do
-            expect(Facter.value(:ipmi3_subnet_mask)).to eq('255.255.255.0')
             expect(Facter.value('ipmi.3.subnet_mask')).to eq('255.255.255.0')
           end
 
           it do
-            expect(Facter.value(:ipmi3_macaddress)).to eq('1a:16:97:fb:64:d8')
             expect(Facter.value('ipmi.3.macaddress')).to eq('1a:16:97:fb:64:d8')
           end
+        end
+      end
+
+      context 'when multiple IPMI devices exist' do
+        before do
+          ipmitool_1_output = <<-OUTPUT
+          IP Address              : 192.168.1.11
+          Subnet Mask             : 255.255.255.0
+          MAC Address             : aa:aa:aa:aa:aa:aa
+          Default Gateway IP      : 192.168.1.1
+          IP Address Source       : Static Address
+          OUTPUT
+          ipmitool_2_output = <<-OUTPUT
+          IP Address              : 192.168.2.22
+          Subnet Mask             : 255.255.255.0
+          MAC Address             : bb:bb:bb:bb:bb:bb
+          Default Gateway IP      : 192.168.2.1
+          IP Address Source       : Static Address
+          OUTPUT
+          ipmitool_user_output = <<-USEROUTPUT
+          ID  Name         Callin  Link Auth	IPMI Msg   Channel Priv Limit
+          2   admin        true    false      true       ADMINISTRATOR
+          USEROUTPUT
+          Facter::Core::Execution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool lan print 1 2>&1', on_fail: '').returns(ipmitool_1_output)
+          Facter::Core::Execution.expects(:execute).at_least(1).with('ipmitool lan print 2 2>&1', on_fail: '').returns(ipmitool_2_output)
+          (3..11).to_a.each do |mocked_channel|
+            Facter::Core::Execution.expects(:execute).at_least(1).with("ipmitool lan print #{mocked_channel} 2>&1", on_fail: '').returns("Invalid channel: #{mocked_channel}")
+          end
+          Facter::Core::Execution.stubs(:execute).with('ipmitool user list 1 2>&1', on_fail: '').returns(ipmitool_user_output)
+          Facter::Core::Execution.stubs(:execute).with('ipmitool user list 2 2>&1', on_fail: '').returns(ipmitool_user_output)
+          kernel_fact = mock('kernel_fact')
+          kernel_fact.stubs(:value).returns('Linux')
+          Facter.stubs(:fact).with(:kernel).returns(kernel_fact)
+        end
+
+        let(:facts) { { kernel: 'Linux' } }
+
+        it 'exposes the first device as the Foreman-compatible flat facts' do
+          expect(Facter.value(:ipmi_ipaddress)).to eq('192.168.1.11')
+          expect(Facter.value(:ipmi_ipaddress_source)).to eq('Static Address')
+          expect(Facter.value(:ipmi_subnet_mask)).to eq('255.255.255.0')
+          expect(Facter.value(:ipmi_macaddress)).to eq('aa:aa:aa:aa:aa:aa')
+          expect(Facter.value(:ipmi_gateway)).to eq('192.168.1.1')
+        end
+
+        it 'still exposes each device separately in the structured fact' do
+          expect(Facter.value(:ipmi)['default']['ipaddress']).to eq('192.168.1.11')
+          expect(Facter.value(:ipmi)['1']['gateway']).to eq('192.168.1.1')
+          expect(Facter.value(:ipmi)['2']['ipaddress']).to eq('192.168.2.22')
+          expect(Facter.value(:ipmi)['2']['macaddress']).to eq('bb:bb:bb:bb:bb:bb')
         end
       end
     end
