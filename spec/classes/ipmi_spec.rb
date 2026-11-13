@@ -27,7 +27,7 @@ shared_examples 'contains ipmi::service' do
   it { is_expected.to contain_class('ipmi::service') }
   it { is_expected.to contain_class('ipmi::service::ipmi') }
   it { is_expected.to contain_class('ipmi::service::ipmievd') }
-  it { is_expected.to contain_class('ipmi::config').that_notifies('Class[ipmi::service]') }
+  it { is_expected.to contain_class('ipmi::install').that_comes_before('Class[ipmi::service]') }
 end
 
 describe 'ipmi', type: :class do
@@ -58,7 +58,7 @@ describe 'ipmi', type: :class do
         it_behaves_like 'contains ipmi::service'
 
         it { is_expected.to contain_class('ipmi::install') }
-        it { is_expected.to contain_class('ipmi::config') }
+        it { is_expected.to contain_class('ipmi::watchdog') }
         it { is_expected.to contain_class('ipmi::service::ipmi') }
         it { is_expected.to contain_class('ipmi::service::ipmievd') }
 

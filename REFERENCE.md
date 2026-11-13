@@ -12,17 +12,25 @@
 
 #### Private Classes
 
-* `ipmi::config`
 * `ipmi::install`
 * `ipmi::service`
 * `ipmi::service::ipmi`
 * `ipmi::service::ipmievd`
+* `ipmi::watchdog`: Coordinates the IPMI watchdog pieces
+* `ipmi::watchdog::kmod`: Load the ipmi_watchdog kernel module, now and at boot
+* `ipmi::watchdog::openipmi`: Write IPMI_WATCHDOG in the OpenIPMI service config
+* `ipmi::watchdog::systemd`: Let systemd (PID 1) own /dev/watchdog
 
 ### Resource types
 
 * [`ipmi_network`](#ipmi_network): Manages BMC network configuration via IPMI.
 * [`ipmi_snmp`](#ipmi_snmp): Manages SNMP community string on a BMC LAN channel via IPMI.
 * [`ipmi_user`](#ipmi_user): Manages BMC user accounts via IPMI.
+
+### Data types
+
+* [`Ipmi::Watchdog::ModuleOptions`](#Ipmi--Watchdog--ModuleOptions): ipmi_watchdog module parameters
+* [`Ipmi::Watchdog::SystemdOptions`](#Ipmi--Watchdog--SystemdOptions): systemd-system.conf(5) [Manager] settings for the watchdog drop-in
 
 ## Classes
 
@@ -45,6 +53,11 @@ The following parameters are available in the `ipmi` class:
 * [`users`](#-ipmi--users)
 * [`networks`](#-ipmi--networks)
 * [`service_manage`](#-ipmi--service_manage)
+* [`watchdog_manage_module`](#-ipmi--watchdog_manage_module)
+* [`watchdog_supervisor`](#-ipmi--watchdog_supervisor)
+* [`watchdog_timeout`](#-ipmi--watchdog_timeout)
+* [`watchdog_systemd_options`](#-ipmi--watchdog_systemd_options)
+* [`watchdog_module_options`](#-ipmi--watchdog_module_options)
 * [`default_channel`](#-ipmi--default_channel)
 
 ##### <a name="-ipmi--packages"></a>`packages`
@@ -99,7 +112,15 @@ Default value: `'stopped'`
 
 Data type: `Boolean`
 
-Controls whether the IPMI watchdog is enabled.
+Controls whether the IPMI watchdog is enabled. When `true`, the owner
+chosen by `watchdog_supervisor` is configured: under `openipmi`
+`IPMI_WATCHDOG` is set to `yes`, so the OpenIPMI service loads the
+`ipmi_watchdog` kernel module; under `systemd` Puppet loads the module (see
+`watchdog_manage_module`) and a system.conf drop-in is written. When
+`false`, `IPMI_WATCHDOG` is set to `no` (`openipmi`), and the drop-in and
+the module's modprobe.d and modules-load.d files are removed. A loaded
+module is never unloaded: it stays loaded until the next boot or a manual
+unload.
 
 Default value: `false`
 
@@ -136,6 +157,72 @@ Controls whether the `ipmi` service is managed. When `false`, the
 (handled by the administrator or an external tooling system).
 
 Default value: `true`
+
+##### <a name="-ipmi--watchdog_manage_module"></a>`watchdog_manage_module`
+
+Data type: `Boolean`
+
+Whether Puppet loads the `ipmi_watchdog` kernel module, and writes its
+modprobe options, when `watchdog` is `true` under `systemd`. Set `false`
+when `/dev/watchdog` already exists, for example because the module is
+built in or loaded by other tooling; this module's modprobe.d and
+modules-load.d files are then removed, and `watchdog_timeout` and
+`watchdog_module_options` have no effect on the module. Has no effect
+under `openipmi`, where the OpenIPMI service loads the module.
+
+Default value: `true`
+
+##### <a name="-ipmi--watchdog_supervisor"></a>`watchdog_supervisor`
+
+Data type: `Enum['auto', 'systemd', 'openipmi']`
+
+Which component owns `/dev/watchdog`: `systemd`, `openipmi`, or `auto`.
+`systemd` writes a system.conf drop-in so PID 1 opens and pings the device,
+and forces `IPMI_WATCHDOG` to `no` if its file exists. `openipmi` sets
+`IPMI_WATCHDOG`, which only makes the OpenIPMI service load the module;
+nothing in this module opens the device. `auto` selects `systemd` when
+the `ipmi_systemd_version` fact is present, unless it is 250 or 251, and
+`openipmi` otherwise. `ipmi_watchdog` creates only `/dev/watchdog`, which
+systemd 250 and 251 replace with `/dev/watchdog0`.
+
+Default value: `'auto'`
+
+##### <a name="-ipmi--watchdog_timeout"></a>`watchdog_timeout`
+
+Data type: `Integer[0]`
+
+Watchdog timeout in seconds. Passed to the `ipmi_watchdog` module as its
+`timeout` option (in modprobe.d under `systemd`, in
+`IPMI_WATCHDOG_OPTIONS` under `openipmi`) and, under `systemd`, written as
+RuntimeWatchdogSec. `0`, the default, writes neither: the driver default
+of 10 seconds applies, and systemd keeps whatever RuntimeWatchdogSec the
+rest of its configuration sets, which is off unless something sets it.
+
+Default value: `0`
+
+##### <a name="-ipmi--watchdog_systemd_options"></a>`watchdog_systemd_options`
+
+Data type: `Ipmi::Watchdog::SystemdOptions`
+
+Extra system.conf [Manager] settings, used only under `systemd`. A
+`RuntimeWatchdogSec` here replaces `watchdog_timeout`, so setting it to `0`
+keeps systemd off the device while `watchdog` is `true`.
+
+Default value: `{}`
+
+##### <a name="-ipmi--watchdog_module_options"></a>`watchdog_module_options`
+
+Data type: `Ipmi::Watchdog::ModuleOptions`
+
+Extra `ipmi_watchdog` module options, for example
+`{ 'action' => 'power_cycle' }`, written with `watchdog_timeout` to
+modprobe.d under `systemd` or to `IPMI_WATCHDOG_OPTIONS` under `openipmi`.
+When neither is set, `IPMI_WATCHDOG_OPTIONS` keeps the value it has, such
+as the package's `timeout=60`. A `timeout` key must not disagree with a
+non-zero `watchdog_timeout`. Booleans are written as 1/0 and whole Floats
+as integers; a fractional value is an error.
+
+Default value: `{}`
 
 ##### <a name="-ipmi--default_channel"></a>`default_channel`
 
@@ -537,3 +624,20 @@ The IPMI username.  Defaults to the resource title.
 At most 16 bytes, without whitespace, and not starting with `-`: the
 name goes on ipmitool's command line, where its option parser would
 take it as an option.
+
+## Data types
+
+### <a name="Ipmi--Watchdog--ModuleOptions"></a>`Ipmi::Watchdog::ModuleOptions`
+
+They are written to modprobe.d or to the OpenIPMI service's
+IPMI_WATCHDOG_OPTIONS, which its helper script sources and expands unquoted
+on the modprobe command line, so values are limited to characters that need
+no quoting.
+
+Alias of `Hash[Pattern[/\A[a-z][a-z0-9_]*\z/], Variant[Integer, Float, Boolean, Pattern[/\A[\w.,:+-]+\z/]]]`
+
+### <a name="Ipmi--Watchdog--SystemdOptions"></a>`Ipmi::Watchdog::SystemdOptions`
+
+Each key is written as one `Key=value` line, so a value may not span lines.
+
+Alias of `Hash[Pattern[/\A[A-Z][A-Za-z]*\z/], Variant[Integer, Pattern[/\A[^\n]*\z/]]]`
