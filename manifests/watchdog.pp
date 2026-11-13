@@ -54,7 +54,25 @@ class ipmi::watchdog {
     $module_settings = $module_options
   }
 
-  $option_words = $module_settings.map |$option, $value| { "${option}=${value}" }
+  # ipmi_watchdog's integer parameters (start_now, timeout, pretimeout) reject
+  # "true" and "60.0", and 1/0 is also what its bool parameters accept.
+  $option_words = $module_settings.map |$option, $value| {
+    case $value {
+      Boolean: {
+        $written = if $value { 1 } else { 0 }
+      }
+      Float: {
+        unless $value.floor == $value {
+          fail("ipmi::watchdog_module_options ${option} (${value}) must be a whole number")
+        }
+        $written = $value.floor
+      }
+      default: {
+        $written = $value
+      }
+    }
+    "${option}=${written}"
+  }
   $options = $option_words.empty ? {
     true    => undef,
     default => $option_words.join(' '),

@@ -57,7 +57,9 @@ class ipmi::watchdog::kmod (
   if $manage {
     exec { 'ipmi::watchdog modprobe ipmi_watchdog':
       command => 'modprobe ipmi_watchdog',
-      unless  => "grep -q '^ipmi_watchdog ' /proc/modules",
+      # /sys/module also exists for a driver built into the kernel, which
+      # /proc/modules does not list.
+      unless  => 'test -d /sys/module/ipmi_watchdog',
       path    => ['/usr/sbin', '/usr/bin', '/sbin', '/bin'],
       require => File['/etc/modprobe.d/50-ipmi-watchdog.conf'],
     }

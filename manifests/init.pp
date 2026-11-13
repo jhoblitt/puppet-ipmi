@@ -67,7 +67,8 @@
 #   modprobe.d under `systemd` or to `IPMI_WATCHDOG_OPTIONS` under `openipmi`.
 #   When neither is set, `IPMI_WATCHDOG_OPTIONS` keeps the value it has, such
 #   as the package's `timeout=60`. A `timeout` key must not disagree with a
-#   non-zero `watchdog_timeout`.
+#   non-zero `watchdog_timeout`. Booleans are written as 1/0 and whole Floats
+#   as integers; a fractional value is an error.
 # @param default_channel
 #   Optional default IPMI channel (1-15) to use for resources that do not
 #   specify one. When unset, class-declared resources use the node's
@@ -103,6 +104,9 @@ class ipmi (
   # when it changes what that service loads.
   Class['ipmi::install'] -> Class['ipmi::watchdog']
   Class['ipmi::install'] -> Class['ipmi::service']
+  # IPMI_WATCHDOG must be settled before the OpenIPMI service starts, or it
+  # loads ipmi_watchdog with its own IPMI_WATCHDOG_OPTIONS first.
+  Class['ipmi::watchdog'] -> Class['ipmi::service']
 
   # The class sees the target node's facts on Puppet Server. Native type
   # defaultto blocks run on the compiler and must not read local Facter data.

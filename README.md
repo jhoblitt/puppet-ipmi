@@ -229,9 +229,11 @@ Options:
 * `watchdog_module_options` adds any other module option. Names are module
   parameter names, and values may not contain spaces, quotes or other
   characters a shell would interpret, because `IPMI_WATCHDOG_OPTIONS` is
-  expanded unquoted by the OpenIPMI service. Setting `timeout` here as well as
-  a non-zero `watchdog_timeout` is an error unless the two values are the
-  same number.
+  expanded unquoted by the OpenIPMI service. A Boolean is written as `1` or
+  `0` and a whole Float as an integer, because the driver's integer
+  parameters reject `true` and `60.0`; a fractional value is an error.
+  Setting `timeout` here as well as a non-zero `watchdog_timeout` is an error
+  unless the two values are the same number.
 * `watchdog_manage_module => false` under `systemd` skips the module load and
   its options, for hosts where `/dev/watchdog` already exists.
   `watchdog_timeout` and `watchdog_module_options` then have no effect on the

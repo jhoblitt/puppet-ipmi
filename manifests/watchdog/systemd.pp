@@ -77,6 +77,9 @@ class ipmi::watchdog::systemd (
     command     => 'systemctl daemon-reexec',
     path        => ['/usr/bin', '/bin'],
     refreshonly => true,
+    # A forced watchdog_supervisor => systemd on a host where systemd is not
+    # PID 1 (the sd_booted check) would otherwise fail on every change.
+    onlyif      => 'test -d /run/systemd/system',
     subscribe   => File[$dropin],
   }
 }

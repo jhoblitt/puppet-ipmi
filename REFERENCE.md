@@ -219,7 +219,8 @@ Extra `ipmi_watchdog` module options, for example
 modprobe.d under `systemd` or to `IPMI_WATCHDOG_OPTIONS` under `openipmi`.
 When neither is set, `IPMI_WATCHDOG_OPTIONS` keeps the value it has, such
 as the package's `timeout=60`. A `timeout` key must not disagree with a
-non-zero `watchdog_timeout`.
+non-zero `watchdog_timeout`. Booleans are written as 1/0 and whole Floats
+as integers; a fractional value is an error.
 
 Default value: `{}`
 

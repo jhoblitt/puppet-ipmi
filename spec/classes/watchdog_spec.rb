@@ -60,6 +60,7 @@ describe 'ipmi', type: :class do
       context 'with defaults' do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_class('ipmi::watchdog') }
+        it { is_expected.to contain_class('ipmi::watchdog').that_comes_before('Class[ipmi::service]') }
         it { is_expected.to contain_class('ipmi::watchdog::openipmi').with(enable: false, only_if_exists: false) }
         it { is_expected.not_to contain_class('ipmi::watchdog::openipmi::watchdog_param') }
         it { is_expected.to contain_augeas('ipmi_watchdog').with(changes: ['set IPMI_WATCHDOG no']) }
@@ -171,6 +172,28 @@ describe 'ipmi', type: :class do
         it { is_expected.to compile.and_raise_error(%r{watchdog_module_options}) }
       end
 
+      context 'when systemd owns the device and module options are not strings' do
+        let(:facts) { super().merge(ipmi_systemd_version: '257') }
+
+        {
+          { 'start_now' => true } => 'start_now=1',
+          { 'start_now' => false } => 'start_now=0',
+          { 'timeout' => 60.0 } => 'timeout=60',
+        }.each do |options, written|
+          context "with watchdog_module_options #{options.inspect}" do
+            let(:params) { { watchdog: true, watchdog_module_options: options } }
+
+            it { is_expected.to contain_file(modprobe_conf).with_content(%r{^options ipmi_watchdog #{written}$}) }
+          end
+        end
+
+        context 'with a fractional watchdog_module_options value' do
+          let(:params) { { watchdog: true, watchdog_module_options: { 'pretimeout' => 2.5 } } }
+
+          it { is_expected.to compile.and_raise_error(%r{pretimeout \(2\.5\) must be a whole number}) }
+        end
+      end
+
       context 'when systemd owns the device' do
         let(:facts) { super().merge(ipmi_systemd_version: '257') }
 
@@ -194,7 +217,7 @@ describe 'ipmi', type: :class do
           it do
             is_expected.to contain_exec(modprobe_exec).with(
               command: 'modprobe ipmi_watchdog',
-              unless: "grep -q '^ipmi_watchdog ' /proc/modules",
+              unless: 'test -d /sys/module/ipmi_watchdog',
             ).that_requires("File[#{modprobe_conf}]")
           end
 
@@ -410,6 +433,7 @@ describe 'ipmi', type: :class do
             is_expected.to contain_exec(reexec).with(
               command: 'systemctl daemon-reexec',
               refreshonly: true,
+              onlyif: 'test -d /run/systemd/system',
             ).that_subscribes_to("File[#{dropin}]")
           end
 
