@@ -189,6 +189,12 @@ describe PuppetX::Ipmi::Provider::Freeipmi do
       expect(provider.bmc_config_get('Lan_Conf', 'Nope', channel: 1)).to be_nil
     end
 
+    it 'skips lines that are not key/value pairs' do
+      provider.stubs(:bmcconfig_exec).returns("Section S\n  lonelykey\n  K  v\nEndSection\n")
+
+      expect(provider.send(:section_cache, 'S')).to eq('K' => 'v')
+    end
+
     it 'ignores comments and section markers' do
       provider.stubs(:bmcconfig_exec).returns(section)
 

@@ -18,7 +18,7 @@ require 'puppet_x/ipmi'
 module PuppetX::Ipmi::LanChannel
   # Resolve the standalone resource default without local Facter calls.
   def self.default_channel(title)
-    return title.to_i if title.to_s =~ %r{^\d+$}
+    return title.to_i if title.to_s =~ %r{\A\d+\z}
 
     1
   end
@@ -31,11 +31,15 @@ module PuppetX::Ipmi::LanChannel
   # @return [void]
   def self.channel_number(param, name)
     param.validate do |value|
-      raise Puppet::Error, "#{name} must be an integer between 1 and 15" unless value.to_s =~ %r{^[1-9]$|^1[0-5]$}
+      raise Puppet::Error, "#{name} must be an integer between 1 and 15" unless value.to_s =~ %r{\A(?:[1-9]|1[0-5])\z}
     end
     param.munge(&:to_i)
   end
 
+  # Declares the shared `lan_channel` parameter on the including type.
+  #
+  # @param base [Class] the native type that includes this module
+  # @return [void]
   def self.included(base)
     base.newparam(:lan_channel) do
       desc <<-DESC

@@ -128,7 +128,7 @@ Puppet::Type.newtype(:ipmi_user) do
     defaultto 'auto'
     validate do |value|
       str = value.to_s
-      raise Puppet::Error, 'user_id must be an integer between 2 and 63 or "auto"' unless str == 'auto' || (str =~ %r{^\d+$} && (2..63).cover?(value.to_i))
+      raise Puppet::Error, 'user_id must be an integer between 2 and 63 or "auto"' unless str == 'auto' || (str =~ %r{\A\d+\z} && (2..63).cover?(value.to_i))
     end
     munge do |value|
       next :auto if value.to_s == 'auto'

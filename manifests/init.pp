@@ -84,10 +84,10 @@ class ipmi (
   Variant[Stdlib::Ensure::Service, String[0]] $service_ensure,
   Stdlib::Ensure::Service $ipmievd_service_ensure,
   Boolean $watchdog,
-  Optional[Hash] $snmps,
-  Optional[Hash] $users,
-  Optional[Hash] $networks,
-  Boolean $service_manage = true,
+  Hash $snmps,
+  Hash $users,
+  Hash $networks,
+  Boolean $service_manage,
   Boolean $watchdog_manage_module = true,
   Enum['auto', 'systemd', 'openipmi'] $watchdog_supervisor = 'auto',
   Integer[0] $watchdog_timeout = 0,
@@ -122,42 +122,39 @@ class ipmi (
   $user_defaults = { 'channel' => $effective_channel }
   $lan_defaults = { 'lan_channel' => $effective_channel }
 
-  if $users {
-    $users.each |$title, $params| {
-      ipmi_user { $title:
-        * => $user_defaults + $params,
-      }
-      Class['ipmi::install'] -> Ipmi_user[$title]
+  $users.each |$key, $params| {
+    $user_title = String($key)
+    ipmi_user { $user_title:
+      * => $user_defaults + $params,
     }
+    Class['ipmi::install'] -> Ipmi_user[$user_title]
   }
 
-  if $networks {
-    $networks.each |$title, $params| {
-      # An integer title is already a channel unless the caller explicitly
-      # requested an override via default_channel.
-      if $default_channel == undef and $title =~ /^[0-9]+$/ {
-        $network_defaults = { 'lan_channel' => Integer($title) }
-      } else {
-        $network_defaults = $lan_defaults
-      }
-      ipmi_network { $title:
-        * => $network_defaults + $params,
-      }
-      Class['ipmi::install'] -> Ipmi_network[$title]
+  $networks.each |$key, $params| {
+    $network_title = String($key)
+    # An integer title is already a channel unless the caller explicitly
+    # requested an override via default_channel.
+    if $default_channel == undef and $network_title =~ /\A[0-9]+\z/ {
+      $network_defaults = { 'lan_channel' => Integer($network_title, 10) }
+    } else {
+      $network_defaults = $lan_defaults
     }
+    ipmi_network { $network_title:
+      * => $network_defaults + $params,
+    }
+    Class['ipmi::install'] -> Ipmi_network[$network_title]
   }
 
-  if $snmps {
-    $snmps.each |$title, $params| {
-      if $default_channel == undef and $title =~ /^[0-9]+$/ {
-        $snmp_defaults = { 'lan_channel' => Integer($title) }
-      } else {
-        $snmp_defaults = $lan_defaults
-      }
-      ipmi_snmp { $title:
-        * => $snmp_defaults + $params,
-      }
-      Class['ipmi::install'] -> Ipmi_snmp[$title]
+  $snmps.each |$key, $params| {
+    $snmp_title = String($key)
+    if $default_channel == undef and $snmp_title =~ /\A[0-9]+\z/ {
+      $snmp_defaults = { 'lan_channel' => Integer($snmp_title, 10) }
+    } else {
+      $snmp_defaults = $lan_defaults
     }
+    ipmi_snmp { $snmp_title:
+      * => $snmp_defaults + $params,
+    }
+    Class['ipmi::install'] -> Ipmi_snmp[$snmp_title]
   }
 }

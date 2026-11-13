@@ -509,6 +509,12 @@ the slot, and leaves the slot alone.
   }
 ```
 
+A source other than DHCP or static (`BIOS Assigned Address`, `Unspecified`,
+and so on) is reported as `other`, which never equals a managed `type`. The
+resource therefore writes the desired source, and is in sync once the BMC
+reports DHCP or static. A BMC that keeps reporting another source after the
+write changes on every run.
+
 #### `ipmi_snmp`
 
 **Credential change:** If `community` is omitted, `ipmi_snmp` actively
@@ -628,6 +634,100 @@ At present, only support for RedHat and Debian distributions
 has been implemented.
 
 Adding other Linux distrubtions should be trivial.
+
+### Scope and access
+
+* **In-band only.** Providers talk to the local BMC through the kernel IPMI
+  driver (`/dev/ipmi0`) and must run as root.  Remote (LAN/lanplus) access
+  is not supported, so containers and VMs without the IPMI device cannot be
+  managed.
+* **Packages.** The `ipmi` class installs `OpenIPMI` and `ipmitool` only.
+  The `freeipmi` providers also need the `freeipmi` package (`bmc-config`
+  and `ipmi-pef-config`); install it yourself or add it to `ipmi::packages`.
+* **First run.** A provider is unsuitable until its command exists.  A
+  resource declared directly, without the `ipmi` class or an explicit
+  `Package` ordering, may be skipped or fail on a host where the tool is
+  installed in the same run (not covered by the tests).  Resources declared
+  through the `ipmi` class are ordered after `ipmi::install`.
+* **Tested hardware.** Parsers are covered by fixtures from Supermicro, ASUS
+  and HP BMCs only.  Other vendors may format output differently.  Test on a
+  non-production node first, and keep a working BMC login while doing so.
+
+### Secrets
+
+* **Command line exposure.** `ipmitool` and `bmc-config` receive passwords and
+  SNMP community strings as arguments, so they are visible in the process
+  table (`/proc/<pid>/cmdline`) to local users while the command runs.  Only
+  Puppet's own logs and reports are redacted.
+* **`community` is sensitive.** The `ipmi_snmp` `community` property is
+  redacted in logs and reports.
+* **Passwords cannot be read back.** Whether the password is current is
+  tested with `ipmitool user test` or `bmc-config --diff`.  If that test
+  fails for any reason, including a command error and not only a wrong
+  password, the password is treated as different and rewritten on every run.
+  A warning is logged when the check itself fails.
+* **`password` is required** whenever `enable` is true, even for a user that
+  already exists.  Passwords are at most 20 bytes; with `ipmitool`, 16 bytes
+  or fewer use the 16 byte form.
+
+### `freeipmi` backend
+
+* Values containing whitespace (passwords, community strings, usernames) are
+  rejected, because `bmc-config --key-pair` keeps only the first word.
+* Reading users requires a full `bmc-config --checkout`.  If it exits with
+  status 1 and the output is incomplete, the run fails instead of guessing.
+
+### `ipmi_user`
+
+* **User IDs are shared by the whole BMC; `channel` only selects where
+  privileges and access are set.**  Uniqueness checks and `auto` allocation
+  are made per `channel`.  Do not manage the same BMC with resources on
+  different channels unless each uses a distinct explicit `user_id`, or two
+  `auto` resources may be given the same free slot.  Access granted on
+  other channels is not changed.
+* A present and an absent resource for the same username with `user_id =>
+  auto`, or for the same explicit slot, are rejected.  An absent resource for
+  a different explicit slot is allowed.
+* **No slot is ever deleted.**  `ensure => absent` renames the slot
+  `DISABLED_<id>`; the slot's other state (for example a stale password)
+  is not cleared.
+* **IDs 2-63 are accepted**, but not checked against the BMC's real
+  maximum.  A slot the BMC does not have is expected to fail when the tool
+  rejects the write.
+* **Enumeration.** `puppet resource ipmi_user` lists only the default
+  channel (1), and only slots with a name that is not empty or `DISABLED_*`.
+* **Cost.** With `ipmitool`, reading users runs one `channel getaccess` per
+  named slot, on every run, on every channel in the catalog.
+  `purge_duplicates` reads the user table again for each resource that sets
+  it.
+
+### `ipmi_network`
+
+* IPv4 only.  Addresses are not checked for netmask validity or for whether
+  the gateway lies on the subnet.
+* **Do not change the address of the channel you reach the BMC through**
+  unless you have another way in.  Writes are not verified or rolled back,
+  and some BMCs may apply them after a delay.
+* With `type` unset, `ip`, `netmask` and `gateway` are written as given
+  even if the BMC is on DHCP.  A BMC may ignore or revert these writes,
+  which would show as a change on every run.  Set `type` as well.
+* When the resource switches to static, `ip`, `netmask` and `gateway` are
+  re-checked and may be written once more after the first write, because
+  some BMCs reload a stored address on a source change.
+
+### `ipmi_snmp`
+
+* A default `community` of `public` is applied when it is omitted (see
+  above).
+* The community string is at most 18 characters.
+
+### Catalog failures
+
+* The duplicate channel, username and slot checks (`pre_run_check`) run at
+  apply time, not at catalog compile time, and a failure stops the whole
+  run, so unrelated resources are not applied either.
+* `ip`, `netmask` or `gateway` together with `type => 'dhcp'` is rejected
+  when the catalog is built, which fails the agent run.
 
 ## Versioning
 

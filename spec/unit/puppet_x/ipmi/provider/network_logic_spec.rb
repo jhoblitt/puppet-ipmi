@@ -40,11 +40,19 @@ describe PuppetX::Ipmi::Provider::NetworkLogic do
       end
     end
 
-    ['Static Address', 'Static', 'BIOS Assigned Address'].each do |source|
+    ['Static Address', 'Static', 'static'].each do |source|
       it "is :static for #{source.inspect}" do
         provider.values[:source] = source
 
         expect(provider.type).to eq(:static)
+      end
+    end
+
+    ['BIOS Assigned Address', 'Unspecified', 'Other'].each do |source|
+      it "is :other for #{source.inspect}, so it never satisfies a managed type" do
+        provider.values[:source] = source
+
+        expect(provider.type).to eq(:other)
       end
     end
   end

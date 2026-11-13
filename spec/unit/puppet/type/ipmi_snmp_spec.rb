@@ -19,6 +19,33 @@ describe Puppet::Type.type(:ipmi_snmp) do
   end
 
   describe 'when validating values' do
+    it 'rejects an empty community' do
+      expect { described_class.new(name: 'mysnmp', community: '') }
+        .to raise_error(Puppet::Error, %r{non-empty})
+    end
+
+    it 'rejects a community longer than 18 characters' do
+      expect { described_class.new(name: 'mysnmp', community: 'a' * 19) }
+        .to raise_error(Puppet::Error, %r{18 bytes})
+    end
+
+    it 'accepts a community of exactly 18 characters' do
+      expect { described_class.new(name: 'mysnmp', community: 'a' * 18) }.not_to raise_error
+    end
+
+    it 'marks the community property as sensitive' do
+      expect(described_class.new(name: 'mysnmp').parameter(:community).is_sensitive).to be(true)
+    end
+
+    it 'rejects a lan_channel with a trailing newline' do
+      expect { described_class.new(name: 'mysnmp', lan_channel: "1\nx") }
+        .to raise_error(Puppet::Error, %r{lan_channel})
+    end
+
+    it 'does not derive a channel from a multi-line title' do
+      expect(PuppetX::Ipmi::LanChannel.default_channel("5\nx")).to eq(1)
+    end
+
     it 'defaults lan_channel to 1 for non-integer title' do
       Facter.stubs(:value).with(:kernel).returns('Linux')
       Facter.stubs(:value).with('ipmi.default.channel').returns(nil)
