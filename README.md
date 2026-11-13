@@ -167,17 +167,25 @@ When `users`, `networks`, or `snmps` are passed as class parameters, the
 `ipmi_network` and `ipmi_snmp` reject catalogs where two resources target
 the same LAN channel, preventing them from fighting on every run.
 
+For resources declared through `ipmi::users`, `ipmi::networks`, and
+`ipmi::snmps`, `ipmi::default_channel` takes precedence over the node's
+`ipmi.default.channel` fact; an invalid or missing fact falls back to 1.
+An integer network/SNMP resource title takes precedence over the fact.
+Native resources declared directly do not consult facts during compilation:
+specify `channel`/`lan_channel` explicitly when the target channel is not 1
+(or use an integer title for network/SNMP).
+
 #### The IPMI hardware watchdog
 
 When `watchdog => true` the `ipmi_watchdog` kernel module is loaded, which
 provides `/dev/watchdog`. Loading it does not start the BMC timer: the timer
-runs once something opens `/dev/watchdog`, or if the module is given the
-`start_now=1` option.
+runs once something opens `/dev/watchdog` and pings it, or if the module is
+given the `start_now=1` option.
 
 The device can only be opened once, so one component owns it, chosen by
 `watchdog_supervisor` (`auto` by default):
 
-- `systemd`: Puppet loads the module, now and at boot. Its options go to
+* `systemd`: Puppet loads the module, now and at boot. Its options go to
   `/etc/modprobe.d/50-ipmi-watchdog.conf` and the boot-time load to
   `/etc/modules-load.d/50-ipmi-watchdog.conf`; files of other names, such as
   the `ipmi_watchdog.conf` that puppet/kmod writes, are left alone. A
@@ -187,7 +195,7 @@ The device can only be opened once, so one component owns it, chosen by
   changes or is removed. If the OpenIPMI config file exists, `IPMI_WATCHDOG`
   in it is forced to `no` (the file is never created for this), so the
   OpenIPMI service does not also load the module with its own options.
-- `openipmi`: `IPMI_WATCHDOG=yes` is set in the OpenIPMI config, which makes
+* `openipmi`: `IPMI_WATCHDOG=yes` is set in the OpenIPMI config, which makes
   the OpenIPMI service load the module with the options in
   `IPMI_WATCHDOG_OPTIONS`. `watchdog_timeout` and `watchdog_module_options`
   are written there; when neither is set it keeps its value, such as the
@@ -197,7 +205,7 @@ The device can only be opened once, so one component owns it, chosen by
   device, so the timer is started by whatever else does, such as the
   `watchdog` daemon. A drop-in written while systemd was the owner is
   removed.
-- `auto`: `systemd` when systemd is the init system (the
+* `auto`: `systemd` when systemd is the init system (the
   `ipmi_systemd_version` fact is present), unless its version is 250 or 251,
   and `openipmi` otherwise. `ipmi_watchdog` creates only `/dev/watchdog`.
   systemd up to 249 opens that path, and 252 onwards falls back to it when
@@ -206,36 +214,28 @@ The device can only be opened once, so one component owns it, chosen by
 
 Options:
 
-- `watchdog_timeout` sets the module `timeout` option, in seconds, and under
+* `watchdog_timeout` sets the module `timeout` option, in seconds, and under
   `systemd` also `RuntimeWatchdogSec`. The default, `0`, writes neither: the
   driver default of 10 seconds applies, and systemd keeps whatever
   `RuntimeWatchdogSec` the rest of its configuration sets, which is off unless
   something sets it. With no setting to write, the drop-in is not created.
   Set a non-zero value to have systemd arm the BMC watchdog.
-- `watchdog_systemd_options` adds other `system.conf` [Manager] settings. A
+* `watchdog_systemd_options` adds other `system.conf` [Manager] settings. A
   `RuntimeWatchdogSec` here replaces `watchdog_timeout`; `0` keeps systemd off
-  the device on hardware with a buggy BMC watchdog. Leave `WatchdogDevice`
-  unset (see below).
-- `watchdog_module_options` adds any other module option. Names are module
+  the device on hardware with a buggy BMC watchdog. When PID 1 takes the
+  device it sets the BMC timer to `RuntimeWatchdogSec`, so that value, not
+  the module's `timeout` option, is the timeout from then on. Leave
+  `WatchdogDevice` unset (see below).
+* `watchdog_module_options` adds any other module option. Names are module
   parameter names, and values may not contain spaces, quotes or other
   characters a shell would interpret, because `IPMI_WATCHDOG_OPTIONS` is
   expanded unquoted by the OpenIPMI service. Setting `timeout` here as well as
-  a non-zero `watchdog_timeout` is an error unless the two values match.
-- `watchdog_manage_module => false` under `systemd` skips the module load and
+  a non-zero `watchdog_timeout` is an error unless the two values are the
+  same number.
+* `watchdog_manage_module => false` under `systemd` skips the module load and
   its options, for hosts where `/dev/watchdog` already exists.
   `watchdog_timeout` and `watchdog_module_options` then have no effect on the
   module.
-
-Installing or upgrading the packages neither re-executes PID 1 nor restarts
-a service, and changes to the module files or the drop-in do not restart the
-`ipmi` or `ipmievd` services. Under `openipmi`, a change to the OpenIPMI
-config restarts the `ipmi` service, as that service loads the module.
-
-Module options only apply the next time the module is loaded, usually after a
-reboot. Setting `watchdog => false` removes the drop-in and both module files,
-but Puppet never unloads the module: unloading it does not stop a running BMC
-timer, which would then reset the host. A loaded module stays loaded until the
-next boot or a manual `modprobe -r ipmi_watchdog`.
 
 ```puppet
   class { 'ipmi':
@@ -246,20 +246,56 @@ next boot or a manual `modprobe -r ipmi_watchdog`.
   }
 ```
 
+Installing or upgrading the packages neither re-executes PID 1 nor restarts
+a service, and changes to the module files or the drop-in do not restart the
+`ipmi` or `ipmievd` services. Under `openipmi`, a change to the OpenIPMI
+config restarts the `ipmi` service, as that service loads the module.
+Module options only apply the next time the module is loaded, usually after a
+reboot.
+
+To turn the watchdog off:
+
+* `watchdog => false` sets `IPMI_WATCHDOG=no` and removes the drop-in and
+  both module files. Removing the drop-in re-executes PID 1, which disarms
+  and closes the device before it re-executes; the new instance opens it
+  again only if `RuntimeWatchdogSec` is set elsewhere.
+* To keep the module loaded but stop PID 1 from arming the BMC, keep
+  `watchdog => true` and set
+  `watchdog_systemd_options => { 'RuntimeWatchdogSec' => 0 }`.
+* Puppet never unloads the module: unloading it does not stop a running BMC
+  timer, which would then reset the host because nothing could ping it. A
+  loaded module stays loaded until the next boot, or until it is unloaded by
+  hand (`modprobe -r ipmi_watchdog`) once nothing holds `/dev/watchdog`.
+
+When upgrading from 8.x or earlier, where `watchdog => true` only set
+`IPMI_WATCHDOG=yes`:
+
+* `auto` now picks `systemd` on every supported release (EL8, EL9 and EL10,
+  Debian 11, Ubuntu 20.04). Puppet then loads the module itself and forces
+  `IPMI_WATCHDOG` to `no`, so `IPMI_WATCHDOG_OPTIONS`, and its package
+  default of `timeout=60`, no longer applies: the module gets
+  `watchdog_timeout` and `watchdog_module_options`, or the driver default of
+  10 seconds. Set `watchdog_supervisor => 'openipmi'` to keep the OpenIPMI
+  service in charge of the module as before.
+* `watchdog => false`, the default, also removes the files listed above if
+  they exist.
+* A change to the OpenIPMI config restarts only the `ipmi` service, not
+  `ipmievd`, and the private class `ipmi::config` is gone.
+
 Which device PID 1 opens: `ipmi_watchdog` provides only the legacy
 `/dev/watchdog` node. Unlike drivers built on the kernel's watchdog core, such
 as `iTCO_wdt`, it has no `/dev/watchdogN` node and no `/sys/class/watchdog`
 entry, so there is no other name to point `WatchdogDevice` at.
 
-- While `ipmi_watchdog` holds `/dev/watchdog`, the kernel numbers other
+* While `ipmi_watchdog` holds `/dev/watchdog`, the kernel numbers other
   watchdog drivers from `/dev/watchdog1`, so `/dev/watchdog0` does not exist.
   With `WatchdogDevice` unset, systemd up to 249 opens `/dev/watchdog`, and
   252 and later fall back to it, so PID 1 opens the BMC's watchdog.
-- `WatchdogDevice=/dev/watchdog0`, or any other `/dev/watchdogN`, names
+* `WatchdogDevice=/dev/watchdog0`, or any other `/dev/watchdogN`, names
   another driver, never the BMC. systemd 252 and later treat
   `/dev/watchdog` like an unset value, and 250 and 251 replace it with
   `/dev/watchdog0`.
-- If another watchdog driver registers before `ipmi_watchdog`, it takes
+* If another watchdog driver registers before `ipmi_watchdog`, it takes
   `/dev/watchdog` as well as `/dev/watchdog0`, and `ipmi_watchdog` gets no
   device at all (the kernel logs `Unable to register misc device`). No
   `WatchdogDevice` value reaches the BMC then; keep the other driver from
@@ -267,14 +303,6 @@ entry, so there is no other name to point `WatchdogDevice` at.
 
 PID 1 logs `Using hardware watchdog 'IPMI'` (`Hardware watchdog 'IPMI'` in
 older releases such as 239) once it has opened the BMC's watchdog.
-
-For resources declared through `ipmi::users`, `ipmi::networks`, and
-`ipmi::snmps`, `ipmi::default_channel` takes precedence over the node's
-`ipmi.default.channel` fact; an invalid or missing fact falls back to 1.
-An integer network/SNMP resource title takes precedence over the fact.
-Native resources declared directly do not consult facts during compilation:
-specify `channel`/`lan_channel` explicitly when the target channel is not 1
-(or use an integer title for network/SNMP).
 
 ### Native Resources
 
@@ -520,7 +548,7 @@ usage and sets nothing, so such a community would never be applied.
 ## Additional Facts
 
 This module provides IPMI facts for Facter, compatible with The Foreman's
-BMC features, in two forms:
+BMC features, in two forms, and a systemd version fact for the watchdog:
 
 ### Structured Format
 
