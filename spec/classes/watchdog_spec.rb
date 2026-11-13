@@ -60,8 +60,8 @@ describe 'ipmi', type: :class do
       context 'with defaults' do
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_class('ipmi::watchdog') }
-        it { is_expected.to contain_class('ipmi::watchdog::openipmi').with(enable: false) }
-        it { is_expected.to contain_class('ipmi::watchdog::openipmi::watchdog_param').with(enable: false) }
+        it { is_expected.to contain_class('ipmi::watchdog::openipmi').with(enable: false, only_if_exists: false) }
+        it { is_expected.not_to contain_class('ipmi::watchdog::openipmi::watchdog_param') }
         it { is_expected.to contain_augeas('ipmi_watchdog').with(changes: ['set IPMI_WATCHDOG no']) }
         it { is_expected.to contain_file(modprobe_conf).with_ensure('absent') }
         it { is_expected.to contain_file(modules_load_conf).with_ensure('absent') }
@@ -75,8 +75,8 @@ describe 'ipmi', type: :class do
         let(:params) { { watchdog: true } }
 
         it { is_expected.to compile.with_all_deps }
-        it { is_expected.to contain_class('ipmi::watchdog::openipmi').with(enable: true) }
-        it { is_expected.to contain_class('ipmi::watchdog::openipmi::watchdog_param').with(enable: true) }
+        it { is_expected.to contain_class('ipmi::watchdog::openipmi').with(enable: true, only_if_exists: false) }
+        it { is_expected.not_to contain_class('ipmi::watchdog::openipmi::watchdog_param') }
 
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
@@ -375,8 +375,8 @@ describe 'ipmi', type: :class do
 
           it { is_expected.to compile.with_all_deps }
           it { is_expected.to contain_class('ipmi::watchdog::systemd') }
-          it { is_expected.not_to contain_class('ipmi::watchdog::openipmi') }
-          it { is_expected.to contain_class('ipmi::watchdog::openipmi::watchdog_param').with(enable: false, only_if_exists: true) }
+          it { is_expected.to contain_class('ipmi::watchdog::openipmi').with(enable: false, only_if_exists: true) }
+          it { is_expected.not_to contain_class('ipmi::watchdog::openipmi::watchdog_param') }
           it { is_expected.not_to contain_class('systemd') }
 
           it do

@@ -69,7 +69,7 @@ class ipmi::watchdog {
 
   class { 'ipmi::watchdog::systemd':
     enable  => $use_systemd and $ipmi::watchdog,
-    timeout => $ipmi::watchdog_timeout,
+    timeout => $timeout,
     options => $ipmi::watchdog_systemd_options,
   }
 
@@ -77,28 +77,20 @@ class ipmi::watchdog {
 
   Class['ipmi::watchdog::kmod'] -> Class['ipmi::watchdog::systemd']
 
-  if $use_systemd {
-    # systemd owns /dev/watchdog and Puppet loads the module. IPMI_WATCHDOG=yes
-    # would make the OpenIPMI service also load and unload ipmi_watchdog itself
-    # (per upstream ipmi.init), so force it to "no" if the config file exists.
-    # The file is not created, and the rest of ipmi::watchdog::openipmi is
-    # deliberately not declared.
-    class { 'ipmi::watchdog::openipmi::watchdog_param':
-      enable         => false,
-      only_if_exists => true,
-    }
+  # When systemd owns /dev/watchdog, Puppet loads the module. IPMI_WATCHDOG=yes
+  # would make the OpenIPMI service also load and unload ipmi_watchdog itself
+  # (per upstream ipmi.init), so it is forced to "no" if the config file
+  # exists; the file is not created.
+  class { 'ipmi::watchdog::openipmi':
+    enable         => !$use_systemd and $ipmi::watchdog,
+    only_if_exists => $use_systemd,
+    options        => $options,
+  }
 
-    contain ipmi::watchdog::openipmi::watchdog_param
-  } else {
-    # OpenIPMI is the owner: IPMI_WATCHDOG=yes makes its service load the
-    # module, with IPMI_WATCHDOG_OPTIONS.
-    class { 'ipmi::watchdog::openipmi':
-      enable  => $ipmi::watchdog,
-      options => $options,
-    }
+  contain ipmi::watchdog::openipmi
 
-    contain ipmi::watchdog::openipmi
-
+  unless $use_systemd {
+    # The ipmi service loads the module, with IPMI_WATCHDOG_OPTIONS.
     Class['ipmi::watchdog::openipmi'] ~> Class['ipmi::service::ipmi']
   }
 }

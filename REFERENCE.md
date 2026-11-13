@@ -18,8 +18,7 @@
 * `ipmi::service::ipmievd`
 * `ipmi::watchdog`: Coordinates the IPMI watchdog pieces
 * `ipmi::watchdog::kmod`: Load the ipmi_watchdog kernel module, now and at boot
-* `ipmi::watchdog::openipmi`: Have the OpenIPMI service load ipmi_watchdog
-* `ipmi::watchdog::openipmi::watchdog_param`: Write IPMI_WATCHDOG in the OpenIPMI daemon config
+* `ipmi::watchdog::openipmi`: Write IPMI_WATCHDOG in the OpenIPMI service config
 * `ipmi::watchdog::systemd`: Let systemd (PID 1) own /dev/watchdog
 
 ### Resource types
