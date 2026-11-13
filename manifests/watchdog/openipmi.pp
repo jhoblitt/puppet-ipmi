@@ -20,7 +20,7 @@
 #   `true` writes `IPMI_WATCHDOG=yes`, `false` writes `no`.
 # @param only_if_exists
 #   Only apply the change if the config file already exists and is non-empty
-#   (augments `onlyif` matches `size > 0`), rather than creating the file.
+#   (the augeas `onlyif` matches `size > 0`), rather than creating the file.
 # @param options
 #   Module options for IPMI_WATCHDOG_OPTIONS, as `name=value` words separated
 #   by spaces, written only with `enable`, as the service reads them only

@@ -186,7 +186,7 @@ The device can only be opened once, so one component owns it, chosen by
   starts, so Puppet runs `systemctl daemon-reexec` whenever the drop-in
   changes or is removed. If the OpenIPMI config file exists, `IPMI_WATCHDOG`
   in it is forced to `no` (the file is never created for this), so the
-  OpenIPMI service does not also manage the module.
+  OpenIPMI service does not also load the module with its own options.
 - `openipmi`: `IPMI_WATCHDOG=yes` is set in the OpenIPMI config, which makes
   the OpenIPMI service load the module with the options in
   `IPMI_WATCHDOG_OPTIONS`. `watchdog_timeout` and `watchdog_module_options`
