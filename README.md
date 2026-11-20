@@ -514,6 +514,20 @@ the slot, and leaves the slot alone.
   }
 ```
 
+A source other than DHCP or static (`BIOS Assigned Address`, `Unspecified`,
+and so on) is reported as `other`, which never equals a managed `type`. The
+resource therefore writes the desired source, and is in sync once the BMC
+reports DHCP or static. A BMC that keeps reporting another source after the
+write changes on every run.
+
+This is a behaviour change. Before, `BIOS Assigned Address` was reported as
+`static`, so a host managed with `type => static` on a BMC that reported it
+was already in sync. After upgrading, the first run writes the source once.
+
+`puppet resource ipmi_network` prints `type => 'other'` for such a BMC. The
+type does not accept `other` as a value, so copying that output back into a
+manifest fails; set `type` to `dhcp` or `static` instead.
+
 #### `ipmi_snmp`
 
 **Credential change:** If `community` is omitted, `ipmi_snmp` actively
