@@ -22,105 +22,113 @@ describe Puppet::Type.type(:ipmi_user) do
 
   describe 'when validating values' do
     it 'defaults username to the resource title' do
-      resource = described_class.new(name: 'test', enable: :false)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false)
       expect(resource[:username]).to eq('test')
     end
 
     it 'defaults user_id to auto' do
-      resource = described_class.new(name: 'test', enable: :false)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false)
       expect(resource[:user_id]).to eq(:auto)
     end
 
     it 'defaults channel to 1' do
       Facter.stubs(:value).with('ipmi.default.channel').returns(nil)
-      resource = described_class.new(name: 'test', enable: :false)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false)
       expect(resource[:channel]).to eq(1)
     end
 
     it 'does not read compiler-local facts for the channel default' do
       Facter.expects(:value).with('ipmi.default.channel').never
-      resource = described_class.new(name: 'test', enable: :false)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false)
       expect(resource[:channel]).to eq(1)
     end
 
     it 'accepts an explicitly supplied channel' do
-      resource = described_class.new(name: 'test', enable: :false, channel: 3)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false, channel: 3)
       expect(resource[:channel]).to eq(3)
     end
 
     it 'munges a channel given as a string to an Integer' do
-      expect(described_class.new(name: 'test', enable: :false, channel: '15')[:channel]).to eq(15)
+      expect(described_class.new(name: 'test', priv: :ADMIN, enable: :false, channel: '15')[:channel]).to eq(15)
     end
 
     [0, 16, 'one', ''].each do |bad|
       it "rejects channel #{bad.inspect}" do
-        expect { described_class.new(name: 'test', enable: :false, channel: bad) }
+        expect { described_class.new(name: 'test', priv: :ADMIN, enable: :false, channel: bad) }
           .to raise_error(Puppet::Error, %r{channel must be an integer between 1 and 15})
       end
     end
 
     it 'defaults enable to true' do
       # enable defaults to true but requires password
-      resource = described_class.new(name: 'test', password: 'secret')
+      resource = described_class.new(name: 'test', priv: :ADMIN, password: 'secret')
       expect(resource[:enable]).to eq(:true)
     end
 
-    it 'defaults priv to 4' do
-      resource = described_class.new(name: 'test', password: 'secret')
-      expect(resource[:priv]).to eq(4)
+    it 'defaults priv to 15 (NO ACCESS)' do
+      expect(described_class.new(name: 'test', enable: :false)[:priv]).to eq(15)
+    end
+
+    it 'rejects the NOACCESS default for an enabled user' do
+      expect { described_class.new(name: 'test', password: 'secret') }
+        .to raise_error(Puppet::Error, %r{not NOACCESS})
+    end
+
+    it 'accepts NO ACCESS for a disabled user' do
+      expect(described_class.new(name: 'test', enable: :false, priv: :NOACCESS)[:priv]).to eq(15)
     end
 
     it 'rejects password over 20 characters when enable is true' do
       expect do
-        described_class.new(name: 'test', password: 'a' * 21, enable: :true)
+        described_class.new(name: 'test', priv: :ADMIN, password: 'a' * 21, enable: :true)
       end.to raise_error(Puppet::Error, %r{20 or fewer bytes})
     end
 
     it 'requires password when enable is true' do
       expect do
-        described_class.new(name: 'test', enable: :true)
+        described_class.new(name: 'test', priv: :ADMIN, enable: :true)
       end.to raise_error(Puppet::Error, %r{You must supply a password})
     end
 
     it 'rejects an empty plain password when enable is true' do
       expect do
-        described_class.new(name: 'test', enable: :true, password: '')
+        described_class.new(name: 'test', priv: :ADMIN, enable: :true, password: '')
       end.to raise_error(Puppet::Error, %r{You must supply a password})
     end
 
     it 'rejects an empty Sensitive password when enable is true' do
       expect do
-        described_class.new(name: 'test', enable: :true, password: Puppet::Pops::Types::PSensitiveType::Sensitive.new(''))
+        described_class.new(name: 'test', priv: :ADMIN, enable: :true, password: Puppet::Pops::Types::PSensitiveType::Sensitive.new(''))
       end.to raise_error(Puppet::Error, %r{You must supply a password})
     end
 
     it 'rejects a Sensitive password over 20 characters when enable is true' do
       expect do
-        described_class.new(name: 'test', enable: :true, password: Puppet::Pops::Types::PSensitiveType::Sensitive.new('a' * 21))
+        described_class.new(name: 'test', priv: :ADMIN, enable: :true, password: Puppet::Pops::Types::PSensitiveType::Sensitive.new('a' * 21))
       end.to raise_error(Puppet::Error, %r{20 or fewer bytes})
     end
 
     it 'rejects passwords that exceed 20 bytes even when shorter in characters' do
       expect do
-        described_class.new(name: 'test', password: 'é' * 11)
+        described_class.new(name: 'test', priv: :ADMIN, password: 'é' * 11)
       end.to raise_error(Puppet::Error, %r{20 or fewer bytes})
     end
 
     it 'rejects non-string passwords without leaking their value' do
       expect do
-        described_class.new(name: 'test', password: 1234)
+        described_class.new(name: 'test', priv: :ADMIN, password: 1234)
       end.to raise_error(Puppet::Error, %r{password must be a String})
     end
 
     it 'rejects non-string Sensitive passwords' do
       expect do
-        described_class.new(name: 'test', password: Puppet::Pops::Types::PSensitiveType::Sensitive.new(1234))
+        described_class.new(name: 'test', priv: :ADMIN, password: Puppet::Pops::Types::PSensitiveType::Sensitive.new(1234))
       end.to raise_error(Puppet::Error, %r{password must be a String})
     end
 
     it 'rejects a username exceeding 16 bytes' do
       expect do
-        described_class.new(name: 'test', username: 'é' * 9, enable: :false)
+        described_class.new(name: 'test', priv: :ADMIN, username: 'é' * 9, enable: :false)
       end.to raise_error(Puppet::Error, %r{16 bytes})
     end
 
@@ -129,62 +137,66 @@ describe Puppet::Type.type(:ipmi_user) do
     ['-v', '-Hhost'].each do |name|
       it "rejects the username #{name}, which starts with -" do
         expect do
-          described_class.new(name: 'test', username: name, enable: :false)
+          described_class.new(name: 'test', priv: :ADMIN, username: name, enable: :false)
         end.to raise_error(Puppet::Error, %r{username must not start with -})
       end
 
       it "rejects the title #{name} as the username" do
         expect do
-          described_class.new(name: name, enable: :false)
+          described_class.new(name: name, priv: :ADMIN, enable: :false)
         end.to raise_error(Puppet::Error, %r{username must not start with -})
       end
     end
 
     it 'accepts a username with - after its first character' do
-      expect(described_class.new(name: 'test', username: 'a-v', enable: :false)[:username]).to eq('a-v')
+      expect(described_class.new(name: 'test', priv: :ADMIN, username: 'a-v', enable: :false)[:username]).to eq('a-v')
     end
 
     it 'still rejects an over-long password when enable is false' do
       expect do
-        described_class.new(name: 'test', enable: :false, password: 'a' * 21)
+        described_class.new(name: 'test', priv: :ADMIN, enable: :false, password: 'a' * 21)
       end.to raise_error(Puppet::Error, %r{20 or fewer bytes})
     end
 
     it 'does not require password when enable is false' do
-      resource = described_class.new(name: 'test', enable: :false)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false)
       expect(resource[:enable]).to eq(:false)
     end
 
-    it 'rejects invalid priv values when enable is true' do
-      expect do
-        described_class.new(name: 'test', password: 'secret', priv: 5)
-      end.to raise_error(Puppet::Error, %r{priv must be})
+    it 'rejects a numeric priv' do
+      expect { described_class.new(name: 'test', password: 'secret', priv: 4) }
+        .to raise_error(Puppet::ResourceError, %r{Invalid value 4})
     end
 
-    it 'rejects invalid priv values when enable is false' do
-      expect do
-        described_class.new(name: 'test', enable: :false, priv: 5)
-      end.to raise_error(Puppet::Error, %r{priv must be})
+    it 'rejects an unknown priv word' do
+      expect { described_class.new(name: 'test', password: 'secret', priv: :SUPERUSER) }
+        .to raise_error(Puppet::ResourceError, %r{Invalid value})
     end
 
-    it 'ignores invalid priv values when ensure is absent' do
-      expect { described_class.new(name: 'test', ensure: :absent, priv: 5) }.not_to raise_error
+    it 'rejects NOACCESS for an enabled user' do
+      expect { described_class.new(name: 'test', password: 'secret', priv: :NOACCESS) }
+        .to raise_error(Puppet::Error, %r{not NOACCESS})
     end
 
-    it 'accepts valid priv values' do
-      [1, 2, 3, 4].each do |p|
-        resource = described_class.new(name: "test#{p}", password: 'secret', priv: p)
-        expect(resource[:priv]).to eq(p)
+    it 'rejects an unknown priv word even when ensure is absent' do
+      expect { described_class.new(name: 'test', ensure: :absent, priv: :SUPERUSER) }
+        .to raise_error(Puppet::ResourceError, %r{Invalid value})
+    end
+
+    it 'maps each priv word to its IPMI number' do
+      { ADMIN: 4, OPERATOR: 3, USER: 2, CALLBACK: 1 }.each do |word, number|
+        resource = described_class.new(name: "test#{number}", password: 'secret', priv: word)
+        expect(resource[:priv]).to eq(number)
       end
     end
 
     it 'ignores priv mismatch when enable is false' do
-      resource = described_class.new(name: 'test', enable: :false, priv: 3)
+      resource = described_class.new(name: 'test', enable: :false, priv: :OPERATOR)
       expect(resource.property(:priv).insync?(4)).to be(true)
     end
 
     it 'defaults ensure to present' do
-      resource = described_class.new(name: 'test', enable: :false)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false)
       expect(resource[:ensure]).to eq(:present)
     end
 
@@ -193,7 +205,7 @@ describe Puppet::Type.type(:ipmi_user) do
     end
 
     it 'treats a disabled user as in sync only once access is revoked' do
-      resource = described_class.new(name: 'test', enable: :false, provider: :ipmitool)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false, provider: :ipmitool)
       provider = resource.provider
       provider.stubs(:access_revoked?).returns(false, true)
 
@@ -202,7 +214,7 @@ describe Puppet::Type.type(:ipmi_user) do
     end
 
     it 'compares the enabled flag when enabling' do
-      resource = described_class.new(name: 'test', password: 'secret')
+      resource = described_class.new(name: 'test', priv: :ADMIN, password: 'secret')
 
       expect(resource.property(:enable).insync?(:true)).to be(true)
       expect(resource.property(:enable).insync?(:false)).to be(false)
@@ -210,34 +222,34 @@ describe Puppet::Type.type(:ipmi_user) do
 
     it 'rejects invalid user_id' do
       expect do
-        described_class.new(name: 'test', enable: :false, user_id: 0)
+        described_class.new(name: 'test', priv: :ADMIN, enable: :false, user_id: 0)
       end.to raise_error(Puppet::Error, %r{user_id must be an integer between 2 and 63 or "auto"})
     end
 
     it 'rejects anonymous slot 1 and slots beyond the IPMI range' do
       [1, 64].each do |id|
-        expect { described_class.new(name: 'test', enable: :false, user_id: id) }
+        expect { described_class.new(name: 'test', priv: :ADMIN, enable: :false, user_id: id) }
           .to raise_error(Puppet::Error, %r{between 2 and 63})
       end
     end
 
     it 'accepts the highest valid slot' do
-      expect(described_class.new(name: 'test', enable: :false, user_id: 63)[:user_id]).to eq(63)
+      expect(described_class.new(name: 'test', priv: :ADMIN, enable: :false, user_id: 63)[:user_id]).to eq(63)
     end
 
     it 'accepts user_id auto as a string' do
-      resource = described_class.new(name: 'test', enable: :false, user_id: 'auto')
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false, user_id: 'auto')
       expect(resource[:user_id]).to eq(:auto)
     end
 
     it 'accepts user_id auto as a symbol' do
-      resource = described_class.new(name: 'test', enable: :false, user_id: :auto)
+      resource = described_class.new(name: 'test', priv: :ADMIN, enable: :false, user_id: :auto)
       expect(resource[:user_id]).to eq(:auto)
     end
 
     it 'rejects non-auto string user_id values' do
       expect do
-        described_class.new(name: 'test', enable: :false, user_id: 'foo')
+        described_class.new(name: 'test', priv: :ADMIN, enable: :false, user_id: 'foo')
       end.to raise_error(Puppet::Error, %r{user_id must be an integer between 2 and 63 or "auto"})
     end
   end
@@ -250,7 +262,7 @@ describe Puppet::Type.type(:ipmi_user) do
     before { described_class.provider(:ipmitool).stubs(:suitable?).returns(true) }
 
     def build(**params)
-      described_class.new({ name: 'bob', password: 'secret', channel: 1, user_id: 3, provider: :ipmitool }.merge(params))
+      described_class.new({ name: 'bob', password: 'secret', priv: :ADMIN, channel: 1, user_id: 3, provider: :ipmitool }.merge(params))
     end
 
     it 'does not purge by default' do
@@ -295,7 +307,7 @@ describe Puppet::Type.type(:ipmi_user) do
   describe '#pre_run_check' do
     def catalog_with(*param_sets)
       catalog = Puppet::Resource::Catalog.new
-      resources = param_sets.map { |params| described_class.new({ password: 'secret', channel: 1 }.merge(params)) }
+      resources = param_sets.map { |params| described_class.new({ password: 'secret', priv: :ADMIN, channel: 1 }.merge(params)) }
       resources.each { |r| catalog.add_resource(r) }
       resources
     end
@@ -345,7 +357,7 @@ describe Puppet::Type.type(:ipmi_user) do
 
   describe 'when handling sensitive values' do
     it 'marks the password property as sensitive' do
-      resource = described_class.new(name: 'test', password: 'secret', enable: :false)
+      resource = described_class.new(name: 'test', priv: :ADMIN, password: 'secret', enable: :false)
 
       expect(resource.parameter(:password)).to respond_to(:is_sensitive)
       expect(resource.parameter(:password).is_sensitive).to be(true)
@@ -362,7 +374,7 @@ describe Puppet::Type.type(:ipmi_user) do
         user_id: 4,
         channel: 1,
         enable: :true,
-        priv: 4,
+        priv: :ADMIN,
         provider: 'ipmitool',
       )
       catalog = Puppet::Resource::Catalog.new

@@ -37,7 +37,7 @@ describe 'ipmi_user purge_duplicates before the BMC can be read' do
   end
 
   def user(**params)
-    Puppet::Type.type(:ipmi_user).new({ name: 'bob', password: 'secret', user_id: 3, channel: 1, purge_duplicates: true }.merge(params))
+    Puppet::Type.type(:ipmi_user).new({ name: 'bob', password: 'secret', priv: :ADMIN, user_id: 3, channel: 1, purge_duplicates: true }.merge(params))
   end
 
   def apply(*resources)

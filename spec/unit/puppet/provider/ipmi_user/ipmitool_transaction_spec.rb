@@ -26,7 +26,7 @@ describe 'ipmi_user through the ipmitool provider' do
 
   def apply_all(*param_sets)
     catalog = Puppet::Resource::Catalog.new
-    defaults = { name: 'bob', password: 'secret', channel: 1, provider: 'ipmitool' }
+    defaults = { name: 'bob', password: 'secret', priv: :ADMIN, channel: 1, provider: 'ipmitool' }
     param_sets.each { |params| catalog.add_resource(Puppet::Type.type(:ipmi_user).new(defaults.merge(params).compact)) }
     catalog.apply.report
   end

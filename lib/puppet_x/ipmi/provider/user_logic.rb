@@ -771,7 +771,7 @@ module PuppetX::Ipmi::Provider::UserLogic
     revoke_before_rename(id, slot_entry) if rename
     write_name!(id, user_name) if rename
     write_password!(id, pw) if pw
-    grant_access!(id, @resource[:priv] || 4)
+    grant_access!(id, @resource[:priv])
   end
 
   # Disable the resolved slot by removing privileges and channel access,

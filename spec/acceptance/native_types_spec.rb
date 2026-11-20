@@ -9,6 +9,7 @@ describe 'ipmi native types' do
 
       ipmi_user { 'acceptance_user':
         password         => Sensitive('acceptance_password'),
+        priv             => 'ADMIN',
         user_id          => 4,
         channel          => 1,
         purge_duplicates => true,

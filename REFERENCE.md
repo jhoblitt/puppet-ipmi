@@ -405,7 +405,7 @@ lets the provider select a slot.
 ```puppet
 ipmi_user { 'admin':
   password => Sensitive('s3cret'),
-  priv     => 4,
+  priv     => 'ADMIN',
   channel  => 1,
   enable   => true,
 }
@@ -437,7 +437,7 @@ ipmi_user { 'reserved_operator':
 ```puppet
 ipmi_user { 'auto_user':
   password => Sensitive('s3cret'),
-  priv     => 4,
+  priv     => 'ADMIN',
   channel  => 1,
 }
 ```
@@ -449,7 +449,7 @@ ipmi_user { 'admin_account':
   username => 'admin',
   password => Sensitive('s3cret'),
   user_id  => 3,
-  priv     => 4,
+  priv     => 'ADMIN',
   channel  => 1,
 }
 ```
@@ -511,13 +511,18 @@ through bmc-config's `Password` key.
 
 ##### `priv`
 
-      Privilege level for the user:
-4 - ADMINISTRATOR
-3 - OPERATOR
-2 - USER
-1 - CALLBACK
+Valid values: `PuppetX::Ipmi::Privilege::NAMES.keys`
 
-Default value: `4`
+Privilege level for the user.  Defaults to NOACCESS, so a user can
+never become an administrator by omission.  An enabled user must name
+a level it can use; a disabled user is set to NOACCESS.
+  ADMIN     - administrator
+  OPERATOR  - operator
+  USER      - user
+  CALLBACK  - callback only
+  NOACCESS  - no privilege (disabled users only)
+
+Default value: `NOACCESS`
 
 #### Parameters
 
