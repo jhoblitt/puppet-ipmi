@@ -47,11 +47,12 @@ See [REFERENCE](REFERENCE.md)
   include ipmi
 ```
 
-Create a user with admin privileges in any slot (default):
+Create a user with admin privileges in any slot:
 
 ```puppet
   ipmi_user { 'newuser1':
     password => 'password1',
+    priv     => 'ADMIN',
   }
 ```
 
@@ -61,7 +62,7 @@ Create a user with operator privileges:
   ipmi_user { 'operator user: newuser2':
     username => 'newuser2',
     password => 'password2',
-    priv     => 3,
+    priv     => 'OPERATOR',
     user_id  => 5,
   }
 ```
@@ -71,7 +72,7 @@ Create a user with user privileges on a specific channel:
 ```puppet
   ipmi_user { 'newuser3':
     password => 'password3',
-    priv     => 2,
+    priv     => 'USER',
     user_id  => 6,
     channel  => 3,
   }
@@ -83,6 +84,7 @@ it to a different `user_id`):
 ```puppet
   ipmi_user { 'newuser1':
     password         => 'password1',
+    priv             => 'ADMIN',
     user_id          => 4,
     purge_duplicates => true,
   }
@@ -136,6 +138,7 @@ the provider on the resource:
 ```puppet
   ipmi_user { 'newuser1':
     password => 'password1',
+    priv     => 'ADMIN',
     provider => 'freeipmi',
   }
 ```
@@ -317,6 +320,13 @@ When upgrading from 8.x or earlier:
 * `ipmi_user` takes `username`, not `user`.
 * `ipmi_user`'s `user_id` now defaults to `'auto'`.
 * `ipmi_user`'s username now defaults to the `namevar` rather than `root`.
+* `ipmi_user`'s `priv` is now a word, not a number: `'ADMIN'`, `'OPERATOR'`,
+  `'USER'`, `'CALLBACK'` or `'NOACCESS'`. Integers are rejected. Replace each
+  number with its word (4 is `'ADMIN'`, 3 is `'OPERATOR'`, 2 is `'USER'`,
+  1 is `'CALLBACK'`, 15 is `'NOACCESS'`).
+* `ipmi_user`'s `priv` no longer defaults to ADMINISTRATOR. It defaults to
+  `'NOACCESS'`, and an enabled user must name a level. Previously such users
+  were granted ADMINISTRATOR. Review existing users before upgrading.
 * `ipmi::snmps` entries and `ipmi_snmp` take `community`, not `snmp`.
 * `ip`, `netmask` or `gateway` together with `type => 'dhcp'` is rejected,
   and the error fails the whole agent run.
@@ -341,13 +351,20 @@ When upgrading from 8.x or earlier:
 #### `ipmi_user`
 
 ```puppet
-  # defaults
+  # defaults, except priv, which an enabled user must set
   ipmi_user { 'newuser':
-    priv     => 4,           # Administrator
+    password => Sensitive('s3cret'),  # required when enable is true
+    priv     => 'ADMIN',         # ADMIN, OPERATOR, USER or CALLBACK when enabled
     user_id  => 'auto',      # auto-select a slot
     channel  => 1,
   }
 ```
+
+`priv` takes one of the words `'ADMIN'`, `'OPERATOR'`, `'USER'`, `'CALLBACK'` or
+`'NOACCESS'`. It defaults to `'NOACCESS'`, so a user cannot become an
+administrator by omission. An enabled `ipmi_user` must name one of the first
+four; left at the default, the agent run fails for that resource. A disabled
+one (`enable => false`) may keep the default or set `'NOACCESS'` explicitly.
 
 When `enable => false`, the account is disabled, after its privilege is set
 to `NO ACCESS` and its channel and SOL access removed on every LAN channel,
@@ -471,7 +488,7 @@ account without renaming it, use its current username with the explicit slot.
   ipmi_user { 'new_operator':
     user_id  => 5,
     password => Sensitive('new-secret'),
-    priv     => 3,
+    priv     => 'OPERATOR',
   }
 ```
 

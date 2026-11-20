@@ -10,7 +10,7 @@ describe PuppetX::Ipmi::UserCatalog do
   # A named provider, so the provider does not depend on which IPMI tools
   # are installed here or on the default an earlier spec left cached.
   def build(**params)
-    type.new({ name: 'bob', password: 'secret', channel: 1, user_id: 3, provider: :ipmitool }.merge(params).compact)
+    type.new({ name: 'bob', password: 'secret', priv: :ADMIN, channel: 1, user_id: 3, provider: :ipmitool }.merge(params).compact)
   end
 
   def catalog_with(*resources)
@@ -240,8 +240,8 @@ describe PuppetX::Ipmi::UserCatalog do
       end
 
       it 'allows one username with different privileges, and the same password wrapped or not' do
-        a = build(name: 'a', username: 'bob', priv: 4)
-        catalog_with(a, build(name: 'b', username: 'bob', channel: 2, priv: 2, password: Puppet::Pops::Types::PSensitiveType::Sensitive.new('secret')))
+        a = build(name: 'a', username: 'bob', priv: :ADMIN)
+        catalog_with(a, build(name: 'b', username: 'bob', channel: 2, priv: :USER, password: Puppet::Pops::Types::PSensitiveType::Sensitive.new('secret')))
 
         expect { described_class.check_unique!(a) }.not_to raise_error
       end

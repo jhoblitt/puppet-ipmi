@@ -2,6 +2,7 @@
 
 require 'puppet/parameter/boolean'
 require 'puppet_x/ipmi/lan_channel'
+require 'puppet_x/ipmi/privilege'
 require 'puppet_x/ipmi/user_catalog'
 
 Puppet::Type.newtype(:ipmi_user) do
@@ -20,7 +21,7 @@ Puppet::Type.newtype(:ipmi_user) do
     @example Create an admin user
       ipmi_user { 'admin':
         password => Sensitive('s3cret'),
-        priv     => 4,
+        priv     => 'ADMIN',
         channel  => 1,
         enable   => true,
       }
@@ -43,7 +44,7 @@ Puppet::Type.newtype(:ipmi_user) do
     @example Automatically select a user ID
       ipmi_user { 'auto_user':
         password => Sensitive('s3cret'),
-        priv     => 4,
+        priv     => 'ADMIN',
         channel  => 1,
       }
 
@@ -52,7 +53,7 @@ Puppet::Type.newtype(:ipmi_user) do
         username => 'admin',
         password => Sensitive('s3cret'),
         user_id  => 3,
-        priv     => 4,
+        priv     => 'ADMIN',
         channel  => 1,
       }
   DOC
@@ -210,14 +211,18 @@ Puppet::Type.newtype(:ipmi_user) do
 
   newproperty(:priv) do
     desc <<-DESC
-      Privilege level for the user:
-        4 - ADMINISTRATOR
-        3 - OPERATOR
-        2 - USER
-        1 - CALLBACK
+      Privilege level for the user.  Defaults to NOACCESS, so a user can
+      never become an administrator by omission.  An enabled user must name
+      a level it can use; a disabled user is set to NOACCESS.
+        ADMIN     - administrator
+        OPERATOR  - operator
+        USER      - user
+        CALLBACK  - callback only
+        NOACCESS  - no privilege (disabled users only)
     DESC
-    munge(&:to_i)
-    defaultto 4
+    newvalues(*PuppetX::Ipmi::Privilege::NAMES.keys)
+    munge { |value| PuppetX::Ipmi::Privilege.number(value) }
+    defaultto :NOACCESS
 
     def insync?(is)
       # When disabling, privilege gets set to NO ACCESS (0xF / 15)
@@ -275,11 +280,10 @@ Puppet::Type.newtype(:ipmi_user) do
     # are not meaningful; skip validation entirely for them.
     return if self[:ensure] == :absent
 
-    # priv range is validated for every present resource, even a disabled
-    # one: an out-of-range value is never meaningful, and catching it here
-    # prevents it from silently reaching the provider.
-    priv = self[:priv]
-    raise Puppet::Error, "priv must be 1 (CALLBACK), 2 (USER), 3 (OPERATOR), or 4 (ADMINISTRATOR), got #{priv}" unless [1, 2, 3, 4].include?(priv)
+    # NOACCESS is the default and is valid only for a disabled user, which the
+    # provider sets to NO ACCESS itself; an enabled user with it would be
+    # created with no way to log in.
+    raise Puppet::Error, "priv must be ADMIN, OPERATOR, USER or CALLBACK for an enabled user, not NOACCESS (#{self[:username]})" if self[:enable] == :true && self[:priv] == PuppetX::Ipmi::Privilege.number(:NOACCESS)
 
     return unless self[:enable] == :true
 

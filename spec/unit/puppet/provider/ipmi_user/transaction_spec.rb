@@ -32,7 +32,7 @@ describe 'ipmi_user catalog application' do
   def apply_all(*param_sets)
     catalog = Puppet::Resource::Catalog.new
     param_sets.each do |params|
-      catalog.add_resource(type.new({ name: 'bob', password: 'secret', channel: 1, provider: 'fake_bmc' }.merge(params).compact))
+      catalog.add_resource(type.new({ name: 'bob', password: 'secret', priv: :ADMIN, channel: 1, provider: 'fake_bmc' }.merge(params).compact))
     end
     catalog.apply.report
   end
@@ -242,7 +242,7 @@ describe 'ipmi_user catalog application' do
     end
 
     it 'allocates them together, so an auto user keeps a slot that no other provider resource names' do
-      sets = [{ name: 'bob', priv: 2, purge_duplicates: true }, { name: 'carol', user_id: 3, provider: 'fake_bmc_peer' }]
+      sets = [{ name: 'bob', priv: :USER, purge_duplicates: true }, { name: 'carol', user_id: 3, provider: 'fake_bmc_peer' }]
       report = apply_all(*sets)
 
       expect(report.resource_statuses.values.count(&:failed)).to eq(0)
@@ -418,7 +418,7 @@ describe 'ipmi_user catalog application' do
     it 'reads the table once for a resource whose password and privilege change' do
       provider.fake_password = 'old'
 
-      expect(changed_count(apply(user_id: 3, priv: 3))).to eq(1)
+      expect(changed_count(apply(user_id: 3, priv: :OPERATOR))).to eq(1)
       expect(log).to eq([[:password, 3, 'secret'], [:priv, 3, 3]])
       expect(provider.fake_reads).to eq([[1]])
     end
@@ -427,7 +427,7 @@ describe 'ipmi_user catalog application' do
       FakeUserBmc.update(slot(3), priv: 15, status: :disabled)
       provider.fake_password = 'old'
 
-      expect(changed_count(apply(user_id: 3, priv: 3))).to eq(1)
+      expect(changed_count(apply(user_id: 3, priv: :OPERATOR))).to eq(1)
       expect(log).to eq([[:password, 3, 'secret'], [:grant, 3, 3]])
       expect(provider.fake_reads).to eq([[1]])
       expect(state(3)).to include(status: :enabled, priv: 3)
@@ -436,7 +436,7 @@ describe 'ipmi_user catalog application' do
     it 'reads the table again only to confirm a takeover, and keeps writing from what it knows' do
       FakeUserBmc.update(slot(3), name: 'SLAM')
 
-      expect(changed_count(apply(user_id: 3, priv: 3))).to eq(1)
+      expect(changed_count(apply(user_id: 3, priv: :OPERATOR))).to eq(1)
       expect(log).to eq([[:revoke, 3, [1]], [:name, 3, 'bob'], [:password, 3, 'secret'], [:grant, 3, 3]])
       expect(provider.fake_reads).to eq([[1], [1]])
     end

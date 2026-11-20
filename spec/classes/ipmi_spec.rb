@@ -269,7 +269,7 @@ describe 'ipmi', type: :class do
       context 'with native resources' do
         let(:params) do
           {
-            users: { newuser: { password: 'password' } },
+            users: { newuser: { password: 'password', priv: :ADMIN } },
             networks: { dhcp: {} },
             snmps: { snmp1: { community: 'secret', lan_channel: 1 } },
           }
@@ -287,7 +287,7 @@ describe 'ipmi', type: :class do
         let(:params) do
           {
             default_channel: 8,
-            users: { newuser: { password: 'password' } },
+            users: { newuser: { password: 'password', priv: :ADMIN } },
             networks: { dhcp: {} },
             snmps: { snmp1: { community: 'secret' } },
           }
@@ -322,7 +322,7 @@ describe 'ipmi', type: :class do
         end
         let(:params) do
           {
-            users: { newuser: { password: 'password' } },
+            users: { newuser: { password: 'password', priv: :ADMIN } },
             networks: { dhcp: {}, '4' => {} },
             snmps: { snmp1: { community: 'secret' } },
           }
@@ -339,7 +339,7 @@ describe 'ipmi', type: :class do
         let(:facts) do
           super().merge(ipmi: { default: { channel: 'invalid' } })
         end
-        let(:params) { { users: { newuser: { password: 'password' } }, networks: { dhcp: {} } } }
+        let(:params) { { users: { newuser: { password: 'password', priv: :ADMIN } }, networks: { dhcp: {} } } }
 
         it { is_expected.to compile.with_all_deps }
         it { is_expected.to contain_ipmi_user('newuser').with_channel(1) }
@@ -350,7 +350,7 @@ describe 'ipmi', type: :class do
         let(:params) do
           {
             default_channel: 8,
-            users: { newuser: { username: 'newuser', password: 'password', channel: 3 } },
+            users: { newuser: { username: 'newuser', password: 'password', priv: :ADMIN, channel: 3 } },
             networks: { dhcp: { lan_channel: 2 } },
             snmps: { snmp1: { community: 'secret', lan_channel: 1 } },
           }
