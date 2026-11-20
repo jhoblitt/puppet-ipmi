@@ -124,6 +124,7 @@ Puppet::Type.newtype(:ipmi_user) do
 
       On SuperMicro IPMI, user id 2 is reserved for the ADMIN username.
       On ASUS IPMI, user id 2 is reserved for the admin username.
+      On HP IPMI, user id 2 is reserved for the OPERATOR username.
     DESC
     defaultto 'auto'
     validate do |value|
