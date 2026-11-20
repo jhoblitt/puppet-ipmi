@@ -57,6 +57,9 @@ describe 'ipmi', type: :class do
         it_behaves_like 'installs packages', facts
         it_behaves_like 'contains ipmi::service'
 
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_ipmi_user('newuser') }
+
         it { is_expected.to contain_class('ipmi::install') }
         it { is_expected.to contain_class('ipmi::watchdog') }
         it { is_expected.to contain_class('ipmi::service::ipmi') }
@@ -264,6 +267,12 @@ describe 'ipmi', type: :class do
             enable: false,
           )
         end
+      end
+
+      context 'with users set to nil' do
+        let(:params) { { users: nil } }
+
+        it { is_expected.to compile.and_raise_error(%r{expects a Hash value}) }
       end
 
       context 'with native resources' do

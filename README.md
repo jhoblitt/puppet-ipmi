@@ -318,6 +318,11 @@ When upgrading from 8.x or earlier:
 * `ipmi_user`'s `user_id` now defaults to `'auto'`.
 * `ipmi_user`'s username now defaults to the `namevar` rather than `root`.
 * `ipmi::snmps` entries and `ipmi_snmp` take `community`, not `snmp`.
+* `ipmi::snmps`, `ipmi::users`, and `ipmi::networks` are plain hashes that
+  default to `{}`. Use `{}` to declare none, not `~` or `undef`. Puppet
+  rejects `undef` for these parameters. In Hiera, `~` is treated as unset,
+  so it silently falls back to a lower layer's value instead of meaning
+  "none".
 * `ip`, `netmask` or `gateway` together with `type => 'dhcp'` is rejected,
   and the error fails the whole agent run.
 * `ipmi_network`'s `type` has no default. `ipmi::network` defaulted it to
