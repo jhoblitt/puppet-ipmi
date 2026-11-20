@@ -33,6 +33,26 @@ describe Puppet::Type.type(:ipmi_user) do
         .to raise_error(Puppet::Error, %r{user_id})
     end
 
+    it 'rejects an empty username' do
+      expect { described_class.new(name: 'test', enable: :false, username: '') }
+        .to raise_error(Puppet::Error, %r{non-empty})
+    end
+
+    it 'rejects a username containing whitespace' do
+      expect { described_class.new(name: 'test', enable: :false, username: 'a b') }
+        .to raise_error(Puppet::Error, %r{whitespace})
+    end
+
+    it 'treats the password as in sync when none is declared' do
+      resource = described_class.new(name: 'test', enable: :false, provider: :ipmitool)
+      provider = resource.provider
+      provider.expects(:password_insync?).never
+
+      expect(resource.parameter(:password)).to be_nil
+      property = described_class.attrclass(:password).new(resource: resource)
+      expect(property.insync?(:absent)).to be(true)
+    end
+
     it 'defaults username to the resource title' do
       resource = described_class.new(name: 'test', enable: :false)
       expect(resource[:username]).to eq('test')
