@@ -126,27 +126,27 @@ Default value: `false`
 
 ##### <a name="-ipmi--snmps"></a>`snmps`
 
-Data type: `Optional[Hash]`
+Data type: `Hash`
 
 `ipmi_snmp` resources to create.
 
-Default value: `undef`
+Default value: `{}`
 
 ##### <a name="-ipmi--users"></a>`users`
 
-Data type: `Optional[Hash]`
+Data type: `Hash`
 
 `ipmi_user` resources to create.
 
-Default value: `undef`
+Default value: `{}`
 
 ##### <a name="-ipmi--networks"></a>`networks`
 
-Data type: `Optional[Hash]`
+Data type: `Hash`
 
 `ipmi_network` resources to create.
 
-Default value: `undef`
+Default value: `{}`
 
 ##### <a name="-ipmi--service_manage"></a>`service_manage`
 

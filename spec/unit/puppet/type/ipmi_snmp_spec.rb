@@ -31,6 +31,36 @@ describe Puppet::Type.type(:ipmi_snmp) do
       expect(resource[:lan_channel]).to eq(2)
     end
 
+    it 'rejects a lan_channel with a trailing newline' do
+      expect { described_class.new(name: 'mysnmp', lan_channel: "1\nx") }
+        .to raise_error(Puppet::Error, %r{lan_channel})
+    end
+
+    it 'does not derive a channel from a multi-line title' do
+      expect(PuppetX::Ipmi::LanChannel.default_channel("5\nx")).to eq(1)
+    end
+
+    it 'rejects an empty community' do
+      expect { described_class.new(name: 'mysnmp', community: '') }
+        .to raise_error(Puppet::Error, %r{non-empty})
+    end
+
+    it 'rejects a community longer than 18 bytes' do
+      expect { described_class.new(name: 'mysnmp', community: 'a' * 19) }
+        .to raise_error(Puppet::Error, %r{18 bytes})
+    end
+
+    it 'accepts a community of exactly 18 bytes' do
+      expect { described_class.new(name: 'mysnmp', community: 'a' * 18) }.not_to raise_error
+    end
+
+    it 'rejects a community with leading or trailing whitespace' do
+      [' lead', 'trail ', "tab\t", "\nline"].each do |community|
+        expect { described_class.new(name: 'mysnmp', community: community) }
+          .to raise_error(Puppet::Error, %r{whitespace}), community.inspect
+      end
+    end
+
     it 'defaults community to public' do
       resource = described_class.new(name: 'test')
       expect(resource[:community]).to eq('public')

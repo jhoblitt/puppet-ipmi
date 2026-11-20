@@ -13,19 +13,21 @@ require 'puppet_x/ipmi/provider/base'
 #
 # Backend primitives (field is one of `:source`, `:ip`, `:netmask`, `:gateway`):
 #
-# * `lan_get(field)` -> String or nil.  For `:source` the raw tool text; any
-#   value containing "DHCP" (case-insensitive) means DHCP, everything else
-#   means static.
+# * `lan_get(field)` -> String or nil.  For `:source` the raw tool text; a
+#   value containing "DHCP" (case-insensitive) means DHCP, one containing
+#   "static" means static, anything else (BIOS assigned, unspecified, other)
+#   is reported as `:other` so it never satisfies a managed `type`.
 # * `lan_set(field, value)` -> void.  For `:source` the value is `:dhcp` or
 #   `:static`.  The primitive owns any cache invalidation after the write.
 module PuppetX::Ipmi::Provider::NetworkLogic
-  # @return [Symbol, nil] :dhcp or :static depending on the BMC configuration
+  # @return [Symbol, nil] :dhcp, :static, or :other for any other source
   def type
     source = lan_get(:source)
     return nil if source.nil?
     return :dhcp if source.match?(%r{DHCP}i)
+    return :static if source.match?(%r{static}i)
 
-    :static
+    :other
   end
 
   # @param val [Symbol] :dhcp or :static

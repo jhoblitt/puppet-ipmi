@@ -88,6 +88,20 @@ describe PuppetX::Ipmi::Provider::UserLogic do
     end
   end
 
+  describe '.merge' do
+    it 'reports no privilege on a channel whose list lacks the slot' do
+      lists = { 1 => [{ id: 2, name: 'ADMIN', priv: 4 }, { id: 3, name: 'bob', priv: 2 }], 2 => [{ id: 2, name: 'ADMIN', priv: 3 }] }
+      merged = described_class.merge(lists, { 2 => :enabled })
+
+      expect(merged).to eq(
+        [
+          { id: 2, name: 'ADMIN', status: :enabled, privs: { 1 => 4, 2 => 3 } },
+          { id: 3, name: 'bob', status: :unknown, privs: { 1 => 2, 2 => nil } },
+        ],
+      )
+    end
+  end
+
   describe '.instances' do
     it 'returns one provider per named slot, skipping empty and DISABLED_ slots' do
       Facter.stubs(:value).with('ipmi.default.channel').returns(nil)
@@ -342,6 +356,13 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       expect(provider).to be_access_revoked
     end
 
+    it 'does not report access revoked when the table has no such slot' do
+      params[:enable] = :false
+      provider.slots = []
+
+      expect(provider).not_to be_access_revoked
+    end
+
     it 'reads the table once per run' do
       provider_class.expects(:read_table).once.returns(table)
       p = provider_class.provider_for(params, provider_class.read_table([1]))
@@ -539,6 +560,14 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       params[:user_id] = 2
 
       expect { provider.password = :ignored }.to raise_error(Puppet::Error, %r{Refusing to modify slot 2})
+      expect(log).to be_empty
+    end
+
+    it 'says the slot is missing, not that it holds nil, when the table has no such slot' do
+      provider.slots = table.reject { |u| u[:id] == 3 }
+
+      expect { provider.password = :ignored }
+        .to raise_error(Puppet::Error, %r{Refusing to modify slot 3: it is missing from the BMC's user table})
       expect(log).to be_empty
     end
 

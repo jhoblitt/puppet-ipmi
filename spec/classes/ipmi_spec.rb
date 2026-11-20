@@ -57,6 +57,9 @@ describe 'ipmi', type: :class do
         it_behaves_like 'installs packages', facts
         it_behaves_like 'contains ipmi::service'
 
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.not_to contain_ipmi_user('newuser') }
+
         it { is_expected.to contain_class('ipmi::install') }
         it { is_expected.to contain_class('ipmi::watchdog') }
         it { is_expected.to contain_class('ipmi::service::ipmi') }
@@ -266,6 +269,12 @@ describe 'ipmi', type: :class do
         end
       end
 
+      context 'with users set to nil' do
+        let(:params) { { users: nil } }
+
+        it { is_expected.to compile.and_raise_error(%r{expects a Hash value}) }
+      end
+
       context 'with native resources' do
         let(:params) do
           {
@@ -297,6 +306,34 @@ describe 'ipmi', type: :class do
         it { is_expected.to contain_ipmi_user('newuser').with_channel(8) }
         it { is_expected.to contain_ipmi_network('dhcp').with_lan_channel(8) }
         it { is_expected.to contain_ipmi_snmp('snmp1').with_lan_channel(8) }
+      end
+
+      context 'with Integer hiera keys as LAN titles' do
+        let(:params) do
+          {
+            users: { 3 => { 'password' => 'password' } },
+            networks: { 4 => { 'type' => 'dhcp' } },
+            snmps: { 5 => { 'community' => 'secret' } },
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_user('3') }
+        it { is_expected.to contain_ipmi_network('4').with_lan_channel(4) }
+        it { is_expected.to contain_ipmi_snmp('5').with_lan_channel(5) }
+      end
+
+      context 'with zero-padded numeric LAN titles' do
+        let(:params) do
+          {
+            networks: { '08' => { 'type' => 'dhcp' } },
+            snmps: { '010' => { 'community' => 'secret' } },
+          }
+        end
+
+        it { is_expected.to compile.with_all_deps }
+        it { is_expected.to contain_ipmi_network('08').with_lan_channel(8) }
+        it { is_expected.to contain_ipmi_snmp('010').with_lan_channel(10) }
       end
 
       context 'with a numeric LAN title and an explicit default_channel' do
