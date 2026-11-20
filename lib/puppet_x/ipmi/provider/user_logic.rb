@@ -677,10 +677,10 @@ module PuppetX::Ipmi::Provider::UserLogic
   # rejected a duplicate name), this prevents the wrong slot from receiving
   # this resource's password or privilege.
   def assert_slot_owned!
-    actual = slot_name
-    return if actual == user_name
+    raise Puppet::Error, "Refusing to modify slot #{resolved_user_id}: it is missing from the BMC's user table" if slot_entry.nil?
+    return if slot_name == user_name
 
-    raise Puppet::Error, "Refusing to modify slot #{resolved_user_id}: expected user '#{user_name}' but slot contains #{actual.inspect}"
+    raise Puppet::Error, "Refusing to modify slot #{resolved_user_id}: expected user '#{user_name}' but slot contains #{slot_name.inspect}"
   end
 
   # Whether the slot must be renamed for this user, which takes it over.

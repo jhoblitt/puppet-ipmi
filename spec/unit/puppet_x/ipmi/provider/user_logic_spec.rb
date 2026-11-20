@@ -563,6 +563,14 @@ describe PuppetX::Ipmi::Provider::UserLogic do
       expect(log).to be_empty
     end
 
+    it 'says the slot is missing, not that it holds nil, when the table has no such slot' do
+      provider.slots = table.reject { |u| u[:id] == 3 }
+
+      expect { provider.password = :ignored }
+        .to raise_error(Puppet::Error, %r{Refusing to modify slot 3: it is missing from the BMC's user table})
+      expect(log).to be_empty
+    end
+
     it 'does not write when disabling' do
       params[:enable] = :false
       provider.password = :ignored
