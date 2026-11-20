@@ -614,6 +614,7 @@ slot fails on its own; the others still apply.
 
 On SuperMicro IPMI, user id 2 is reserved for the ADMIN username.
 On ASUS IPMI, user id 2 is reserved for the admin username.
+On HP IPMI, user id 2 is reserved for the OPERATOR username.
 
 Default value: `auto`
 
