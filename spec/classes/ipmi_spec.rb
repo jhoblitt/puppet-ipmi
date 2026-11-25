@@ -65,6 +65,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: [
               'set IPMI_WATCHDOG no',
             ],
@@ -95,6 +97,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: [
               'set IPMI_WATCHDOG no',
             ],
@@ -125,6 +129,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: [
               'set IPMI_WATCHDOG no',
             ],
@@ -155,6 +161,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: [
               'set IPMI_WATCHDOG no',
             ],
@@ -185,6 +193,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: [
               'set IPMI_WATCHDOG no',
             ],
@@ -215,6 +225,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: [
               'set IPMI_WATCHDOG yes',
             ],
@@ -245,6 +257,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: [
               'set IPMI_WATCHDOG no',
             ],
