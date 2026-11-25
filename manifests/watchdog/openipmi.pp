@@ -56,6 +56,8 @@ class ipmi::watchdog::openipmi (
 
   augeas { 'ipmi_watchdog':
     context => "/files${ipmi::config_file}",
+    incl    => $ipmi::config_file,
+    lens    => 'Sysconfig.lns',
     changes => ["set IPMI_WATCHDOG ${ipmi_watchdog}"] + $options_changes,
     onlyif  => $onlyif,
   }

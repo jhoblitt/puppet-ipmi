@@ -82,6 +82,8 @@ describe 'ipmi', type: :class do
         it do
           is_expected.to contain_augeas('ipmi_watchdog').with(
             context: "/files#{config_file}",
+            incl: config_file,
+            lens: 'Sysconfig.lns',
             changes: ['set IPMI_WATCHDOG yes'],
           )
         end
@@ -120,6 +122,8 @@ describe 'ipmi', type: :class do
           it 'passes them as IPMI_WATCHDOG_OPTIONS' do
             is_expected.to contain_augeas('ipmi_watchdog').with(
               context: "/files#{config_file}",
+              incl: config_file,
+              lens: 'Sysconfig.lns',
               changes: [
                 'set IPMI_WATCHDOG yes',
                 %(set IPMI_WATCHDOG_OPTIONS '"timeout=30 action=power_cycle"'),
@@ -405,6 +409,8 @@ describe 'ipmi', type: :class do
           it do
             is_expected.to contain_augeas('ipmi_watchdog').with(
               context: "/files#{config_file}",
+              incl: config_file,
+              lens: 'Sysconfig.lns',
               changes: ['set IPMI_WATCHDOG no'],
               onlyif: "match /files#{config_file} size > 0",
             )
