@@ -117,6 +117,68 @@ describe 'ipmi facts' do
         end
       end
 
+      context 'invocation count (flat facts do not re-probe)' do
+        let(:lan_output) do
+          <<-OUTPUT
+          IP Address              : 192.168.0.37
+          Subnet Mask             : 255.255.255.0
+          MAC Address             : 3c:a8:2a:9f:9a:92
+          Default Gateway IP      : 192.168.0.1
+          IP Address Source       : Static Address
+          OUTPUT
+        end
+
+        let(:user_output) do
+          <<~OUTPUT
+            ID  Name     Callin  Link Auth	IPMI Msg   Channel Priv Limit
+            2   admin    true    false      true       ADMINISTRATOR
+          OUTPUT
+        end
+
+        let(:expectations) { [] }
+
+        before do
+          Facter::Core::Execution.expects(:which).at_least(1).with('ipmitool').returns('/usr/bin/ipmitool')
+
+          # Each of the 11 channels is probed exactly once via `lan print`.
+          lan_calls = {}
+          lan_calls['1'] = lan_output
+          (2..11).each do |channel|
+            lan_calls[channel] = "Invalid channel: #{channel}"
+          end
+          lan_calls.each do |channel, output|
+            expectations << Facter::Core::Execution.expects(:execute).with("ipmitool lan print #{channel} 2>&1", on_fail: '').returns(output)
+          end
+
+          # `user list` only for the one configured channel.
+          expectations << Facter::Core::Execution.expects(:execute).with('ipmitool user list 1 2>&1', on_fail: '').returns(user_output)
+
+          kernel_fact = mock('kernel_fact')
+          kernel_fact.stubs(:value).returns('Linux')
+          Facter.stubs(:fact).with(:kernel).returns(kernel_fact)
+        end
+
+        it 'probes each channel once via the structured fact only, not once per flat fact' do
+          # Driving the entire flat-fact surface must not add extra invocations.
+          %i[
+            ipmi_ipaddress
+            ipmi_ipaddress_source
+            ipmi_subnet_mask
+            ipmi_macaddress
+            ipmi_gateway
+            ipmi
+          ].each { |fact_name| Facter.value(fact_name) }
+
+          # Every expected command was called exactly once. A duplicate call (the
+          # duplication that used to double each channel's round-trip) would trip
+          # mocha's "unexpected invocation" error during the evaluations above, so
+          # reaching this assertion proves each command ran exactly once.
+          expect(expectations.size).to eq(12)
+          expect(Facter.value(:ipmi_ipaddress)).to eq('192.168.0.37')
+          expect(Facter.value(:ipmi)).to have_key('1')
+        end
+      end
+
       context 'when multiple channels' do
         before do
           ipmitool_2_output = <<-OUTPUT
